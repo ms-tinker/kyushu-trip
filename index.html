@@ -196,23 +196,26 @@
   .ds-arrow:disabled{opacity:0.35;cursor:default;}
   .ds-arrow svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .ds-scroll{flex:1;display:flex;gap:0.5rem;overflow-x:auto;scroll-behavior:smooth;padding:0.2rem;}
-  .ds-card{flex:none;width:3.9rem;display:flex;flex-direction:column;align-items:center;gap:0.15rem;padding:0.6rem 0.3rem;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);cursor:pointer;}
+  .ds-card{flex:none;width:3.9rem;display:flex;flex-direction:column;align-items:center;gap:0.15rem;padding:0.55rem 0.3rem;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink-soft);cursor:pointer;}
   .ds-card .ds-wd{font-size:0.66rem;letter-spacing:0.05em;color:var(--ink-faint);}
   .ds-card .ds-num{font-family:var(--font-display);font-size:1.15rem;font-weight:700;color:var(--ink);}
   .ds-card .ds-mon{font-size:0.62rem;color:var(--ink-faint);}
-  .ds-card.active{background:var(--indigo);border-color:var(--indigo);}
-  .ds-card.active .ds-wd, .ds-card.active .ds-mon{color:var(--indigo-soft);}
-  .ds-card.active .ds-num{color:var(--surface);}
-  .ds-card.ds-indigo.active{background:var(--indigo);border-color:var(--indigo);}
+  .ds-card.ds-indigo{border-color:var(--indigo);}
+  .ds-card.ds-persimmon{border-color:var(--persimmon);}
+  .ds-card.ds-moss{border-color:var(--moss);}
+  .ds-card.ds-sand{border-color:var(--sand);}
+  .ds-card.ds-neutral{border-color:var(--neutral);}
+  .ds-card.ds-indigo.active{background:var(--indigo);}
   .ds-card.ds-indigo.active .ds-wd, .ds-card.ds-indigo.active .ds-mon{color:var(--indigo-soft);}
-  .ds-card.ds-persimmon.active{background:var(--persimmon);border-color:var(--persimmon);}
+  .ds-card.ds-persimmon.active{background:var(--persimmon);}
   .ds-card.ds-persimmon.active .ds-wd, .ds-card.ds-persimmon.active .ds-mon{color:var(--persimmon-soft);}
-  .ds-card.ds-moss.active{background:var(--moss);border-color:var(--moss);}
+  .ds-card.ds-moss.active{background:var(--moss);}
   .ds-card.ds-moss.active .ds-wd, .ds-card.ds-moss.active .ds-mon{color:var(--moss-soft);}
-  .ds-card.ds-sand.active{background:var(--sand);border-color:var(--sand);}
+  .ds-card.ds-sand.active{background:var(--sand);}
   .ds-card.ds-sand.active .ds-wd, .ds-card.ds-sand.active .ds-mon{color:var(--sand-soft);}
-  .ds-card.ds-neutral.active{background:var(--neutral);border-color:var(--neutral);}
+  .ds-card.ds-neutral.active{background:var(--neutral);}
   .ds-card.ds-neutral.active .ds-wd, .ds-card.ds-neutral.active .ds-mon{color:var(--neutral-soft);}
+  .ds-card.active .ds-num{color:var(--surface);}
 
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
@@ -396,6 +399,10 @@
     <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M6.5 10.3l2 2 4.5-5"/></svg>
     清單
   </button>
+  <button data-panel="links" role="tab">
+    <svg viewBox="0 0 20 20"><path d="M8.3 11.7l3.4-3.4"/><path d="M6.4 13.6a3.2 3.2 0 0 1 0-4.5l1.7-1.7a3.2 3.2 0 0 1 4.5 0"/><path d="M13.6 6.4a3.2 3.2 0 0 1 0 4.5l-1.7 1.7a3.2 3.2 0 0 1-4.5 0"/></svg>
+    連結
+  </button>
 </nav>
 
 <main>
@@ -411,15 +418,15 @@
           <span>主要基地 <b>福岡（博多）</b>／<b>由布院</b></span>
           <span>隨行 <b>5 個月大寶寶</b></span>
         </div>
-        <nav class="quick-jump">
-          <a href="#ov-map">路線總覽</a>
-          <a href="#ov-itin">行程總覽</a>
-          <a href="#ov-weather">天氣預報</a>
-          <a href="#ov-flights">航班資訊</a>
-          <a href="#ov-stays">住宿資訊</a>
-          <a href="#ov-links">常用連結</a>
-        </nav>
       </div>
+
+      <nav class="quick-jump">
+        <a href="#ov-map">路線總覽</a>
+        <a href="#ov-itin">行程總覽</a>
+        <a href="#ov-weather">天氣預報</a>
+        <a href="#ov-flights">航班資訊</a>
+        <a href="#ov-stays">住宿資訊</a>
+      </nav>
 
       <div id="ov-map">
         <div class="section-head">
@@ -598,23 +605,6 @@
         </div>
       </div>
 
-      <div id="ov-links">
-        <div class="section-head">
-          <h2>常用連結</h2>
-          <p class="sub">開車、查地點會用到的外部工具。</p>
-        </div>
-        <div class="stay-list">
-          <a class="stay-card" href="https://www.locationsmart.org/" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">
-            <div class="stay-name">LocationSmart</div>
-            <div class="stay-info"><span>locationsmart.org</span></div>
-          </a>
-          <a class="stay-card" href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">
-            <div class="stay-name">Japan Mapcode</div>
-            <div class="stay-info"><span>japanmapcode.com・查詢日本導航用 Mapcode</span></div>
-          </a>
-        </div>
-      </div>
-
       <footer class="next">
         <h2>下一步</h2>
         <p>9/1 退房與回程班機時間很緊（見上方提醒），要不要先跟飯店確認能否提早退房，或調整 8/31 晚上的行程？接著還可以補：</p>
@@ -647,6 +637,8 @@
         <div class="dh-theme" id="dhTheme"></div>
         <div class="dh-sub tnum" id="dhSub"></div>
       </div>
+
+      <div id="dayNoteHost"></div>
 
       <div id="dayMap" class="day-mini-map"></div>
 
@@ -811,6 +803,31 @@
       <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此的勾選。</p>
     </div>
   </section>
+
+  <!-- ================= LINKS ================= -->
+  <section class="tab-panel" data-panel="links">
+    <div class="panel-inner">
+      <div class="section-head">
+        <h2>常用連結</h2>
+        <p class="sub">開車、查地點會用到的外部工具，可以自己新增／編輯／刪除。</p>
+      </div>
+
+      <div class="form-card" style="margin-bottom:1.2rem;">
+        <div class="field">
+          <label>名稱</label>
+          <input type="text" id="linkName" placeholder="例如：Japan Mapcode">
+        </div>
+        <div class="field">
+          <label>網址</label>
+          <input type="text" id="linkUrl" placeholder="https://…">
+        </div>
+        <button class="btn-primary" id="linkAddBtn" type="button">新增連結</button>
+      </div>
+      <div class="stay-list" id="linksList"></div>
+
+      <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此新增的連結。</p>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -854,14 +871,6 @@
     }
     if(typeof L === 'undefined'){ showFallback(); return; }
     try{
-      var style = getComputedStyle(document.documentElement);
-      var col = {
-        indigo: style.getPropertyValue('--indigo').trim(),
-        persimmon: style.getPropertyValue('--persimmon').trim(),
-        moss: style.getPropertyValue('--moss').trim(),
-        sand: style.getPropertyValue('--sand').trim(),
-        neutral: style.getPropertyValue('--neutral').trim()
-      };
       var map = L.map('tripMap', {scrollWheelZoom:false}).setView([33.15, 130.85], 8);
       window.__tripMap = map;
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -869,47 +878,34 @@
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-    var pts = {
-      fukuoka: [33.5874, 130.40703],
-      airport: [33.5859, 130.4515],
-      mojiko: [33.9495, 130.9628],
-      safari: [33.352022, 131.413506],
-      yufuin: [33.2645, 131.3550],
-      chojabaru: [33.0894, 131.2591],
-      makinotoge: [33.0847, 131.2437],
-      senomoto: [33.0397, 131.1974],
-      daikanbo: [32.9884, 131.1064],
-      kako: [32.8843, 131.1044],
-      kusasenri: [32.8797, 131.0783]
-    };
-
-    function dot(latlng, color, label){
-      L.circleMarker(latlng, {radius:7, color:'#fff', weight:2, fillColor:color, fillOpacity:1}).addTo(map).bindPopup(label);
-    }
-    function line(coords, color){
-      L.polyline(coords, {color:color, weight:3, opacity:0.85}).addTo(map);
-    }
-
-    dot(pts.fukuoka, col.indigo, '福岡／博多住宿');
-    dot(pts.airport, col.neutral, '福岡機場');
-    dot(pts.mojiko, col.sand, '門司港');
-    dot(pts.safari, col.moss, 'African Safari');
-    dot(pts.yufuin, col.moss, '由布院');
-    dot(pts.chojabaru, col.persimmon, '長者原');
-    dot(pts.makinotoge, col.persimmon, '牧ノ戸峠');
-    dot(pts.senomoto, col.persimmon, '瀬の本');
-    dot(pts.daikanbo, col.persimmon, '大観峰');
-    dot(pts.kako, col.persimmon, '阿蘇山火口');
-    dot(pts.kusasenri, col.persimmon, '草千里');
-
-    line([pts.fukuoka, pts.mojiko], col.sand);
-    line([pts.fukuoka, pts.safari, pts.yufuin], col.moss);
-    line([pts.yufuin, pts.chojabaru, pts.makinotoge, pts.senomoto, pts.daikanbo, pts.kako, pts.kusasenri, pts.yufuin], col.persimmon);
-    line([pts.yufuin, pts.fukuoka], col.indigo);
-    line([pts.fukuoka, pts.airport], col.neutral);
-
-      var bounds = L.latLngBounds(Object.keys(pts).map(function(k){ return pts[k]; }));
-      map.fitBounds(bounds, {padding:[24,24]});
+      var overviewLayer = L.layerGroup().addTo(map);
+      /* itinerary.js calls this every time trip data loads/changes, so the
+         overview map always reflects the current (possibly edited) stops */
+      window.__drawOverviewFromDays = function(DAYS, SLOT_ORDER){
+        try{
+          overviewLayer.clearLayers();
+          var style = getComputedStyle(document.documentElement);
+          var allPts = [];
+          Object.keys(DAYS).forEach(function(id){
+            var d = DAYS[id];
+            var color = style.getPropertyValue('--' + d.color).trim();
+            var dayPts = [];
+            SLOT_ORDER.forEach(function(k){
+              (d.slots[k] || []).forEach(function(s){
+                if(s.lat != null && s.lon != null){ dayPts.push([s.lat, s.lon, s.name]); }
+              });
+            });
+            if(dayPts.length > 1){
+              L.polyline(dayPts.map(function(p){ return [p[0], p[1]]; }), {color:color, weight:3, opacity:0.85}).addTo(overviewLayer);
+            }
+            dayPts.forEach(function(p){
+              L.circleMarker([p[0], p[1]], {radius:6, color:'#fff', weight:2, fillColor:color, fillOpacity:1}).addTo(overviewLayer).bindPopup(p[2]);
+              allPts.push([p[0], p[1]]);
+            });
+          });
+          if(allPts.length){ map.fitBounds(L.latLngBounds(allPts), {padding:[24, 24]}); }
+        }catch(e){ /* keep last good map rather than crash */ }
+      };
     }catch(e){
       showFallback();
     }
@@ -1323,12 +1319,20 @@
 
     var DAYS = {};
     DAYS_SEED.forEach(function(s){ DAYS[s.id] = JSON.parse(JSON.stringify(s)); });
+    function redrawOverviewMap(){ if(window.__drawOverviewFromDays){ window.__drawOverviewFromDays(DAYS, SLOT_ORDER); } }
+    redrawOverviewMap();
 
-    function buildNavUrl(lat, lon){ return 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving'; }
+    function buildNavUrl(lat, lon, originLat, originLon){
+      var url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving';
+      if(originLat != null && originLon != null){ url += '&origin=' + originLat + ',' + originLon; }
+      return url;
+    }
 
-    function stopCardHtml(stop, idx, slotKey, dayId, color){
+    function stopCardHtml(stop, idx, slotKey, dayId, color, prevStop){
       var hasGeo = stop.lat != null && stop.lon != null;
+      var hasPrevGeo = prevStop && prevStop.lat != null && prevStop.lon != null;
       var coordsText = hasGeo ? (Number(stop.lat).toFixed(5) + ', ' + Number(stop.lon).toFixed(5)) : '';
+      var navLabel = hasPrevGeo ? ('導航（從' + escapeHtml(prevStop.name || '上一站') + '）') : '導航';
       return '<div class="itin-stop" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
         '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>' +
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
@@ -1336,7 +1340,7 @@
             (stop.time ? '<span class="stop-stay c-' + color + '">' + escapeHtml(stop.time) + '</span>' : '') + '</div>' +
           (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
           '<div class="itin-stop-actions">' +
-            (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon) + '" target="_blank" rel="noopener">導航</a>' : '') +
+            (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon, hasPrevGeo ? prevStop.lat : null, hasPrevGeo ? prevStop.lon : null) + '" target="_blank" rel="noopener">' + navLabel + '</a>' : '') +
             (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
             '<button class="ia-btn ia-edit" type="button">編輯</button>' +
             '<button class="ia-btn ia-del" type="button">刪除</button>' +
@@ -1464,22 +1468,30 @@
       var stopCount = SLOT_ORDER.reduce(function(n, k){ return n + (d.slots[k] ? d.slots[k].length : 0); }, 0);
       document.getElementById('dhSub').textContent = d.date + d.weekday + '・' + stopCount + ' 站';
 
-      var host = document.getElementById('dayRender');
-      host.innerHTML = '';
+      var noteHost = document.getElementById('dayNoteHost');
+      noteHost.innerHTML = '';
       if(d.note){
         var noteEl = document.createElement('div');
         noteEl.className = 'day-note' + (d.warn ? ' warn' : '');
         noteEl.textContent = d.note;
-        host.appendChild(noteEl);
+        noteHost.appendChild(noteEl);
       }
+      var host = document.getElementById('dayRender');
+      host.innerHTML = '';
       var card = document.createElement('div');
       card.className = 'day-card';
+      var prevStop = null;
       SLOT_ORDER.forEach(function(slotKey){
         var stops = d.slots[slotKey] || [];
         var block = document.createElement('div');
         block.className = 'slot-block';
+        var stopsHtml = stops.map(function(s, idx){
+          var html = stopCardHtml(s, idx, slotKey, dayId, d.color, prevStop);
+          if(s.lat != null && s.lon != null){ prevStop = s; }
+          return html;
+        }).join('');
         block.innerHTML = '<h4 class="slot-head">' + SLOT_LABELS[slotKey] + '</h4>' +
-          '<div class="slot-stops">' + stops.map(function(s, idx){ return stopCardHtml(s, idx, slotKey, dayId, d.color); }).join('') + '</div>' +
+          '<div class="slot-stops">' + stopsHtml + '</div>' +
           '<button class="slot-add" type="button" data-slot="' + slotKey + '">＋ 新增地點</button>';
         card.appendChild(block);
       });
@@ -1542,6 +1554,7 @@
           }
           renderDateStrip();
           if(String(window.__currentDay) === seed.id){ renderDay(seed.id); }
+          redrawOverviewMap();
         }, function(err){ console.error('itinerary day ' + seed.id + ' sync error', err); });
       });
     });
@@ -1918,6 +1931,90 @@
           qty: parseInt(rowEl.querySelector('.ce-qty').value, 10) || 1,
           box: rowEl.querySelector('.ce-box').value
         };
+      }
+    });
+  })();
+
+  /* ---- useful links ---- */
+  (function(){
+    var items = [];
+    function render(){
+      var list = document.getElementById('linksList');
+      list.innerHTML = '';
+      items.forEach(function(it){
+        var row = document.createElement('div');
+        row.className = 'stay-card';
+        row.setAttribute('data-row-id', it.id);
+        row.innerHTML =
+          '<div class="stay-top">' +
+            '<div><div class="stay-name">' + escapeHtml(it.name || '（未命名）') + '</div>' +
+              '<div class="stay-info"><span>' + escapeHtml(it.url || '') + '</span></div></div>' +
+            '<a class="stay-link" href="' + escapeHtml(it.url || '#') + '" target="_blank" rel="noopener">開啟 →</a>' +
+          '</div>' +
+          '<div class="itin-stop-actions" style="margin-top:0.6rem;">' +
+            '<button class="ia-btn" data-edit="' + it.id + '" type="button">編輯</button>' +
+            '<button class="ia-btn ia-del" data-del="' + it.id + '" type="button">刪除</button>' +
+          '</div>';
+        list.appendChild(row);
+      });
+    }
+    render();
+
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      var col = window.fb.col('links');
+      fns.onSnapshot(fns.query(col, fns.orderBy('createdAt', 'asc')), function(snap){
+        items = snap.docs.map(function(d){ var data = d.data(); data.id = d.id; return data; });
+        if(items.length === 0 && !window.__linksSeeded){
+          window.__linksSeeded = true;
+          [
+            {name:'LocationSmart', url:'https://www.locationsmart.org/'},
+            {name:'Japan Mapcode', url:'https://japanmapcode.com/zh-TW'}
+          ].forEach(function(seed){
+            fns.addDoc(col, {name:seed.name, url:seed.url, createdAt:fns.serverTimestamp()});
+          });
+        }
+        render();
+      }, function(err){ console.error('links sync error', err); });
+
+      function normalizeUrl(u){ return /^https?:\/\//i.test(u) ? u : ('https://' + u); }
+
+      document.getElementById('linkAddBtn').addEventListener('click', function(){
+        var name = document.getElementById('linkName').value.trim();
+        var url = document.getElementById('linkUrl').value.trim();
+        if(!name || !url) return;
+        fns.addDoc(col, { name:name, url:normalizeUrl(url), createdAt:fns.serverTimestamp() });
+        document.getElementById('linkName').value = '';
+        document.getElementById('linkUrl').value = '';
+      });
+
+      document.getElementById('linksList').addEventListener('click', function(ev){
+        var editBtn = ev.target.closest('[data-edit]');
+        var delBtn = ev.target.closest('[data-del]');
+        if(editBtn){
+          var id = editBtn.getAttribute('data-edit');
+          var it = items.filter(function(x){ return String(x.id) === id; })[0];
+          var rowEl = document.querySelector('.stay-card[data-row-id="' + id + '"]');
+          if(it && rowEl){ enterEdit(rowEl, id, it); }
+          return;
+        }
+        if(delBtn){ fns.deleteDoc(fns.doc(col, delBtn.getAttribute('data-del'))); }
+      });
+
+      function enterEdit(rowEl, id, it){
+        rowEl.innerHTML =
+          '<div class="inline-edit-form">' +
+            '<input type="text" class="le-name" value="' + escapeHtml(it.name || '') + '" placeholder="名稱">' +
+            '<input type="text" class="le-url" value="' + escapeHtml(it.url || '') + '" placeholder="網址">' +
+            '<div class="itin-edit-actions"><button type="button" class="ie-save">儲存</button><button type="button" class="ie-cancel">取消</button></div>' +
+          '</div>';
+        rowEl.querySelector('.ie-save').addEventListener('click', function(){
+          var name = rowEl.querySelector('.le-name').value.trim();
+          var url = rowEl.querySelector('.le-url').value.trim();
+          if(!name || !url) return;
+          fns.updateDoc(fns.doc(col, id), { name:name, url:normalizeUrl(url) });
+        });
+        rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ render(); });
       }
     });
   })();
