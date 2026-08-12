@@ -926,6 +926,12 @@
   </section>
 </main>
 
+<script>
+  /* type="module" scripts below run deferred (after all classic scripts have
+     already executed), so window.fbReady must exist as a real Promise object
+     before any classic script touches it — created here, resolved later. */
+  window.fbReady = new Promise(function(resolve){ window.__resolveFbReady = resolve; });
+</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
   /* ---- main tab switching ---- */
@@ -1207,12 +1213,9 @@
     fns: { collection: collection, doc: doc, addDoc: addDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp },
     col: function(name){ return collection(db, 'trips', 'kyushu2026', name); }
   };
-  window.fbReady = new Promise(function(resolve){
-    onAuthStateChanged(auth, function(user){ if(user){ resolve(user); } });
-  });
+  onAuthStateChanged(auth, function(user){ if(user){ window.__resolveFbReady(user); } });
   signInAnonymously(auth).catch(function(e){
     console.error('Firebase 匿名登入失敗', e);
-    window.fbFailed = true;
   });
 </script>
 
