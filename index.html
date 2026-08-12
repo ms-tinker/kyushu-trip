@@ -203,26 +203,53 @@
   .ds-card.active{background:var(--indigo);border-color:var(--indigo);}
   .ds-card.active .ds-wd, .ds-card.active .ds-mon{color:var(--indigo-soft);}
   .ds-card.active .ds-num{color:var(--surface);}
+  .ds-card.ds-indigo.active{background:var(--indigo);border-color:var(--indigo);}
+  .ds-card.ds-indigo.active .ds-wd, .ds-card.ds-indigo.active .ds-mon{color:var(--indigo-soft);}
+  .ds-card.ds-persimmon.active{background:var(--persimmon);border-color:var(--persimmon);}
+  .ds-card.ds-persimmon.active .ds-wd, .ds-card.ds-persimmon.active .ds-mon{color:var(--persimmon-soft);}
+  .ds-card.ds-moss.active{background:var(--moss);border-color:var(--moss);}
+  .ds-card.ds-moss.active .ds-wd, .ds-card.ds-moss.active .ds-mon{color:var(--moss-soft);}
+  .ds-card.ds-sand.active{background:var(--sand);border-color:var(--sand);}
+  .ds-card.ds-sand.active .ds-wd, .ds-card.ds-sand.active .ds-mon{color:var(--sand-soft);}
+  .ds-card.ds-neutral.active{background:var(--neutral);border-color:var(--neutral);}
+  .ds-card.ds-neutral.active .ds-wd, .ds-card.ds-neutral.active .ds-mon{color:var(--neutral-soft);}
 
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
   .day-detail-head .dh-sub{font-size:0.8rem;color:var(--ink-soft);}
-  .day-detail-panel{display:none;margin-top:0.9rem;}
-  .day-detail-panel.active{display:block;}
 
-  .day-note{font-size:0.8rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0.55rem 0.8rem;margin:0 0 0.7rem;}
+  .day-mini-map{height:220px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
+
+  .day-note{font-size:0.8rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0.55rem 0.8rem;margin:0 0 1.1rem;}
   .day-note.warn{color:var(--persimmon);background:var(--persimmon-soft);border-color:var(--persimmon);font-weight:600;}
 
-  .day-stops{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:0.2rem 1.1rem;box-shadow:var(--shadow);}
-  .stop-row{display:grid;grid-template-columns:6.2rem 1fr;column-gap:0.9rem;padding:0.85rem 0;border-top:1px solid var(--line);}
-  .day-stops .stop-row:first-child{border-top:none;}
-  .drive-col{font-size:0.74rem;color:var(--ink-faint);padding-top:0.1rem;}
-  .stop-content .stop-name{font-weight:700;font-size:0.94rem;}
-  .stop-content .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;margin:0.3rem 0 0.3rem;}
-  .stop-content .stop-note{font-size:0.84rem;color:var(--ink-soft);overflow-wrap:break-word;}
+  .day-card{display:flex;flex-direction:column;gap:1.3rem;}
+  .slot-block .slot-head{font-family:var(--font-display);font-size:0.92rem;font-weight:700;color:var(--ink-soft);margin-bottom:0.6rem;}
+  .slot-stops{display:flex;flex-direction:column;gap:0.7rem;}
+  .itin-stop{display:flex;gap:0.9rem;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0.9rem 1rem;box-shadow:var(--shadow);}
+  .itin-stop-photo{flex:none;width:80px;height:80px;border-radius:12px;overflow:hidden;background:var(--surface-2);}
+  .itin-stop-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+  .itin-stop-body{flex:1;min-width:0;}
+  .itin-stop-head{display:flex;align-items:baseline;gap:0.6rem;flex-wrap:wrap;}
+  .itin-stop .stop-name{font-weight:700;font-size:0.96rem;}
+  .itin-stop .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;white-space:nowrap;}
+  .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;}
+  .itin-stop-actions{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.65rem;align-items:center;}
+  .ia-btn{font-size:0.76rem;color:var(--indigo);text-decoration:none;font-weight:600;background:none;border:none;padding:0;cursor:pointer;}
+  .ia-btn:hover{text-decoration:underline;}
+  .ia-btn.ia-del{color:var(--persimmon);}
+  .ia-coords{font-size:0.72rem;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .slot-add{align-self:flex-start;font-size:0.8rem;color:var(--ink-soft);background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;padding:0.5rem 0.9rem;margin-top:0.7rem;cursor:pointer;}
+  .slot-add:hover{color:var(--indigo);border-color:var(--indigo);}
 
-  .map-tags{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:1rem;}
-  .map-tags .tagpill{font-size:0.72rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);padding:0.2rem 0.6rem;border-radius:999px;}
+  .itin-edit-form{display:flex;flex-direction:column;gap:0.55rem;}
+  .itin-edit-form input, .itin-edit-form textarea{font:inherit;font-size:0.86rem;padding:0.5rem 0.65rem;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);width:100%;}
+  .itin-edit-form textarea{resize:vertical;min-height:3rem;}
+  .itin-edit-form label{font-size:0.72rem;color:var(--ink-faint);}
+  .itin-edit-actions{display:flex;gap:0.6rem;margin-top:0.2rem;}
+  .itin-edit-actions button{font-size:0.82rem;font-weight:600;padding:0.45rem 1.1rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;}
+  .itin-edit-actions .ie-save{background:var(--indigo);border-color:var(--indigo);color:var(--surface);}
+  .itin-edit-actions .ie-del{color:var(--persimmon);}
 
   .c-indigo{background:var(--indigo-soft);color:var(--indigo);}
   .c-persimmon{background:var(--persimmon-soft);color:var(--persimmon);}
@@ -324,8 +351,8 @@
   .subtab-panel.active{display:block;}
 
   @media (max-width:560px){
-    .stop-row{grid-template-columns:4.4rem 1fr;column-gap:0.6rem;}
-    .drive-col{font-size:0.68rem;}
+    .itin-stop{flex-direction:column;}
+    .itin-stop-photo{width:100%;height:140px;}
     .wx-current-temp{font-size:1.7rem;}
     .wx-daycard{width:4rem;}
   }
@@ -583,20 +610,12 @@
     <div class="panel-inner">
       <div class="section-head">
         <h2>詳細行程</h2>
-        <p class="sub">切換上面的日期看當天細節，左側是與上一站的開車時間。</p>
+        <p class="sub">切換上面的日期看當天細節；每個地點都可以編輯、刪除，或新增你們實際去的地方。</p>
       </div>
 
       <div class="date-strip">
         <button class="ds-arrow" id="dsPrev" aria-label="前一天"><svg viewBox="0 0 20 20"><path d="M12 4l-6 6 6 6"/></svg></button>
-        <div class="ds-scroll" id="dsScroll">
-          <button class="ds-card" data-day="1"><span class="ds-wd">WED</span><span class="ds-num">26</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="2"><span class="ds-wd">THU</span><span class="ds-num">27</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="3"><span class="ds-wd">FRI</span><span class="ds-num">28</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="4"><span class="ds-wd">SAT</span><span class="ds-num">29</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="5"><span class="ds-wd">SUN</span><span class="ds-num">30</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="6"><span class="ds-wd">MON</span><span class="ds-num">31</span><span class="ds-mon">08月</span></button>
-          <button class="ds-card" data-day="7"><span class="ds-wd">TUE</span><span class="ds-num">01</span><span class="ds-mon">09月</span></button>
-        </div>
+        <div class="ds-scroll" id="dsScroll"></div>
         <button class="ds-arrow" id="dsNext" aria-label="後一天"><svg viewBox="0 0 20 20"><path d="M8 4l6 6-6 6"/></svg></button>
       </div>
 
@@ -605,191 +624,9 @@
         <div class="dh-sub tnum" id="dhSub"></div>
       </div>
 
-      <div>
-        <div class="day-detail-panel" data-day="1">
-          <div class="day-note">這天完全不排景點，先讓寶寶適應環境。IT720 17:50 抵達福岡機場，領行李、取車後直接前往飯店。</div>
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">無開車</div>
-              <div class="stop-content">
-                <div class="stop-name">SPAZIO 3 Life More Haruyoshi Annex</div>
-                <span class="stop-stay c-indigo">整天・入住休息</span>
-                <p class="stop-note">抵達後直接前往飯店。入住 15:00 起。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags"><span class="tagpill">SPAZIO 3 Life More Haruyoshi Annex</span></div>
-        </div>
+      <div id="dayMap" class="day-mini-map"></div>
 
-        <div class="day-detail-panel" data-day="2">
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 1 小時 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">門司港</div>
-                <span class="stop-stay c-sand">約 3～3.5 小時</span>
-                <p class="stop-note">慢慢逛門司港車站、懷舊街區、海邊、展望室。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 1 小時 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">SPAZIO 3 Life More Haruyoshi Annex</div>
-                <span class="stop-stay c-sand">下午～晚上</span>
-                <p class="stop-note">回飯店休息。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags"><span class="tagpill">門司港</span><span class="tagpill">SPAZIO 3 Life More Haruyoshi Annex</span></div>
-        </div>
-
-        <div class="day-detail-panel" data-day="3">
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 2 小時 15 分</div>
-              <div class="stop-content">
-                <div class="stop-name">African Safari</div>
-                <span class="stop-stay c-moss">約 2.5～3 小時</span>
-                <p class="stop-note">以自駕 Safari 為主，這天不需要趕。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 2 小時 15 分</div>
-              <div class="stop-content">
-                <div class="stop-name">Yufuin Covaco</div>
-                <span class="stop-stay c-moss">晚上・住宿</span>
-                <p class="stop-note">Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags"><span class="tagpill">African Safari</span><span class="tagpill">Yufuin Covaco</span></div>
-        </div>
-
-        <div class="day-detail-panel" data-day="4">
-          <div class="day-note">全程最密集的一天，當成「景觀自駕日」，每個點都不要停太久。</div>
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 1 小時 10 分</div>
-              <div class="stop-content">
-                <div class="stop-name">長者原</div>
-                <span class="stop-stay c-persimmon">約 20～30 分</span>
-                <p class="stop-note">寶寶喝奶、換尿布、看草原與山景。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">牧之戶峠</div>
-                <span class="stop-stay c-persimmon">約 20～30 分</span>
-                <p class="stop-note">Yamanami Highway 景觀路段。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 25 分</div>
-              <div class="stop-content">
-                <div class="stop-name">瀨之本</div>
-                <span class="stop-stay c-persimmon">約 20～30 分</span>
-                <p class="stop-note">看高原景觀、拍照。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">Milk Road</div>
-                <span class="stop-stay c-persimmon">約 30～45 分</span>
-                <p class="stop-note">這段本身就是景點，不要把它當交通時間。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">大觀峰</div>
-                <span class="stop-stay c-persimmon">約 1 小時</span>
-                <p class="stop-note">看阿蘇五岳、阿蘇谷、草原。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 30 分</div>
-              <div class="stop-content">
-                <div class="stop-name">阿蘇火山口</div>
-                <span class="stop-stay c-persimmon">約 45～60 分</span>
-                <p class="stop-note">若當天開放，建議去；不用走太久。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 15 分</div>
-              <div class="stop-content">
-                <div class="stop-name">草千里</div>
-                <span class="stop-stay c-persimmon">約 45～60 分</span>
-                <p class="stop-note">看草原與火山景觀。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 1 小時 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">Yufuin Covaco</div>
-                <span class="stop-stay c-persimmon">晚上・住宿</span>
-                <p class="stop-note">回到由布院吃飯、泡湯、休息。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags">
-            <span class="tagpill">長者原</span><span class="tagpill">牧之戶峠</span><span class="tagpill">瀨之本</span>
-            <span class="tagpill">Milk Road</span><span class="tagpill">大觀峰</span><span class="tagpill">阿蘇火山口</span>
-            <span class="tagpill">草千里</span><span class="tagpill">Yufuin Covaco</span>
-          </div>
-        </div>
-
-        <div class="day-detail-panel" data-day="5">
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">無開車</div>
-              <div class="stop-content">
-                <div class="stop-name">由布院自由活動</div>
-                <span class="stop-stay c-indigo">約 2～3 小時</span>
-                <p class="stop-note">若前一天太累就慢慢退房；若寶寶精神好，可去湯之坪街道或金鱗湖。Yufuin Covaco 退房時間 06:00～10:00。</p>
-              </div>
-            </div>
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 2 小時 20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">HOTEL Sui HARUYOSHI</div>
-                <span class="stop-stay c-indigo">晚上・住宿</span>
-                <p class="stop-note">回到福岡，休息。入住 15:00～22:00。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags"><span class="tagpill">Yufuin Covaco（退房）</span><span class="tagpill">HOTEL Sui HARUYOSHI（入住）</span></div>
-        </div>
-
-        <div class="day-detail-panel" data-day="6">
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 10～20 分</div>
-              <div class="stop-content">
-                <div class="stop-name">博多站／天神商圈</div>
-                <span class="stop-stay c-sand">整天</span>
-                <p class="stop-note">購物、嬰兒用品、伴手禮、晚餐。</p>
-              </div>
-            </div>
-          </div>
-          <div class="map-tags"><span class="tagpill">博多站</span><span class="tagpill">天神</span><span class="tagpill">HOTEL Sui HARUYOSHI</span></div>
-        </div>
-
-        <div class="day-detail-panel" data-day="7">
-          <div class="day-note warn">HOTEL Sui HARUYOSHI 退房 10:00 前，IT241 10:55 起飛——時間非常緊，建議前一晚打包好行李、退房後直接上車。</div>
-          <div class="day-stops">
-            <div class="stop-row">
-              <div class="drive-col tnum">車程 30～40 分</div>
-              <div class="stop-content">
-                <div class="stop-name">福岡機場</div>
-                <span class="stop-stay c-neutral">IT241・10:55 起飛</span>
-                <p class="stop-note">這天不安排景點，退房後直接前往機場。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div id="dayRender"></div>
 
     </div>
   </section>
@@ -969,6 +806,7 @@
       panels.forEach(function(p){ p.classList.toggle('active', p.dataset.panel === name); });
       try{ localStorage.setItem('kyushu-tab', name); }catch(e){}
       if(name === 'overview' && window.__tripMap){ setTimeout(function(){ window.__tripMap.invalidateSize(); }, 50); }
+      if(name === 'itinerary' && window.__invalidateDayMap){ setTimeout(function(){ window.__invalidateDayMap(); }, 50); }
     }
     window.__setMainTab = setTab;
     buttons.forEach(function(b){
@@ -1168,85 +1006,7 @@
 </script>
 
 <script>
-  /* ---- itinerary date strip ---- */
-  (function(){
-    var themes = {
-      1: ['抵達福岡', 'IT720 17:50 抵達・無開車'],
-      2: ['福岡 → 門司港 → 福岡', '2 站・開車約 2h40'],
-      3: ['福岡 → African Safari → 由布院', '2 站・開車約 4h30'],
-      4: ['由布院 → 阿蘇景觀自駕 → 由布院', '8 站・開車約 4h40'],
-      5: ['由布院 → 福岡', '2 站・開車約 2h20'],
-      6: ['福岡自由日', '1 站・開車約 10～20分'],
-      7: ['福岡 → 台灣', 'IT241 10:55 起飛・開車約 30～40分']
-    };
-    var cards = document.querySelectorAll('.ds-card');
-    var panels = document.querySelectorAll('.day-detail-panel');
-    var prevBtn = document.getElementById('dsPrev');
-    var nextBtn = document.getElementById('dsNext');
-
-    function selectDay(n){
-      n = Math.max(1, Math.min(7, n));
-      cards.forEach(function(c){ c.classList.toggle('active', Number(c.dataset.day) === n); });
-      panels.forEach(function(p){ p.classList.toggle('active', Number(p.dataset.day) === n); });
-      document.getElementById('dhTheme').textContent = themes[n][0];
-      document.getElementById('dhSub').textContent = themes[n][1];
-      prevBtn.disabled = n === 1;
-      nextBtn.disabled = n === 7;
-      var activeCard = document.querySelector('.ds-card[data-day="' + n + '"]');
-      if(activeCard && activeCard.scrollIntoView){ activeCard.scrollIntoView({inline:'center', block:'nearest'}); }
-      window.__currentDay = n;
-    }
-    window.__selectDay = selectDay;
-
-    cards.forEach(function(c){
-      c.addEventListener('click', function(){ selectDay(Number(c.dataset.day)); });
-    });
-    prevBtn.addEventListener('click', function(){ selectDay((window.__currentDay || 1) - 1); });
-    nextBtn.addEventListener('click', function(){ selectDay((window.__currentDay || 1) + 1); });
-
-    document.querySelectorAll('#ovList [data-goday]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var n = Number(b.dataset.goday);
-        window.__setMainTab('itinerary');
-        selectDay(n);
-        window.scrollTo(0,0);
-      });
-    });
-
-    selectDay(1);
-  })();
-</script>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
-  var firebaseConfig = {
-    apiKey: "AIzaSyCZNBXUNkgYaRanYYtdVbCXLXteQbFCnLI",
-    authDomain: "aug-2026-kyushu-trip.firebaseapp.com",
-    projectId: "aug-2026-kyushu-trip",
-    storageBucket: "aug-2026-kyushu-trip.firebasestorage.app",
-    messagingSenderId: "997858263553",
-    appId: "1:997858263553:web:db258576c2883af4b67600"
-  };
-  var app = initializeApp(firebaseConfig);
-  var auth = getAuth(app);
-  var db = getFirestore(app);
-
-  window.fb = {
-    fns: { collection: collection, doc: doc, addDoc: addDoc, setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp },
-    col: function(name){ return collection(db, 'trips', 'kyushu2026', name); }
-  };
-  onAuthStateChanged(auth, function(user){ if(user){ window.__resolveFbReady(user); } });
-  signInAnonymously(auth).catch(function(e){
-    console.error('Firebase 匿名登入失敗', e);
-  });
-</script>
-
-<script>
-  /* ---- shared helpers ---- */
+  /* ---- shared helpers (must load before itinerary/expenses/checklist scripts below) ---- */
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -1468,7 +1228,327 @@
       });
     });
   });
+</script>
 
+<script>
+  /* ---- itinerary: data-driven, editable, Firestore-synced ---- */
+  (function(){
+    var SLOT_ORDER = ['start','breakfast','morning','lunch','afternoon','dinner','evening','end'];
+    var SLOT_LABELS = {start:'起點', breakfast:'早餐', morning:'上午行程', lunch:'午餐', afternoon:'下午行程', dinner:'晚餐', evening:'晚上行程', end:'終點'};
+    var MAPCODE_TOOL = 'https://saibara.sakura.ne.jp/map/convgeo.cgi';
+
+    var DAYS_SEED = [
+      { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo',
+        note:'這天完全不排景點，先讓寶寶適應環境。IT720 17:50 抵達福岡機場，領行李、取車後直接前往飯店。', warn:false,
+        slots:{
+          start:[{name:'福岡機場', time:'IT720 17:50 抵達', note:'抵達後領行李、取車。', lat:33.5859, lon:130.4515}],
+          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'整天・入住休息', note:'入住 15:00 起。', lat:33.5874, lon:130.40703}]
+        } },
+      { id:'2', date:'8/27', weekday:'（四）', wd3:'THU', monthLabel:'08月', theme:'福岡 → 門司港 → 福岡', color:'sand', note:'', warn:false,
+        slots:{
+          start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
+          morning:[{name:'門司港', time:'約 3～3.5 小時・開車 1 小時 20 分', note:'慢慢逛門司港車站、懷舊街區、海邊、展望室。', lat:33.9495, lon:130.9628, wikiTitle:'門司港レトロ'}],
+          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'下午～晚上・開車 1 小時 20 分', note:'回飯店休息。', lat:33.5874, lon:130.40703}]
+        } },
+      { id:'3', date:'8/28', weekday:'（五）', wd3:'FRI', monthLabel:'08月', theme:'福岡 → African Safari → 由布院', color:'moss', note:'', warn:false,
+        slots:{
+          start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
+          morning:[{name:'African Safari', time:'約 2.5～3 小時・開車 2 小時 15 分', note:'以自駕 Safari 為主，這天不需要趕。', lat:33.352022, lon:131.413506, wikiTitle:'九州自然動物公園アフリカンサファリ'}],
+          end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 2 小時 15 分', note:'Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。', lat:33.2645, lon:131.3550}]
+        } },
+      { id:'4', date:'8/29', weekday:'（六）', wd3:'SAT', monthLabel:'08月', theme:'由布院 → 阿蘇景觀自駕 → 由布院', color:'persimmon',
+        note:'全程最密集的一天，當成「景觀自駕日」，每個點都不要停太久。', warn:false,
+        slots:{
+          start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
+          morning:[
+            {name:'長者原', time:'約 20～30 分・開車 1 小時 10 分', note:'寶寶喝奶、換尿布、看草原與山景。', lat:33.0894, lon:131.2591},
+            {name:'牧之戶峠', time:'約 20～30 分・開車 20 分', note:'Yamanami Highway 景觀路段。', lat:33.0847, lon:131.2437},
+            {name:'瀨之本', time:'約 20～30 分・開車 25 分', note:'看高原景觀、拍照。', lat:33.0397, lon:131.1974},
+            {name:'Milk Road', time:'約 30～45 分・開車 20 分', note:'這段本身就是景點，不要把它當交通時間。', lat:32.98, lon:131.15}
+          ],
+          afternoon:[
+            {name:'大觀峰', time:'約 1 小時・開車 20 分', note:'看阿蘇五岳、阿蘇谷、草原。', lat:32.9884, lon:131.1064},
+            {name:'阿蘇火山口', time:'約 45～60 分・開車 30 分', note:'若當天開放，建議去；不用走太久。', lat:32.8843, lon:131.1044, wikiTitle:'中岳 (熊本県)'},
+            {name:'草千里', time:'約 45～60 分・開車 15 分', note:'看草原與火山景觀。', lat:32.8797, lon:131.0783, wikiTitle:'草千里ヶ浜'}
+          ],
+          end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 1 小時 20 分', note:'回到由布院吃飯、泡湯、休息。', lat:33.2645, lon:131.3550}]
+        } },
+      { id:'5', date:'8/30', weekday:'（日）', wd3:'SUN', monthLabel:'08月', theme:'由布院 → 福岡', color:'indigo', note:'', warn:false,
+        slots:{
+          start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
+          morning:[{name:'由布院自由活動', time:'約 2～3 小時', note:'若前一天太累就慢慢退房；若寶寶精神好，可去湯之坪街道或金鱗湖。Yufuin Covaco 退房時間 06:00～10:00。', lat:33.2645, lon:131.3550}],
+          end:[{name:'HOTEL Sui HARUYOSHI', time:'晚上・住宿・開車 2 小時 20 分', note:'回到福岡，休息。入住 15:00～22:00。', lat:33.58675, lon:130.4068}]
+        } },
+      { id:'6', date:'8/31', weekday:'（一）', wd3:'MON', monthLabel:'08月', theme:'福岡自由日', color:'sand', note:'', warn:false,
+        slots:{
+          start:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}],
+          morning:[{name:'博多站／天神商圈', time:'整天・開車 10～20 分', note:'購物、嬰兒用品、伴手禮、晚餐。', lat:33.5902, lon:130.4017, wikiTitle:'天神 (福岡市)'}],
+          end:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}]
+        } },
+      { id:'7', date:'9/1', weekday:'（二）', wd3:'TUE', monthLabel:'09月', theme:'福岡 → 台灣', color:'neutral',
+        note:'HOTEL Sui HARUYOSHI 退房 10:00 前，IT241 10:55 起飛——時間非常緊，建議前一晚打包好行李、退房後直接上車。', warn:true,
+        slots:{
+          start:[{name:'HOTEL Sui HARUYOSHI', time:'退房 10:00 前', note:'', lat:33.58675, lon:130.4068}],
+          end:[{name:'福岡機場', time:'IT241・10:55 起飛・開車 30～40 分', note:'這天不安排景點，退房後直接前往機場。', lat:33.5859, lon:130.4515}]
+        } }
+    ];
+
+    var DAYS = {};
+    DAYS_SEED.forEach(function(s){ DAYS[s.id] = JSON.parse(JSON.stringify(s)); });
+
+    function buildNavUrl(lat, lon){ return 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving'; }
+
+    function stopCardHtml(stop, idx, slotKey, dayId, color){
+      var hasGeo = stop.lat != null && stop.lon != null;
+      var coordsText = hasGeo ? (Number(stop.lat).toFixed(5) + ', ' + Number(stop.lon).toFixed(5)) : '';
+      return '<div class="itin-stop" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
+        '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>' +
+        '<div class="itin-stop-body"><div class="itin-stop-view">' +
+          '<div class="itin-stop-head"><span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
+            (stop.time ? '<span class="stop-stay c-' + color + '">' + escapeHtml(stop.time) + '</span>' : '') + '</div>' +
+          (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
+          '<div class="itin-stop-actions">' +
+            (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon) + '" target="_blank" rel="noopener">導航</a>' : '') +
+            (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
+            '<button class="ia-btn ia-edit" type="button">編輯</button>' +
+            '<button class="ia-btn ia-del" type="button">刪除</button>' +
+          '</div>' +
+        '</div></div>' +
+      '</div>';
+    }
+    function editFormHtml(stop){
+      return '<div class="itin-edit-form">' +
+        '<div><label>地點名稱</label><input type="text" class="ie-name" value="' + escapeHtml(stop.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
+        '<div class="geo-suggest-list ie-suggest"></div>' +
+        '<div><label>時間／停留</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="例如：約 30 分・開車 20 分"></div>' +
+        '<div><label>備註</label><textarea class="ie-note" placeholder="說明、提醒…">' + escapeHtml(stop.note || '') + '</textarea></div>' +
+        '<div class="itin-edit-actions">' +
+          '<button type="button" class="ie-save">儲存</button>' +
+          '<button type="button" class="ie-cancel">取消</button>' +
+          '<button type="button" class="ie-del">刪除這個地點</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function persistDay(dayId){
+      window.fbReady.then(function(){
+        window.fb.fns.setDoc(window.fb.fns.doc(window.fb.col('itinerary'), dayId), DAYS[dayId]);
+      });
+    }
+    function addStop(dayId, slotKey){
+      if(!DAYS[dayId].slots[slotKey]){ DAYS[dayId].slots[slotKey] = []; }
+      DAYS[dayId].slots[slotKey].push({name:'', time:'', note:''});
+      persistDay(dayId);
+      renderDay(dayId);
+      var newIdx = DAYS[dayId].slots[slotKey].length - 1;
+      var cardEl = document.querySelector('.itin-stop[data-day="' + dayId + '"][data-slot="' + slotKey + '"][data-idx="' + newIdx + '"]');
+      var editBtn = cardEl && cardEl.querySelector('.ia-edit');
+      if(editBtn){ editBtn.click(); }
+    }
+    function removeStop(dayId, slotKey, idx){
+      DAYS[dayId].slots[slotKey].splice(idx, 1);
+      persistDay(dayId);
+      renderDay(dayId);
+    }
+    function saveStop(dayId, slotKey, idx, updated){
+      DAYS[dayId].slots[slotKey][idx] = updated;
+      persistDay(dayId);
+      renderDay(dayId);
+    }
+    function enterEdit(cardEl, dayId, slotKey, idx){
+      var stop = DAYS[dayId].slots[slotKey][idx] || {name:'', time:'', note:''};
+      var body = cardEl.querySelector('.itin-stop-body');
+      body.innerHTML = editFormHtml(stop);
+      var nameInput = body.querySelector('.ie-name');
+      setupLocationSearch(nameInput, body.querySelector('.ie-suggest'));
+      if(stop.lat != null){ nameInput.dataset.lat = stop.lat; nameInput.dataset.lon = stop.lon; }
+      body.querySelector('.ie-save').addEventListener('click', function(){
+        var updated = {
+          name: nameInput.value.trim(),
+          time: body.querySelector('.ie-time').value.trim(),
+          note: body.querySelector('.ie-note').value.trim()
+        };
+        if(nameInput.dataset.lat){ updated.lat = parseFloat(nameInput.dataset.lat); updated.lon = parseFloat(nameInput.dataset.lon); }
+        else if(stop.lat != null){ updated.lat = stop.lat; updated.lon = stop.lon; }
+        if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
+        saveStop(dayId, slotKey, idx, updated);
+      });
+      body.querySelector('.ie-cancel').addEventListener('click', function(){ renderDay(dayId); });
+      body.querySelector('.ie-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
+    }
+    function wireStopActions(dayId){
+      var host = document.getElementById('dayRender');
+      host.querySelectorAll('.itin-stop').forEach(function(cardEl){
+        var slotKey = cardEl.dataset.slot, idx = Number(cardEl.dataset.idx);
+        cardEl.querySelector('.ia-edit').addEventListener('click', function(){ enterEdit(cardEl, dayId, slotKey, idx); });
+        cardEl.querySelector('.ia-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
+      });
+      host.querySelectorAll('.slot-add').forEach(function(btn){
+        btn.addEventListener('click', function(){ addStop(dayId, btn.dataset.slot); });
+      });
+    }
+    function loadStopPhotos(host){
+      host.querySelectorAll('.itin-stop-photo[data-wikiname]').forEach(function(el){
+        var title = el.dataset.wikiname;
+        if(!title) return;
+        fetch('https://ja.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title))
+          .then(function(r){ if(!r.ok) throw new Error('no'); return r.json(); })
+          .then(function(data){
+            var src = data.thumbnail && data.thumbnail.source;
+            if(src){
+              var img = el.querySelector('img');
+              img.src = src; img.alt = title;
+              el.style.display = '';
+            }
+          }).catch(function(){});
+      });
+    }
+
+    var dayMapInstance = null;
+    function renderDayMiniMap(d){
+      var mapEl = document.getElementById('dayMap');
+      if(typeof L === 'undefined'){ mapEl.style.display = 'none'; return; }
+      var pts = [];
+      SLOT_ORDER.forEach(function(k){
+        (d.slots[k] || []).forEach(function(s){ if(s.lat != null && s.lon != null){ pts.push([s.lat, s.lon, s.name]); } });
+      });
+      if(!pts.length){ mapEl.style.display = 'none'; return; }
+      mapEl.style.display = '';
+      try{
+        if(dayMapInstance){ dayMapInstance.remove(); dayMapInstance = null; }
+        dayMapInstance = L.map('dayMap', {scrollWheelZoom:false}).setView([pts[0][0], pts[0][1]], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18, attribution:'&copy; OpenStreetMap contributors'}).addTo(dayMapInstance);
+        var color = getComputedStyle(document.documentElement).getPropertyValue('--' + d.color).trim();
+        var latlngs = pts.map(function(p){ return [p[0], p[1]]; });
+        if(latlngs.length > 1){ L.polyline(latlngs, {color:color, weight:3, opacity:0.85}).addTo(dayMapInstance); }
+        pts.forEach(function(p){
+          L.circleMarker([p[0], p[1]], {radius:6, color:'#fff', weight:2, fillColor:color, fillOpacity:1}).addTo(dayMapInstance).bindPopup(p[2]);
+        });
+        dayMapInstance.fitBounds(L.latLngBounds(latlngs), {padding:[20, 20]});
+      }catch(e){ mapEl.style.display = 'none'; }
+    }
+    window.__invalidateDayMap = function(){ if(dayMapInstance){ dayMapInstance.invalidateSize(); } };
+
+    function renderDay(dayId){
+      var d = DAYS[dayId];
+      if(!d) return;
+      document.getElementById('dhTheme').textContent = d.theme;
+      var stopCount = SLOT_ORDER.reduce(function(n, k){ return n + (d.slots[k] ? d.slots[k].length : 0); }, 0);
+      document.getElementById('dhSub').textContent = d.date + d.weekday + '・' + stopCount + ' 站';
+
+      var host = document.getElementById('dayRender');
+      host.innerHTML = '';
+      if(d.note){
+        var noteEl = document.createElement('div');
+        noteEl.className = 'day-note' + (d.warn ? ' warn' : '');
+        noteEl.textContent = d.note;
+        host.appendChild(noteEl);
+      }
+      var card = document.createElement('div');
+      card.className = 'day-card';
+      SLOT_ORDER.forEach(function(slotKey){
+        var stops = d.slots[slotKey] || [];
+        var block = document.createElement('div');
+        block.className = 'slot-block';
+        block.innerHTML = '<h4 class="slot-head">' + SLOT_LABELS[slotKey] + '</h4>' +
+          '<div class="slot-stops">' + stops.map(function(s, idx){ return stopCardHtml(s, idx, slotKey, dayId, d.color); }).join('') + '</div>' +
+          '<button class="slot-add" type="button" data-slot="' + slotKey + '">＋ 新增地點</button>';
+        card.appendChild(block);
+      });
+      host.appendChild(card);
+
+      wireStopActions(dayId);
+      loadStopPhotos(host);
+      renderDayMiniMap(d);
+    }
+
+    function renderDateStrip(){
+      var scroll = document.getElementById('dsScroll');
+      scroll.innerHTML = DAYS_SEED.map(function(s){
+        var d = DAYS[s.id] || s;
+        return '<button class="ds-card ds-' + d.color + '" data-day="' + s.id + '">' +
+          '<span class="ds-wd">' + d.wd3 + '</span><span class="ds-num">' + d.date.split('/')[1] + '</span><span class="ds-mon">' + d.monthLabel + '</span></button>';
+      }).join('');
+    }
+
+    function selectDay(n){
+      n = Math.max(1, Math.min(7, n));
+      window.__currentDay = n;
+      document.querySelectorAll('.ds-card').forEach(function(c){ c.classList.toggle('active', Number(c.dataset.day) === n); });
+      document.getElementById('dsPrev').disabled = n === 1;
+      document.getElementById('dsNext').disabled = n === 7;
+      var activeCard = document.querySelector('.ds-card[data-day="' + n + '"]');
+      if(activeCard && activeCard.scrollIntoView){ activeCard.scrollIntoView({inline:'center', block:'nearest'}); }
+      renderDay(String(n));
+    }
+    window.__selectDay = selectDay;
+
+    renderDateStrip();
+    document.getElementById('dsScroll').addEventListener('click', function(ev){
+      var card = ev.target.closest('.ds-card');
+      if(card){ selectDay(Number(card.dataset.day)); }
+    });
+    document.getElementById('dsPrev').addEventListener('click', function(){ selectDay((window.__currentDay || 1) - 1); });
+    document.getElementById('dsNext').addEventListener('click', function(){ selectDay((window.__currentDay || 1) + 1); });
+    document.querySelectorAll('#ovList [data-goday]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var n = Number(b.dataset.goday);
+        window.__setMainTab('itinerary');
+        selectDay(n);
+        window.scrollTo(0, 0);
+      });
+    });
+
+    selectDay(1);
+
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      DAYS_SEED.forEach(function(seed){
+        var ref = fns.doc(window.fb.col('itinerary'), seed.id);
+        fns.onSnapshot(ref, function(snap){
+          if(snap.exists()){
+            DAYS[seed.id] = snap.data();
+          } else {
+            DAYS[seed.id] = JSON.parse(JSON.stringify(seed));
+            fns.setDoc(ref, DAYS[seed.id]);
+          }
+          renderDateStrip();
+          if(String(window.__currentDay) === seed.id){ renderDay(seed.id); }
+        }, function(err){ console.error('itinerary day ' + seed.id + ' sync error', err); });
+      });
+    });
+  })();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyCZNBXUNkgYaRanYYtdVbCXLXteQbFCnLI",
+    authDomain: "aug-2026-kyushu-trip.firebaseapp.com",
+    projectId: "aug-2026-kyushu-trip",
+    storageBucket: "aug-2026-kyushu-trip.firebasestorage.app",
+    messagingSenderId: "997858263553",
+    appId: "1:997858263553:web:db258576c2883af4b67600"
+  };
+  var app = initializeApp(firebaseConfig);
+  var auth = getAuth(app);
+  var db = getFirestore(app);
+
+  window.fb = {
+    fns: { collection: collection, doc: doc, addDoc: addDoc, setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp },
+    col: function(name){ return collection(db, 'trips', 'kyushu2026', name); }
+  };
+  onAuthStateChanged(auth, function(user){ if(user){ window.__resolveFbReady(user); } });
+  signInAnonymously(auth).catch(function(e){
+    console.error('Firebase 匿名登入失敗', e);
+  });
+</script>
+
+<script>
   /* ---- expenses ---- */
   (function(){
     var expenseItems = [];
