@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>九州親子自駕行程</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <style>
   :root{
     --paper:#F1F2ED;
@@ -32,7 +31,83 @@
 
     --shadow: 0 1px 2px rgba(30,32,26,0.06), 0 6px 20px -8px rgba(30,32,26,0.18);
     --tabbar-h: 4.6rem;
+    --style-glow: transparent;
     color-scheme: light;
+  }
+
+  /* ============================================================
+     STYLE PREVIEW ONLY, round 2 — 5 directions that change texture,
+     card treatment and section rhythm, not just accent color.
+     Remove this whole block + .style-picker2 markup/script once a
+     style is chosen; the winning rules get folded in above.
+     ============================================================ */
+  :root{ --style-pattern: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)); }
+
+  /* -- a: 紙紋日誌 Paper Grain — flatter cards, visible grain, ink underline on headers -- */
+  :root[data-style2="a"]{
+    --shadow: 0 1px 1px rgba(30,32,26,0.05);
+    --style-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  [data-style2="a"] .map-card, [data-style2="a"] .wx-card, [data-style2="a"] .flight-card,
+  [data-style2="a"] .stay-card, [data-style2="a"] .itin-stop, [data-style2="a"] .form-card,
+  [data-style2="a"] .exp-row, [data-style2="a"] .chk-row, [data-style2="a"] .summary-card{
+    border-radius:10px; border-width:1.5px; border-color:var(--line-strong);
+  }
+  [data-style2="a"] .section-head h2{border-bottom:2px solid var(--indigo); padding-bottom:0.35rem; display:inline-block;}
+
+  /* -- b: 等高線地圖 Topographic — faint contour rings, deeper "lifted pin" shadow, marker-dot headers -- */
+  :root[data-style2="b"]{
+    --shadow: 0 2px 4px rgba(20,24,20,0.07), 0 14px 30px -12px rgba(20,24,20,0.28);
+    --style-pattern: repeating-radial-gradient(circle at 15% -15%, transparent 0 46px, rgba(20,24,20,0.045) 47px 48px);
+  }
+  [data-style2="b"] .section-head h2{position:relative; padding-left:1.1rem;}
+  [data-style2="b"] .section-head h2::before{
+    content:""; position:absolute; left:0; top:0.35em; width:9px; height:9px; border-radius:50%;
+    background:var(--indigo); box-shadow:0 0 0 3px var(--indigo-soft);
+  }
+
+  /* -- c: 登機證票根 Boarding Pass — dashed tear-edge on cards, tag-style uppercase headers -- */
+  :root[data-style2="c"]{
+    --shadow: 0 1px 2px rgba(30,32,26,0.08);
+    --style-pattern: repeating-linear-gradient(115deg, transparent 0 10px, rgba(30,32,26,0.02) 10px 11px);
+  }
+  [data-style2="c"] .map-card, [data-style2="c"] .wx-card, [data-style2="c"] .flight-card,
+  [data-style2="c"] .stay-card, [data-style2="c"] .itin-stop, [data-style2="c"] .form-card,
+  [data-style2="c"] .exp-row, [data-style2="c"] .chk-row, [data-style2="c"] .summary-card{
+    border-radius:8px; border-top:3px dashed var(--line-strong);
+  }
+  [data-style2="c"] .section-head h2{
+    display:inline-flex; align-items:center; gap:0.5rem; text-transform:uppercase; letter-spacing:0.08em; font-size:1.05rem;
+  }
+  [data-style2="c"] .section-head h2::before{ content:""; width:0.6rem; height:0.6rem; background:var(--indigo); flex:none; }
+
+  /* -- d: 手繪速寫 Sketched — offset double-line "hand inked" borders, organic radii, wavy header rule -- */
+  :root[data-style2="d"]{
+    --shadow: 1.5px 1.5px 0 var(--line-strong);
+  }
+  [data-style2="d"] .map-card, [data-style2="d"] .wx-card, [data-style2="d"] .flight-card,
+  [data-style2="d"] .stay-card, [data-style2="d"] .itin-stop, [data-style2="d"] .form-card,
+  [data-style2="d"] .exp-row, [data-style2="d"] .chk-row, [data-style2="d"] .summary-card{
+    border-radius:22px 8px 20px 9px; border-width:1.5px;
+  }
+  [data-style2="d"] .section-head h2{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='10'%3E%3Cpath d='M0 6 Q10 2 20 6 T40 6 T60 6 T80 6 T100 6 T120 6' fill='none' stroke='%2333506E' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat:repeat-x; background-position:bottom left; background-size:60px 8px;
+    padding-bottom:0.5rem; display:inline-block;
+  }
+
+  /* -- e: 墨韻印章 Ink Ribbon — solid-fill ribbon headers, bold top-stripe cards, flat & graphic -- */
+  :root[data-style2="e"]{
+    --shadow: 0 1px 2px rgba(30,32,26,0.06);
+  }
+  [data-style2="e"] .map-card, [data-style2="e"] .wx-card, [data-style2="e"] .flight-card,
+  [data-style2="e"] .stay-card, [data-style2="e"] .itin-stop, [data-style2="e"] .form-card,
+  [data-style2="e"] .exp-row, [data-style2="e"] .chk-row, [data-style2="e"] .summary-card{
+    border-radius:10px; border-top:4px solid var(--indigo);
+  }
+  [data-style2="e"] .section-head h2{
+    background:var(--indigo); color:var(--surface); display:inline-block;
+    padding:0.3rem 0.8rem; border-radius:4px;
   }
 
   @media (prefers-color-scheme: dark){
@@ -63,7 +138,15 @@
   }
 
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--style-pattern), radial-gradient(ellipse 1100px 550px at 50% -120px, var(--style-glow), transparent), var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+  /* ---- style-preview picker (temporary, local-preview only) ---- */
+  body.has-style-picker{padding-top:3rem;}
+  .style-picker{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.8rem;background:#1c1c1c;overflow-x:auto;font-family:var(--font-body);}
+  .style-picker .sp-label{color:#fff;font-size:0.72rem;flex:none;opacity:0.7;}
+  .style-picker button{flex:none;height:1.9rem;border-radius:999px;border:1.5px solid rgba(255,255,255,0.35);cursor:pointer;padding:0 0.75rem;display:flex;align-items:center;justify-content:center;color:#222;font-size:0.72rem;font-weight:700;white-space:nowrap;background:#fff;}
+  .style-picker button.sp-active{border-color:#fff;box-shadow:0 0 0 2px #1c1c1c, 0 0 0 3px #fff;}
+  .style-picker .sp-reset{width:auto;height:auto;border-radius:999px;padding:0.35rem 0.75rem;font-size:0.68rem;color:#fff;background:#3a3a3a;border:1px solid rgba(255,255,255,0.3);font-weight:600;}
   h1,h2,h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0;color:var(--ink);}
   p{margin:0;}
   ::selection{background:var(--indigo-soft);}
@@ -104,9 +187,6 @@
   /* ---- map ---- */
   .map-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.4rem;box-shadow:var(--shadow);}
   #tripMap{height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);}
-  .leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);border-radius:10px;}
-  .leaflet-popup-tip{background:var(--surface);}
-  .leaflet-container{font-family:var(--font-body);}
   .map-caption{font-size:0.76rem;color:var(--ink-faint);margin-top:0.6rem;}
   .map-legend{display:flex;flex-wrap:wrap;gap:0.5rem 1.1rem;margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--line);}
   .map-legend .item{display:flex;align-items:center;gap:0.45rem;font-size:0.8rem;color:var(--ink-soft);}
@@ -254,6 +334,15 @@
   .itin-edit-actions .ie-save{background:var(--indigo);border-color:var(--indigo);color:var(--surface);}
   .itin-edit-actions .ie-del{color:var(--persimmon);}
 
+  .ie-photo-input{font-size:0.8rem;}
+  .ie-photo-status{font-size:0.76rem;color:var(--ink-faint);}
+  .ie-photo-gallery{display:flex;flex-wrap:wrap;gap:0.5rem;}
+  .ie-photo-thumb{position:relative;width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;}
+  .ie-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .ie-photo-del{position:absolute;top:2px;right:2px;width:1.1rem;height:1.1rem;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:0.6rem;line-height:1;cursor:pointer;padding:0;}
+  .receipt-thumb{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.74rem;color:var(--indigo);text-decoration:none;font-weight:600;}
+  .receipt-thumb img{width:22px;height:22px;object-fit:cover;border-radius:5px;}
+
   .c-indigo{background:var(--indigo-soft);color:var(--indigo);}
   .c-persimmon{background:var(--persimmon-soft);color:var(--persimmon);}
   .c-moss{background:var(--moss-soft);color:var(--moss);}
@@ -349,7 +438,8 @@
   .summary-group h4{font-size:0.8rem;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;margin-bottom:0.6rem;}
   .summary-bar-row{display:grid;grid-template-columns:5.4rem 1fr 4.2rem;align-items:center;gap:0.6rem;padding:0.3rem 0;font-size:0.82rem;}
   .summary-bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
-  .summary-bar-fill{height:100%;background:var(--indigo);border-radius:999px;}
+  .summary-bar-fill{height:100%;background:var(--indigo);border-radius:999px;transition:width 0.3s ease;}
+  .summary-bar-fill.over-threshold{background:var(--persimmon);}
   .summary-bar-row .sb-amt{text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
 
   /* ---- checklist sub-tabs ---- */
@@ -376,6 +466,16 @@
 </style>
 </head>
 <body>
+
+<nav class="style-picker" id="stylePicker" aria-label="風格預覽（暫時工具）">
+  <span class="sp-label">風格預覽 R2：</span>
+  <button type="button" class="sp-reset" data-style2="0">原本</button>
+  <button type="button" data-style2="a">紙紋日誌</button>
+  <button type="button" data-style2="b">等高線地圖</button>
+  <button type="button" data-style2="c">登機票根</button>
+  <button type="button" data-style2="d">手繪速寫</button>
+  <button type="button" data-style2="e">墨韻印章</button>
+</nav>
 
 <header class="app-header">
   <p class="eyebrow">九州親子自駕・v3</p>
@@ -426,6 +526,7 @@
         <a href="#ov-weather">天氣預報</a>
         <a href="#ov-flights">航班資訊</a>
         <a href="#ov-stays">住宿資訊</a>
+        <a href="#ov-storage">照片空間</a>
       </nav>
 
       <div id="ov-map">
@@ -605,6 +706,24 @@
         </div>
       </div>
 
+      <div id="ov-storage">
+        <div class="section-head">
+          <h2>照片空間用量</h2>
+          <p class="sub">日本區域沒有免費額度，但費率很低。這裡追蹤目前用量，超過你設的門檻會標紅色提醒。</p>
+        </div>
+        <div class="summary-card">
+          <div class="field">
+            <label>用量門檻（GB，僅供你自己追蹤用，不是硬性上限）</label>
+            <input type="number" id="storageThresholdInput" min="0.1" step="0.1" value="1" style="max-width:8rem;">
+          </div>
+          <div class="summary-bar-track" style="height:14px;"><div class="summary-bar-fill" id="storageBarFill" style="width:0%;"></div></div>
+          <div class="summary-total">
+            <span class="st-label" id="storageUsedLabel">已用 0 MB／0 GB（0%）</span>
+            <span class="st-amt tnum" id="storageCostLabel">約 $0.00</span>
+          </div>
+        </div>
+      </div>
+
       <footer class="next">
         <h2>下一步</h2>
         <p>9/1 退房與回程班機時間很緊（見上方提醒），要不要先跟飯店確認能否提早退房，或調整 8/31 晚上的行程？接著還可以補：</p>
@@ -723,6 +842,12 @@
             <input type="text" id="expItem" placeholder="例如：晚餐、油錢、藥妝店">
           </div>
 
+          <div class="field">
+            <label>收據照片（選填）</label>
+            <input type="file" accept="image/*" id="expReceiptInput">
+            <p class="ie-photo-status" id="expReceiptStatus"></p>
+          </div>
+
           <button class="btn-primary" id="expAddBtn" type="button">新增紀錄</button>
         </div>
       </div>
@@ -835,8 +960,13 @@
      already executed), so window.fbReady must exist as a real Promise object
      before any classic script touches it — created here, resolved later. */
   window.fbReady = new Promise(function(resolve){ window.__resolveFbReady = resolve; });
+  /* Google Maps JS API loads async via callback; same "promise exists before
+     the script resolves it" pattern so every script can safely .then() it
+     regardless of load order/timing. */
+  window.__gmapsReady = new Promise(function(resolve){ window.__resolveGmapsReady = resolve; });
+  window.__onGmapsLoad = function(){ window.__resolveGmapsReady(); };
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAadxEpOwqZHq5kgcWjJi4GPRvnyoYOV4Q&libraries=places&callback=__onGmapsLoad&loading=async"></script>
 <script>
   /* ---- main tab switching ---- */
   (function(){
@@ -846,7 +976,7 @@
       buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.panel === name); });
       panels.forEach(function(p){ p.classList.toggle('active', p.dataset.panel === name); });
       try{ localStorage.setItem('kyushu-tab', name); }catch(e){}
-      if(name === 'overview' && window.__tripMap){ setTimeout(function(){ window.__tripMap.invalidateSize(); }, 50); }
+      if(name === 'overview' && window.__tripMap){ setTimeout(function(){ google.maps.event.trigger(window.__tripMap, 'resize'); }, 50); }
       if(name === 'itinerary' && window.__invalidateDayMap){ setTimeout(function(){ window.__invalidateDayMap(); }, 50); }
     }
     window.__setMainTab = setTab;
@@ -861,54 +991,62 @@
 </script>
 
 <script>
-  /* ---- leaflet map (guarded: some hosting environments block the external
-         map library/tiles entirely — this must never take the rest of the
-         page down with it) ---- */
+  /* ---- Google Maps overview map (guarded: if the key/referrer restriction
+         or network blocks it, this must never take the rest of the page
+         down with it) ---- */
   (function(){
     var mapEl = document.getElementById('tripMap');
     function showFallback(){
-      mapEl.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem;color:var(--ink-faint);font-size:0.85rem;">地圖暫時無法載入（這個環境擋掉了外部地圖服務）。<br>可以改用本機檔案版本查看，或參考上方住宿卡片裡的 Google Maps 連結。</div>';
+      mapEl.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem;color:var(--ink-faint);font-size:0.85rem;">地圖暫時無法載入。<br>可以參考上方住宿卡片裡的 Google Maps 連結。</div>';
     }
-    if(typeof L === 'undefined'){ showFallback(); return; }
-    try{
-      var map = L.map('tripMap', {scrollWheelZoom:false}).setView([33.15, 130.85], 8);
-      window.__tripMap = map;
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      var overviewLayer = L.layerGroup().addTo(map);
-      /* itinerary.js calls this every time trip data loads/changes, so the
-         overview map always reflects the current (possibly edited) stops */
-      window.__drawOverviewFromDays = function(DAYS, SLOT_ORDER){
-        try{
-          overviewLayer.clearLayers();
-          var style = getComputedStyle(document.documentElement);
-          var allPts = [];
-          Object.keys(DAYS).forEach(function(id){
-            var d = DAYS[id];
-            var color = style.getPropertyValue('--' + d.color).trim();
-            var dayPts = [];
-            SLOT_ORDER.forEach(function(k){
-              (d.slots[k] || []).forEach(function(s){
-                if(s.lat != null && s.lon != null){ dayPts.push([s.lat, s.lon, s.name]); }
+    window.__gmapsReady.then(function(){
+      try{
+        if(!window.google || !window.google.maps){ showFallback(); return; }
+        var map = new google.maps.Map(mapEl, {
+          center: {lat:33.15, lng:130.85}, zoom:8, scrollwheel:false,
+          streetViewControl:false, mapTypeControl:false
+        });
+        window.__tripMap = map;
+        var overviewObjs = [];
+        /* itinerary.js calls this every time trip data loads/changes, so the
+           overview map always reflects the current (possibly edited) stops */
+        window.__drawOverviewFromDays = function(DAYS, SLOT_ORDER){
+          try{
+            overviewObjs.forEach(function(o){ o.setMap(null); });
+            overviewObjs = [];
+            var style = getComputedStyle(document.documentElement);
+            var bounds = new google.maps.LatLngBounds();
+            var any = false;
+            Object.keys(DAYS).forEach(function(id){
+              var d = DAYS[id];
+              var color = style.getPropertyValue('--' + d.color).trim();
+              var dayPts = [];
+              SLOT_ORDER.forEach(function(k){
+                (d.slots[k] || []).forEach(function(s){
+                  if(s.lat != null && s.lon != null){ dayPts.push({lat:s.lat, lng:s.lon, name:s.name}); }
+                });
+              });
+              if(dayPts.length > 1){
+                overviewObjs.push(new google.maps.Polyline({
+                  path: dayPts, strokeColor:color, strokeWeight:3, strokeOpacity:0.85, map:map
+                }));
+              }
+              dayPts.forEach(function(p){
+                overviewObjs.push(new google.maps.Marker({
+                  position:{lat:p.lat, lng:p.lng}, map:map, title:p.name,
+                  icon:{path:google.maps.SymbolPath.CIRCLE, scale:7, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2}
+                }));
+                bounds.extend({lat:p.lat, lng:p.lng});
+                any = true;
               });
             });
-            if(dayPts.length > 1){
-              L.polyline(dayPts.map(function(p){ return [p[0], p[1]]; }), {color:color, weight:3, opacity:0.85}).addTo(overviewLayer);
-            }
-            dayPts.forEach(function(p){
-              L.circleMarker([p[0], p[1]], {radius:6, color:'#fff', weight:2, fillColor:color, fillOpacity:1}).addTo(overviewLayer).bindPopup(p[2]);
-              allPts.push([p[0], p[1]]);
-            });
-          });
-          if(allPts.length){ map.fitBounds(L.latLngBounds(allPts), {padding:[24, 24]}); }
-        }catch(e){ /* keep last good map rather than crash */ }
-      };
-    }catch(e){
-      showFallback();
-    }
+            if(any){ map.fitBounds(bounds, 24); }
+          }catch(e){ /* keep last good map rather than crash */ }
+        };
+      }catch(e){
+        showFallback();
+      }
+    });
   })();
 </script>
 
@@ -1203,38 +1341,25 @@
   document.querySelectorAll('.cat-manager').forEach(setupCategoryManager);
 
   /* ---- reusable: OpenStreetMap Nominatim place search ---- */
+  /* Google Places Autocomplete — replaces the old Nominatim/OSM search.
+     suggestBox is kept as a param for call-site compatibility but is unused:
+     Google renders its own dropdown (.pac-container) under the input. */
   function setupLocationSearch(input, suggestBox){
-    var timer = null;
-    input.addEventListener('input', function(){
-      delete input.dataset.lat;
-      delete input.dataset.lon;
-      var q = input.value.trim();
-      if(timer) clearTimeout(timer);
-      if(q.length < 2){ suggestBox.classList.remove('open'); suggestBox.innerHTML = ''; return; }
-      timer = setTimeout(function(){
-        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=jp&q=' + encodeURIComponent(q))
-          .then(function(r){ return r.json(); })
-          .then(function(list){
-            if(!list || !list.length){ suggestBox.classList.remove('open'); suggestBox.innerHTML = ''; return; }
-            suggestBox.innerHTML = list.map(function(item, idx){
-              return '<button type="button" data-idx="' + idx + '">' + escapeHtml(item.display_name) + '</button>';
-            }).join('');
-            suggestBox.classList.add('open');
-            suggestBox.querySelectorAll('button').forEach(function(b, idx){
-              b.addEventListener('click', function(){
-                var item = list[idx];
-                input.value = item.display_name;
-                input.dataset.lat = item.lat;
-                input.dataset.lon = item.lon;
-                suggestBox.classList.remove('open');
-                suggestBox.innerHTML = '';
-              });
-            });
-          }).catch(function(){});
-      }, 450);
-    });
-    document.addEventListener('click', function(ev){
-      if(ev.target !== input && !suggestBox.contains(ev.target)){ suggestBox.classList.remove('open'); }
+    window.__gmapsReady.then(function(){
+      try{
+        var ac = new google.maps.places.Autocomplete(input, {
+          componentRestrictions: {country: 'jp'},
+          fields: ['name', 'formatted_address', 'geometry']
+        });
+        ac.addListener('place_changed', function(){
+          var place = ac.getPlace();
+          if(place && place.geometry && place.geometry.location){
+            input.value = place.name ? place.name : (place.formatted_address || input.value);
+            input.dataset.lat = place.geometry.location.lat();
+            input.dataset.lon = place.geometry.location.lng();
+          }
+        });
+      }catch(e){ /* leave as a plain text field if Places fails to attach */ }
     });
   }
 
@@ -1321,6 +1446,12 @@
     DAYS_SEED.forEach(function(s){ DAYS[s.id] = JSON.parse(JSON.stringify(s)); });
     function redrawOverviewMap(){ if(window.__drawOverviewFromDays){ window.__drawOverviewFromDays(DAYS, SLOT_ORDER); } }
     redrawOverviewMap();
+    /* first paint usually happens before the async Google Maps script has
+       finished loading — once it's ready, redraw whatever's on screen now */
+    window.__gmapsReady.then(function(){
+      redrawOverviewMap();
+      if(window.__currentDay){ renderDay(String(window.__currentDay)); }
+    });
 
     function buildNavUrl(lat, lon, originLat, originLon){
       var url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving';
@@ -1333,8 +1464,12 @@
       var hasPrevGeo = prevStop && prevStop.lat != null && prevStop.lon != null;
       var coordsText = hasGeo ? (Number(stop.lat).toFixed(5) + ', ' + Number(stop.lon).toFixed(5)) : '';
       var navLabel = hasPrevGeo ? ('導航（從' + escapeHtml(prevStop.name || '上一站') + '）') : '導航';
+      var userPhoto = (stop.photos && stop.photos.length) ? stop.photos[stop.photos.length - 1].url : null;
+      var photoHtml = userPhoto
+        ? '<div class="itin-stop-photo"><img src="' + escapeHtml(userPhoto) + '" alt=""></div>'
+        : '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>';
       return '<div class="itin-stop" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
-        '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>' +
+        photoHtml +
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
           '<div class="itin-stop-head"><span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
             (stop.time ? '<span class="stop-stay c-' + color + '">' + escapeHtml(stop.time) + '</span>' : '') + '</div>' +
@@ -1349,17 +1484,28 @@
       '</div>';
     }
     function editFormHtml(stop){
+      var photos = stop.photos || [];
       return '<div class="itin-edit-form">' +
         '<div><label>地點名稱</label><input type="text" class="ie-name" value="' + escapeHtml(stop.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
         '<div class="geo-suggest-list ie-suggest"></div>' +
         '<div><label>時間／停留</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="例如：約 30 分・開車 20 分"></div>' +
         '<div><label>備註</label><textarea class="ie-note" placeholder="說明、提醒…">' + escapeHtml(stop.note || '') + '</textarea></div>' +
+        '<div><label>照片（可以多張，兩人都能上傳）</label>' +
+          '<input type="file" accept="image/*" class="ie-photo-input">' +
+          '<p class="ie-photo-status"></p>' +
+          '<div class="ie-photo-gallery">' + photoGalleryHtml(photos) + '</div>' +
+        '</div>' +
         '<div class="itin-edit-actions">' +
           '<button type="button" class="ie-save">儲存</button>' +
           '<button type="button" class="ie-cancel">取消</button>' +
           '<button type="button" class="ie-del">刪除這個地點</button>' +
         '</div>' +
       '</div>';
+    }
+    function photoGalleryHtml(photos){
+      return photos.map(function(p, i){
+        return '<span class="ie-photo-thumb"><img src="' + escapeHtml(p.url) + '" alt=""><button type="button" class="ie-photo-del" data-pidx="' + i + '" aria-label="刪除照片">✕</button></span>';
+      }).join('');
     }
 
     function persistDay(dayId){
@@ -1389,16 +1535,51 @@
     }
     function enterEdit(cardEl, dayId, slotKey, idx){
       var stop = DAYS[dayId].slots[slotKey][idx] || {name:'', time:'', note:''};
+      if(!stop.photos){ stop.photos = []; }
       var body = cardEl.querySelector('.itin-stop-body');
       body.innerHTML = editFormHtml(stop);
       var nameInput = body.querySelector('.ie-name');
       setupLocationSearch(nameInput, body.querySelector('.ie-suggest'));
       if(stop.lat != null){ nameInput.dataset.lat = stop.lat; nameInput.dataset.lon = stop.lon; }
+
+      var photoInput = body.querySelector('.ie-photo-input');
+      var photoStatus = body.querySelector('.ie-photo-status');
+      var photoGallery = body.querySelector('.ie-photo-gallery');
+      photoInput.addEventListener('change', function(){
+        var file = photoInput.files[0];
+        if(!file) return;
+        photoStatus.textContent = '上傳中…';
+        var path = 'itinerary/' + dayId + '/' + slotKey + '-' + idx + '-' + Date.now() + '-' + file.name;
+        window.fb.storage.upload(path, file).then(function(res){
+          stop.photos.push(res);
+          window.recordStorageDelta(res.size);
+          photoStatus.textContent = '已上傳';
+          photoGallery.innerHTML = photoGalleryHtml(stop.photos);
+          persistDay(dayId);
+        }).catch(function(err){
+          photoStatus.textContent = '上傳失敗：' + (err && err.message ? err.message : '請再試一次');
+        });
+        photoInput.value = '';
+      });
+      photoGallery.addEventListener('click', function(ev){
+        var delBtn = ev.target.closest('.ie-photo-del');
+        if(!delBtn) return;
+        var pidx = Number(delBtn.getAttribute('data-pidx'));
+        var removed = stop.photos.splice(pidx, 1)[0];
+        if(removed){
+          window.fb.storage.remove(removed.path);
+          window.recordStorageDelta(-removed.size);
+        }
+        photoGallery.innerHTML = photoGalleryHtml(stop.photos);
+        persistDay(dayId);
+      });
+
       body.querySelector('.ie-save').addEventListener('click', function(){
         var updated = {
           name: nameInput.value.trim(),
           time: body.querySelector('.ie-time').value.trim(),
-          note: body.querySelector('.ie-note').value.trim()
+          note: body.querySelector('.ie-note').value.trim(),
+          photos: stop.photos
         };
         if(nameInput.dataset.lat){ updated.lat = parseFloat(nameInput.dataset.lat); updated.lon = parseFloat(nameInput.dataset.lon); }
         else if(stop.lat != null){ updated.lat = stop.lat; updated.lon = stop.lon; }
@@ -1406,7 +1587,10 @@
         saveStop(dayId, slotKey, idx, updated);
       });
       body.querySelector('.ie-cancel').addEventListener('click', function(){ renderDay(dayId); });
-      body.querySelector('.ie-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
+      body.querySelector('.ie-del').addEventListener('click', function(){
+        (stop.photos || []).forEach(function(p){ window.fb.storage.remove(p.path); window.recordStorageDelta(-p.size); });
+        removeStop(dayId, slotKey, idx);
+      });
     }
     function wireStopActions(dayId){
       var host = document.getElementById('dayRender');
@@ -1437,29 +1621,38 @@
     }
 
     var dayMapInstance = null;
+    var dayMapObjs = [];
     function renderDayMiniMap(d){
       var mapEl = document.getElementById('dayMap');
-      if(typeof L === 'undefined'){ mapEl.style.display = 'none'; return; }
+      if(!window.google || !window.google.maps){ mapEl.style.display = 'none'; return; }
       var pts = [];
       SLOT_ORDER.forEach(function(k){
-        (d.slots[k] || []).forEach(function(s){ if(s.lat != null && s.lon != null){ pts.push([s.lat, s.lon, s.name]); } });
+        (d.slots[k] || []).forEach(function(s){ if(s.lat != null && s.lon != null){ pts.push({lat:s.lat, lng:s.lon, name:s.name}); } });
       });
       if(!pts.length){ mapEl.style.display = 'none'; return; }
       mapEl.style.display = '';
       try{
-        if(dayMapInstance){ dayMapInstance.remove(); dayMapInstance = null; }
-        dayMapInstance = L.map('dayMap', {scrollWheelZoom:false}).setView([pts[0][0], pts[0][1]], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18, attribution:'&copy; OpenStreetMap contributors'}).addTo(dayMapInstance);
+        dayMapObjs.forEach(function(o){ o.setMap(null); });
+        dayMapObjs = [];
+        if(!dayMapInstance){
+          dayMapInstance = new google.maps.Map(mapEl, {center:pts[0], zoom:11, scrollwheel:false, streetViewControl:false, mapTypeControl:false});
+        }
         var color = getComputedStyle(document.documentElement).getPropertyValue('--' + d.color).trim();
-        var latlngs = pts.map(function(p){ return [p[0], p[1]]; });
-        if(latlngs.length > 1){ L.polyline(latlngs, {color:color, weight:3, opacity:0.85}).addTo(dayMapInstance); }
+        if(pts.length > 1){
+          dayMapObjs.push(new google.maps.Polyline({path:pts, strokeColor:color, strokeWeight:3, strokeOpacity:0.85, map:dayMapInstance}));
+        }
+        var bounds = new google.maps.LatLngBounds();
         pts.forEach(function(p){
-          L.circleMarker([p[0], p[1]], {radius:6, color:'#fff', weight:2, fillColor:color, fillOpacity:1}).addTo(dayMapInstance).bindPopup(p[2]);
+          dayMapObjs.push(new google.maps.Marker({
+            position:{lat:p.lat, lng:p.lng}, map:dayMapInstance, title:p.name,
+            icon:{path:google.maps.SymbolPath.CIRCLE, scale:6, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2}
+          }));
+          bounds.extend({lat:p.lat, lng:p.lng});
         });
-        dayMapInstance.fitBounds(L.latLngBounds(latlngs), {padding:[20, 20]});
+        dayMapInstance.fitBounds(bounds, 20);
       }catch(e){ mapEl.style.display = 'none'; }
     }
-    window.__invalidateDayMap = function(){ if(dayMapInstance){ dayMapInstance.invalidateSize(); } };
+    window.__invalidateDayMap = function(){ if(dayMapInstance){ google.maps.event.trigger(dayMapInstance, 'resize'); } };
 
     function renderDay(dayId){
       var d = DAYS[dayId];
@@ -1564,8 +1757,10 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, increment }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
+    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
   var firebaseConfig = {
     apiKey: "AIzaSyCZNBXUNkgYaRanYYtdVbCXLXteQbFCnLI",
@@ -1578,10 +1773,24 @@
   var app = initializeApp(firebaseConfig);
   var auth = getAuth(app);
   var db = getFirestore(app);
+  var storage = getStorage(app);
 
   window.fb = {
-    fns: { collection: collection, doc: doc, addDoc: addDoc, setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp },
-    col: function(name){ return collection(db, 'trips', 'kyushu2026', name); }
+    fns: { collection: collection, doc: doc, addDoc: addDoc, setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp, increment: increment },
+    col: function(name){ return collection(db, 'trips', 'kyushu2026', name); },
+    storage: {
+      upload: function(path, file){
+        var sref = ref(storage, 'trips/kyushu2026/' + path);
+        return uploadBytes(sref, file).then(function(snap){
+          return getDownloadURL(snap.ref).then(function(url){
+            return { url: url, path: sref.fullPath, size: file.size };
+          });
+        });
+      },
+      remove: function(path){
+        return deleteObject(ref(storage, path)).catch(function(){ /* already gone, ignore */ });
+      }
+    }
   };
   onAuthStateChanged(auth, function(user){ if(user){ window.__resolveFbReady(user); } });
   signInAnonymously(auth).catch(function(e){
@@ -1599,6 +1808,23 @@
     var amountPreview = document.getElementById('expAmountPreview');
     var locationInput = document.getElementById('expLocation');
     setupLocationSearch(locationInput, document.getElementById('expLocationSuggest'));
+
+    var pendingReceipt = null;
+    var receiptInput = document.getElementById('expReceiptInput');
+    var receiptStatus = document.getElementById('expReceiptStatus');
+    receiptInput.addEventListener('change', function(){
+      var file = receiptInput.files[0];
+      if(!file) return;
+      receiptStatus.textContent = '上傳中…';
+      var path = 'expenses/receipt-' + Date.now() + '-' + file.name;
+      window.fb.storage.upload(path, file).then(function(res){
+        pendingReceipt = res;
+        window.recordStorageDelta(res.size);
+        receiptStatus.textContent = '已附上收據照片';
+      }).catch(function(err){
+        receiptStatus.textContent = '上傳失敗：' + (err && err.message ? err.message : '請再試一次');
+      });
+    });
 
     amountInput.addEventListener('input', function(){
       var v = safeEval(amountInput.value);
@@ -1697,7 +1923,9 @@
             '<div class="exp-main">' +
               '<div class="exp-item">' + escapeHtml(e.item || '（未命名）') + '</div>' +
               '<div class="exp-meta"><span>' + e.category + '</span><span>' + e.method + '</span>' +
-                (e.location ? '<span>' + escapeHtml(e.location.split('、')[0] || e.location) + '</span>' : '') + '</div>' +
+                (e.location ? '<span>' + escapeHtml(e.location.split('、')[0] || e.location) + '</span>' : '') +
+                (e.receiptUrl ? '<a class="receipt-thumb" href="' + escapeHtml(e.receiptUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(e.receiptUrl) + '" alt="">收據</a>' : '') +
+              '</div>' +
             '</div>' +
             '<div class="exp-amt">' + (e.currency === 'JPY' ? ('¥' + fmt(e.amount)) : ('NT$' + fmt(e.amount))) +
               '<span class="sec">≈ ' + (e.currency === 'JPY' ? ('NT$' + fmt(amtOther)) : ('¥' + fmt(amtOther))) + '</span></div>' +
@@ -1732,15 +1960,26 @@
           '<select class="ee-category">' + selectOptions(catOptions, e.category) + '</select>' +
         '</div>' +
         '<input type="text" class="ee-location" placeholder="地點（選填）" value="' + escapeHtml(e.location || '') + '">' +
+        (e.receiptUrl
+          ? '<div class="ie-photo-gallery"><span class="ie-photo-thumb"><img src="' + escapeHtml(e.receiptUrl) + '" alt=""><button type="button" class="ee-receipt-del" aria-label="移除收據照片">✕</button></span></div>'
+          : '') +
         '<div class="itin-edit-actions"><button type="button" class="ie-save">儲存</button><button type="button" class="ie-cancel">取消</button></div>' +
       '</div>';
     }
     function enterExpEdit(rowEl, id, e){
       rowEl.innerHTML = expEditFormHtml(e);
+      var removeReceipt = false;
+      var delBtn = rowEl.querySelector('.ee-receipt-del');
+      if(delBtn){
+        delBtn.addEventListener('click', function(){
+          removeReceipt = true;
+          delBtn.closest('.ie-photo-thumb').remove();
+        });
+      }
       rowEl.querySelector('.ie-save').addEventListener('click', function(){
         var amt = safeEval(rowEl.querySelector('.ee-amount').value);
         if(!amt || isNaN(amt) || amt <= 0) return;
-        window.fb.fns.updateDoc(window.fb.fns.doc(window.fb.col('expenses'), id), {
+        var updated = {
           item: rowEl.querySelector('.ee-item').value.trim(),
           day: rowEl.querySelector('.ee-day').value,
           currency: rowEl.querySelector('.ee-currency').value,
@@ -1748,7 +1987,15 @@
           method: rowEl.querySelector('.ee-method').value,
           category: rowEl.querySelector('.ee-category').value,
           location: rowEl.querySelector('.ee-location').value.trim()
-        });
+        };
+        if(removeReceipt && e.receiptUrl){
+          window.fb.storage.remove(e.receiptPath);
+          window.recordStorageDelta(-(e.receiptSize || 0));
+          updated.receiptUrl = null;
+          updated.receiptPath = null;
+          updated.receiptSize = null;
+        }
+        window.fb.fns.updateDoc(window.fb.fns.doc(window.fb.col('expenses'), id), updated);
       });
       rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ renderExpenses(); });
     }
@@ -1764,7 +2011,7 @@
       document.getElementById('expAddBtn').addEventListener('click', function(){
         var amount = safeEval(amountInput.value);
         if(!amount || isNaN(amount) || amount <= 0){ return; }
-        fns.addDoc(col, {
+        var docData = {
           day: groupValue(document.querySelector('.btn-group[data-field="day"]')),
           currency: groupValue(document.querySelector('.btn-group[data-field="currency"]')),
           amount: amount,
@@ -1774,13 +2021,22 @@
           location: locationInput.value.trim(),
           item: document.getElementById('expItem').value.trim(),
           createdAt: fns.serverTimestamp()
-        });
+        };
+        if(pendingReceipt){
+          docData.receiptUrl = pendingReceipt.url;
+          docData.receiptPath = pendingReceipt.path;
+          docData.receiptSize = pendingReceipt.size;
+        }
+        fns.addDoc(col, docData);
         amountInput.value = '';
         amountPreview.textContent = '';
         document.getElementById('expItem').value = '';
         locationInput.value = '';
         delete locationInput.dataset.lat;
         delete locationInput.dataset.lon;
+        pendingReceipt = null;
+        receiptInput.value = '';
+        receiptStatus.textContent = '';
       });
       document.getElementById('expByDate').addEventListener('click', function(ev){
         var editBtn = ev.target.closest('[data-edit-exp]');
@@ -1792,7 +2048,15 @@
           return;
         }
         var delBtn = ev.target.closest('[data-del-exp]');
-        if(delBtn){ fns.deleteDoc(fns.doc(col, delBtn.getAttribute('data-del-exp'))); }
+        if(delBtn){
+          var delId = delBtn.getAttribute('data-del-exp');
+          var delItem = expenseItems.filter(function(x){ return String(x.id) === delId; })[0];
+          if(delItem && delItem.receiptPath){
+            window.fb.storage.remove(delItem.receiptPath);
+            window.recordStorageDelta(-(delItem.receiptSize || 0));
+          }
+          fns.deleteDoc(fns.doc(col, delId));
+        }
       });
     });
   })();
@@ -1935,6 +2199,62 @@
     });
   })();
 
+  /* ---- storage usage tracker (self-tracked; there's no simple client API
+         for real bucket size, so we sum bytes ourselves on upload/delete) ---- */
+  (function(){
+    var RATE_PER_GB = 0.023; /* rough estimate for asia-northeast1 standard storage — see chat for caveat */
+    var usedBytes = 0, thresholdGB = 1;
+    var fillEl = document.getElementById('storageBarFill');
+    var usedLabelEl = document.getElementById('storageUsedLabel');
+    var costLabelEl = document.getElementById('storageCostLabel');
+    var thresholdInput = document.getElementById('storageThresholdInput');
+    if(!fillEl) return;
+
+    function render(){
+      var thresholdBytes = thresholdGB * 1024 * 1024 * 1024;
+      var pct = thresholdBytes > 0 ? Math.min(100, usedBytes / thresholdBytes * 100) : 0;
+      fillEl.style.width = pct + '%';
+      fillEl.classList.toggle('over-threshold', usedBytes > thresholdBytes);
+      var usedMB = usedBytes / (1024 * 1024);
+      var usedGB = usedBytes / (1024 * 1024 * 1024);
+      usedLabelEl.textContent = '已用 ' + (usedMB < 1024 ? usedMB.toFixed(1) + ' MB' : usedGB.toFixed(2) + ' GB') + '／' + thresholdGB + ' GB（' + pct.toFixed(1) + '%）';
+      costLabelEl.textContent = '約 $' + (usedGB * RATE_PER_GB).toFixed(3) + ' 美金（估算）';
+    }
+    render();
+
+    thresholdInput.addEventListener('input', function(){
+      var v = parseFloat(thresholdInput.value);
+      thresholdGB = (isNaN(v) || v <= 0) ? 1 : v;
+      render();
+      window.fbReady.then(function(){
+        window.fb.fns.setDoc(window.fb.fns.doc(window.fb.col('settings'), 'storageThreshold'), {gb: thresholdGB});
+      });
+    });
+
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      fns.onSnapshot(fns.doc(window.fb.col('settings'), 'storageThreshold'), function(snap){
+        if(snap.exists() && typeof snap.data().gb === 'number'){
+          thresholdGB = snap.data().gb;
+          if(document.activeElement !== thresholdInput){ thresholdInput.value = thresholdGB; }
+          render();
+        }
+      });
+      fns.onSnapshot(fns.doc(window.fb.col('settings'), 'storageUsage'), function(snap){
+        usedBytes = (snap.exists() && typeof snap.data().bytes === 'number') ? snap.data().bytes : 0;
+        render();
+      });
+    });
+
+    /* called from anywhere a photo is uploaded (+bytes) or deleted (-bytes) */
+    window.recordStorageDelta = function(bytes){
+      window.fbReady.then(function(){
+        var fns = window.fb.fns;
+        fns.setDoc(fns.doc(window.fb.col('settings'), 'storageUsage'), { bytes: fns.increment(bytes) }, { merge: true });
+      });
+    };
+  })();
+
   /* ---- useful links ---- */
   (function(){
     var items = [];
@@ -2017,6 +2337,24 @@
         rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ render(); });
       }
     });
+  })();
+
+  /* ---- style-preview picker wiring (temporary, local-preview only) ---- */
+  (function(){
+    var picker = document.getElementById('stylePicker');
+    if(!picker) return;
+    document.body.classList.add('has-style-picker');
+    var buttons = picker.querySelectorAll('button[data-style2]');
+    function apply(n){
+      if(n === '0'){ document.documentElement.removeAttribute('data-style2'); }
+      else{ document.documentElement.setAttribute('data-style2', n); }
+      buttons.forEach(function(b){ b.classList.toggle('sp-active', b.dataset.style2 === n); });
+      try{ localStorage.setItem('kyushu-style-preview2', n); }catch(e){}
+    }
+    buttons.forEach(function(b){ b.addEventListener('click', function(){ apply(b.dataset.style2); }); });
+    var saved = '0';
+    try{ saved = localStorage.getItem('kyushu-style-preview2') || '0'; }catch(e){}
+    apply(saved);
   })();
 </script>
 </body>
