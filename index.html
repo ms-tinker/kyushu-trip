@@ -110,25 +110,39 @@
 
   /* ---- weather ---- */
   .wx-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:var(--shadow);}
-  .wx-loc-tabs{display:flex;gap:0.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+  .wx-loc-tabs{display:flex;gap:0.4rem;margin-bottom:1.1rem;flex-wrap:wrap;}
   .wx-loc-tabs button{font-size:0.82rem;padding:0.4rem 0.85rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;}
   .wx-loc-tabs button.active{background:var(--indigo);border-color:var(--indigo);color:var(--surface);font-weight:600;}
   .wx-loc-panel{display:none;}
   .wx-loc-panel.active{display:block;}
-  .wx-row{display:flex;flex-direction:column;gap:0.4rem;}
-  .wx-day{display:grid;grid-template-columns:3.6rem 1fr 4.5rem 3.2rem;align-items:center;gap:0.6rem;padding:0.5rem 0.6rem;border-top:1px solid var(--line);font-size:0.85rem;border-radius:8px;}
-  .wx-day.wx-trip{background:var(--indigo-soft);border-top-color:transparent;}
-  .wx-day.wx-trip .wx-date{color:var(--indigo);font-weight:600;}
-  .wx-row .wx-day:first-child{border-top:none;}
-  .wx-day .wx-date{color:var(--ink-faint);font-size:0.78rem;}
-  .wx-day .wx-label{color:var(--ink-soft);}
-  .wx-day .wx-temp{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .wx-day .wx-temp .lo{color:var(--ink-faint);}
-  .wx-day .wx-pop{text-align:right;color:var(--indigo);font-variant-numeric:tabular-nums;font-size:0.8rem;}
-  .wx-note{font-size:0.78rem;color:var(--ink-faint);margin-top:0.9rem;padding-top:0.9rem;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:0.8rem;flex-wrap:wrap;}
+  .wx-empty{font-size:0.85rem;color:var(--ink-faint);padding:0.8rem 0;}
+
+  .wx-current{display:flex;align-items:center;gap:1rem;padding-bottom:1.1rem;border-bottom:1px solid var(--line);}
+  .wx-current-icon{flex:none;}
+  .wx-current-icon svg{width:52px;height:52px;display:block;}
+  .wx-current-info{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;column-gap:0.6rem;}
+  .wx-current-temp{font-family:var(--font-display);font-size:2rem;font-weight:700;line-height:1;}
+  .wx-current-cond{font-size:0.92rem;color:var(--ink-soft);}
+  .wx-current-meta{flex-basis:100%;font-size:0.76rem;color:var(--ink-faint);margin-top:0.25rem;}
+  .wx-updated{flex:none;font-size:0.7rem;color:var(--ink-faint);align-self:flex-start;white-space:nowrap;}
+
+  .wx-strip{display:flex;gap:0.6rem;overflow-x:auto;padding:1.1rem 0.15rem 0.2rem;}
+  .wx-daycard{flex:none;width:4.5rem;display:flex;flex-direction:column;align-items:center;gap:0.3rem;padding:0.7rem 0.35rem;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);}
+  .wx-daycard.wx-trip{background:var(--indigo-soft);border-color:var(--indigo);}
+  .wx-daycard .wxc-date{font-size:0.74rem;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .wx-daycard.wx-trip .wxc-date{color:var(--indigo);font-weight:700;}
+  .wx-daycard .wxc-wd{font-size:0.64rem;color:var(--ink-faint);}
+  .wx-daycard.wx-trip .wxc-wd{color:var(--indigo);}
+  .wx-daycard .wxc-icon svg{width:26px;height:26px;display:block;}
+  .wx-daycard .wxc-temp{font-size:0.78rem;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;}
+  .wx-daycard .wxc-temp .lo{color:var(--ink-faint);}
+  .wx-daycard .wxc-pop{font-size:0.7rem;color:var(--indigo);font-variant-numeric:tabular-nums;}
+
+  .wx-legend{font-size:0.78rem;color:var(--ink-soft);background:var(--indigo-soft);border-left:3px solid var(--indigo);border-radius:8px;padding:0.6rem 0.8rem;margin-top:1.1rem;}
+  .wx-legend b{color:var(--indigo);}
+  .wx-note{font-size:0.78rem;color:var(--ink-faint);margin-top:0.8rem;display:flex;justify-content:flex-start;align-items:center;gap:0.9rem 1.1rem;flex-wrap:wrap;}
   .wx-note a{color:var(--indigo);font-weight:600;text-decoration:none;white-space:nowrap;}
   .wx-note a:hover{text-decoration:underline;}
-  .wx-empty{font-size:0.85rem;color:var(--ink-faint);padding:0.8rem 0;}
 
   /* ---- flights ---- */
   .flight-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.4rem;box-shadow:var(--shadow);}
@@ -280,7 +294,8 @@
   @media (max-width:560px){
     .stop-row{grid-template-columns:4.4rem 1fr;column-gap:0.6rem;}
     .drive-col{font-size:0.68rem;}
-    .wx-day{grid-template-columns:3rem 1fr 4rem 2.6rem;font-size:0.8rem;}
+    .wx-current-temp{font-size:1.7rem;}
+    .wx-daycard{width:4rem;}
   }
 
   /* ---- widescreen: tab bar becomes a top segmented bar ---- */
@@ -361,9 +376,22 @@
             <button data-wxloc="yufuin">由布院</button>
             <button data-wxloc="aso">阿蘇</button>
           </div>
-          <div class="wx-loc-panel active" data-wxpanel="fukuoka"><div class="wx-row" id="wxRow-fukuoka"><p class="wx-empty">讀取中…</p></div></div>
-          <div class="wx-loc-panel" data-wxpanel="yufuin"><div class="wx-row" id="wxRow-yufuin"><p class="wx-empty">讀取中…</p></div></div>
-          <div class="wx-loc-panel" data-wxpanel="aso"><div class="wx-row" id="wxRow-aso"><p class="wx-empty">讀取中…</p></div></div>
+          <div class="wx-loc-panel active" data-wxpanel="fukuoka">
+            <p class="wx-empty" id="wxEmpty-fukuoka">讀取中…</p>
+            <div class="wx-current" id="wxCurrent-fukuoka" style="display:none;"></div>
+            <div class="wx-strip" id="wxStrip-fukuoka"></div>
+          </div>
+          <div class="wx-loc-panel" data-wxpanel="yufuin">
+            <p class="wx-empty" id="wxEmpty-yufuin">讀取中…</p>
+            <div class="wx-current" id="wxCurrent-yufuin" style="display:none;"></div>
+            <div class="wx-strip" id="wxStrip-yufuin"></div>
+          </div>
+          <div class="wx-loc-panel" data-wxpanel="aso">
+            <p class="wx-empty" id="wxEmpty-aso">讀取中…</p>
+            <div class="wx-current" id="wxCurrent-aso" style="display:none;"></div>
+            <div class="wx-strip" id="wxStrip-aso"></div>
+          </div>
+          <div class="wx-legend">說明：資料來自 Open-Meteo 即時氣象。離出發越近，預報越準。<b>藍色</b>標示的是行程期間（8/26–9/1）。</div>
           <div class="wx-note" id="wxTenkiLinks">
             <span>官方詳細預報：</span>
             <a href="https://tenki.jp/forecast/9/43/8210/40130/10days.html" target="_blank" rel="noopener">福岡・tenki.jp →</a>
@@ -1007,17 +1035,61 @@
       56:'凍雨',57:'凍雨',61:'小雨',63:'雨',65:'大雨',66:'凍雨',67:'凍雨',71:'小雪',73:'雪',75:'大雪',
       77:'雪粒',80:'陣雨',81:'陣雨',82:'強陣雨',85:'陣雪',86:'陣雪',95:'雷雨',96:'雷雨',99:'雷雨'};
 
+    var CLOUD_PATH = 'M6 17a4 4 0 0 1-.6-7.96A5 5 0 0 1 15 8a3.5 3.5 0 0 1 3.9 5.9A3.5 3.5 0 0 1 18 17H6z';
+    function wxIcon(code){
+      if(code === 0){
+        return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="var(--sand)"/><g stroke="var(--sand)" stroke-width="1.8" stroke-linecap="round">' +
+          '<line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/>' +
+          '<line x1="4.4" y1="4.4" x2="6.1" y2="6.1"/><line x1="17.9" y1="17.9" x2="19.6" y2="19.6"/><line x1="4.4" y1="19.6" x2="6.1" y2="17.9"/><line x1="17.9" y1="6.1" x2="19.6" y2="4.4"/></g></svg>';
+      }
+      if(code === 1 || code === 2){
+        return '<svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="4.3" fill="var(--sand)"/><path d="' + CLOUD_PATH.replace('M6 17','M8 18').replace('15 8','17 9').replace('18 17','20 18') + '" fill="var(--ink-faint)" opacity="0.75"/></svg>';
+      }
+      if(code === 3 || code === 45 || code === 48){
+        return '<svg viewBox="0 0 24 24"><path d="' + CLOUD_PATH + '" fill="var(--ink-faint)" opacity="0.7"/></svg>';
+      }
+      if(code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86){
+        return '<svg viewBox="0 0 24 24"><path d="' + CLOUD_PATH.replace('17a4','14a4').replace('8 8','5').replace('17 8','5').replace('18 17','18 14') + '" fill="var(--ink-faint)" opacity="0.65"/>' +
+          '<g fill="var(--indigo)"><circle cx="8" cy="19" r="1.1"/><circle cx="12" cy="20.3" r="1.1"/><circle cx="16" cy="19" r="1.1"/></g></svg>';
+      }
+      if(code === 95 || code === 96 || code === 99){
+        return '<svg viewBox="0 0 24 24"><path d="' + CLOUD_PATH.replace('17a4','14a4').replace('15 8','15 5').replace('18 17','18 14') + '" fill="var(--ink-faint)" opacity="0.65"/>' +
+          '<path d="M13 15l-3.5 5h2.6L11 24l4.5-6h-2.6z" fill="var(--persimmon)"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24"><path d="' + CLOUD_PATH.replace('17a4','14a4').replace('15 8','15 5').replace('18 17','18 14') + '" fill="var(--ink-faint)" opacity="0.65"/>' +
+        '<g stroke="var(--indigo)" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="17" x2="7" y2="20.5"/><line x1="12" y1="17" x2="11" y2="20.5"/><line x1="16" y1="17" x2="15" y2="20.5"/></g></svg>';
+    }
+
     var TRIP_START = '2026-08-26', TRIP_END = '2026-09-01';
 
     Object.keys(locs).forEach(function(key){
       var loc = locs[key];
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
+        '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode' +
         '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
         '&timezone=Asia%2FTokyo&forecast_days=16';
       fetch(url).then(function(r){ if(!r.ok) throw new Error('no data'); return r.json(); }).then(function(data){
-        var el = document.getElementById('wxRow-' + key);
         if(!data.daily || !data.daily.time || !data.daily.time.length){ throw new Error('empty'); }
-        el.innerHTML = '';
+        document.getElementById('wxEmpty-' + key).style.display = 'none';
+
+        if(data.current){
+          var c = data.current;
+          var updTime = new Date(c.time);
+          var hh = ('0' + updTime.getHours()).slice(-2), mm = ('0' + updTime.getMinutes()).slice(-2);
+          var curEl = document.getElementById('wxCurrent-' + key);
+          curEl.style.display = 'flex';
+          curEl.innerHTML =
+            '<div class="wx-current-icon">' + wxIcon(c.weathercode) + '</div>' +
+            '<div class="wx-current-info">' +
+              '<span class="wx-current-temp tnum">' + Math.round(c.temperature_2m) + '°</span>' +
+              '<span class="wx-current-cond">' + (codeMap[c.weathercode] || '—') + '</span>' +
+              '<span class="wx-current-meta tnum">濕度 ' + Math.round(c.relative_humidity_2m) + '%・風速 ' + c.wind_speed_10m.toFixed(1) + ' km/h</span>' +
+            '</div>' +
+            '<div class="wx-updated tnum">更新：' + hh + ':' + mm + '</div>';
+        }
+
+        var strip = document.getElementById('wxStrip-' + key);
+        strip.innerHTML = '';
         var anyTripDay = false;
         data.daily.time.forEach(function(dateStr, i){
           var inTrip = dateStr >= TRIP_START && dateStr <= TRIP_END;
@@ -1029,24 +1101,25 @@
           var hi = Math.round(data.daily.temperature_2m_max[i]);
           var lo = Math.round(data.daily.temperature_2m_min[i]);
           var pop = data.daily.precipitation_probability_max[i];
-          var row = document.createElement('div');
-          row.className = 'wx-day' + (inTrip ? ' wx-trip' : '');
-          row.innerHTML =
-            '<span class="wx-date tnum">' + md + '（' + wd + '）</span>' +
-            '<span class="wx-label">' + (codeMap[code] || '—') + '</span>' +
-            '<span class="wx-temp">' + hi + '°<span class="lo"> / ' + lo + '°</span></span>' +
-            '<span class="wx-pop">' + (pop != null ? pop + '%' : '—') + '</span>';
-          el.appendChild(row);
+          var card = document.createElement('div');
+          card.className = 'wx-daycard' + (inTrip ? ' wx-trip' : '');
+          card.innerHTML =
+            '<span class="wxc-date">' + md + '</span>' +
+            '<span class="wxc-wd">（' + wd + '）</span>' +
+            '<span class="wxc-icon">' + wxIcon(code) + '</span>' +
+            '<span class="wxc-temp">' + hi + '°<span class="lo">/' + lo + '°</span></span>' +
+            '<span class="wxc-pop">' + (pop != null ? pop + '%' : '—') + '</span>';
+          strip.appendChild(card);
         });
         if(!anyTripDay){
           var hint = document.createElement('p');
           hint.className = 'wx-empty';
+          hint.style.marginTop = '0.6rem';
           hint.textContent = '以上是近期預報（先讓你看格式），8/26–9/1 的實際天氣要再接近出發日才會出現。';
-          el.appendChild(hint);
+          strip.parentNode.appendChild(hint);
         }
       }).catch(function(){
-        var el = document.getElementById('wxRow-' + key);
-        el.innerHTML = '<p class="wx-empty">目前抓不到預報（可能離出發還太久，或沒有網路連線）。出發前 2 週內請再打開看看，或直接看下方 tenki.jp 連結。</p>';
+        document.getElementById('wxEmpty-' + key).textContent = '目前抓不到預報（可能離出發還太久，或沒有網路連線）。出發前 2 週內請再打開看看，或直接看下方 tenki.jp 連結。';
       });
     });
 
