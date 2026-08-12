@@ -78,9 +78,9 @@
 
   /* ---- tab bar (bottom on mobile, top on wide) ---- */
   .tabbar-main{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:0.35rem 0.4rem calc(0.35rem + env(safe-area-inset-bottom));box-shadow:0 -4px 16px -10px rgba(20,20,15,0.25);}
-  .tabbar-main button{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.2rem;background:none;border:none;color:var(--ink-faint);font-size:0.66rem;padding:0.35rem 0.15rem;border-radius:12px;cursor:pointer;position:relative;}
-  .tabbar-main button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-  .tabbar-main button.active{color:var(--indigo);}
+  .tabbar-main button{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.25rem;background:none;border:none;color:var(--ink-faint);font-size:0.74rem;font-weight:600;padding:0.4rem 0.15rem;border-radius:12px;cursor:pointer;position:relative;}
+  .tabbar-main button svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+  .tabbar-main button.active{color:var(--indigo);background:var(--indigo-soft);font-weight:700;}
   .tabbar-main button:hover{background:var(--surface-2);}
   .tabbar-main button:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px;}
 
@@ -97,7 +97,7 @@
   .section-head h2{font-size:1.2rem;}
   .section-head .sub{color:var(--ink-soft);font-size:0.88rem;max-width:64ch;}
 
-  .quick-jump{display:flex;gap:0.5rem;overflow-x:auto;margin-top:0.9rem;padding-bottom:0.15rem;}
+  .quick-jump{position:sticky;top:0;z-index:15;display:flex;gap:0.5rem;overflow-x:auto;margin:0 -1.5rem;padding:0.7rem 1.5rem;background:color-mix(in srgb, var(--paper) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
   .quick-jump a{flex:none;font-size:0.8rem;padding:0.4rem 0.85rem;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft);text-decoration:none;white-space:nowrap;}
   .quick-jump a:hover{background:var(--indigo-soft);color:var(--indigo);}
 
@@ -218,7 +218,7 @@
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
   .day-detail-head .dh-sub{font-size:0.8rem;color:var(--ink-soft);}
 
-  .day-mini-map{height:220px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
+  .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
   .day-note{font-size:0.8rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0.55rem 0.8rem;margin:0 0 1.1rem;}
   .day-note.warn{color:var(--persimmon);background:var(--persimmon-soft);border-color:var(--persimmon);font-weight:600;}
@@ -298,9 +298,15 @@
   .chk-row.is-done .chk-text{color:var(--ink-faint);text-decoration:line-through;}
   .chk-row .chk-tag{font-size:0.68rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);padding:0.1rem 0.5rem;border-radius:999px;white-space:nowrap;}
   .chk-row .chk-who{font-size:0.72rem;color:var(--ink-faint);white-space:nowrap;}
-  .del-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;padding:0.35rem;border-radius:8px;flex:none;line-height:0;}
+  .del-btn, .edit-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;padding:0.35rem;border-radius:8px;flex:none;line-height:0;}
   .del-btn:hover{background:var(--surface-2);color:var(--persimmon);}
-  .del-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;}
+  .edit-btn:hover{background:var(--surface-2);color:var(--indigo);}
+  .del-btn svg, .edit-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;}
+  .row-actions{display:flex;gap:0.2rem;flex:none;}
+  .inline-edit-form{display:flex;flex-direction:column;gap:0.5rem;width:100%;}
+  .inline-edit-grid{display:flex;flex-wrap:wrap;gap:0.5rem;}
+  .inline-edit-form input, .inline-edit-form select{font:inherit;font-size:0.84rem;padding:0.45rem 0.6rem;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);}
+  .inline-edit-form input[type="text"].ee-item, .inline-edit-form input.ee-location{width:100%;}
 
   .sub-head{font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
 
@@ -411,6 +417,7 @@
           <a href="#ov-weather">天氣預報</a>
           <a href="#ov-flights">航班資訊</a>
           <a href="#ov-stays">住宿資訊</a>
+          <a href="#ov-links">常用連結</a>
         </nav>
       </div>
 
@@ -591,6 +598,23 @@
         </div>
       </div>
 
+      <div id="ov-links">
+        <div class="section-head">
+          <h2>常用連結</h2>
+          <p class="sub">開車、查地點會用到的外部工具。</p>
+        </div>
+        <div class="stay-list">
+          <a class="stay-card" href="https://www.locationsmart.org/" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">
+            <div class="stay-name">LocationSmart</div>
+            <div class="stay-info"><span>locationsmart.org</span></div>
+          </a>
+          <a class="stay-card" href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">
+            <div class="stay-name">Japan Mapcode</div>
+            <div class="stay-info"><span>japanmapcode.com・查詢日本導航用 Mapcode</span></div>
+          </a>
+        </div>
+      </div>
+
       <footer class="next">
         <h2>下一步</h2>
         <p>9/1 退房與回程班機時間很緊（見上方提醒），要不要先跟飯店確認能否提早退房，或調整 8/31 晚上的行程？接著還可以補：</p>
@@ -712,6 +736,13 @@
       </div>
 
       <div class="subtab-panel" data-subtabpanel="expList">
+        <div class="summary-card" id="cashCard">
+          <div class="field">
+            <label>起始現金（JPY）</label>
+            <input type="number" id="cashStartInput" min="0" placeholder="例如：50000">
+          </div>
+          <div class="summary-total"><span class="st-label">目前現金餘額（約，依「現金」＋JPY 的紀錄扣除）</span><span class="st-amt tnum" id="cashBalanceAmt">¥ —</span></div>
+        </div>
         <div class="summary-card" id="summaryCard"></div>
         <p class="list-progress" id="expSummary" style="margin:1rem 0 0.7rem;"></p>
         <div id="expByDate"></div>
@@ -768,15 +799,8 @@
           </div>
           <div class="field">
             <label>裝到哪一箱（選填，可裝箱後再回來選）</label>
-            <div class="btn-group" data-field="packBox">
-              <button type="button" class="active" data-value="未分箱">未分箱</button>
-              <button type="button" data-value="箱1">箱1</button>
-              <button type="button" data-value="箱2">箱2</button>
-              <button type="button" data-value="箱3">箱3</button>
-              <button type="button" data-value="箱4">箱4</button>
-              <button type="button" data-value="箱5">箱5</button>
-              <button type="button" data-value="箱6">箱6</button>
-            </div>
+            <div class="cat-manager" data-catdoc="packBoxes" data-catfield="packBox"
+                 data-catdefault='["未分箱","箱1","箱2","箱3","箱4","箱5","箱6"]'></div>
           </div>
           <button class="btn-primary" id="packAddBtn" type="button">新增品項</button>
         </div>
@@ -1014,6 +1038,10 @@
   }
   function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
   var delIcon = '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5l-10 10"/></svg>';
+  var editIcon = '<svg viewBox="0 0 20 20"><path d="M4 16l1-4 9-9 3 3-9 9-4 1z"/><path d="M12 5l3 3"/></svg>';
+  function selectOptions(list, selected){
+    return list.map(function(v){ return '<option value="' + escapeHtml(v) + '"' + (v === selected ? ' selected' : '') + '>' + escapeHtml(v) + '</option>'; }).join('');
+  }
   var dayOrder = ['8/26（三）','8/27（四）','8/28（五）','8/29（六）','8/30（日）','8/31（一）','9/1（二）'];
 
   /* ---- small safe arithmetic evaluator (no eval): supports + - * / ( ) and decimals ---- */
@@ -1235,7 +1263,7 @@
   (function(){
     var SLOT_ORDER = ['start','breakfast','morning','lunch','afternoon','dinner','evening','end'];
     var SLOT_LABELS = {start:'起點', breakfast:'早餐', morning:'上午行程', lunch:'午餐', afternoon:'下午行程', dinner:'晚餐', evening:'晚上行程', end:'終點'};
-    var MAPCODE_TOOL = 'https://saibara.sakura.ne.jp/map/convgeo.cgi';
+    var MAPCODE_TOOL = 'https://japanmapcode.com/zh-TW';
 
     var DAYS_SEED = [
       { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo',
@@ -1580,6 +1608,33 @@
       document.getElementById('rateHint').textContent = '自動抓匯率失敗，先用手動填入的數字（可自行修改）。';
     });
 
+    var cashStart = 0;
+    var cashStartInput = document.getElementById('cashStartInput');
+    function renderCashBalance(){
+      var spent = expenseItems.reduce(function(sum, e){
+        return sum + (e.method === '現金' && e.currency === 'JPY' ? e.amount : 0);
+      }, 0);
+      document.getElementById('cashBalanceAmt').textContent = '¥ ' + fmt(cashStart - spent);
+    }
+    cashStartInput.addEventListener('input', function(){
+      var v = parseFloat(cashStartInput.value);
+      cashStart = isNaN(v) ? 0 : v;
+      renderCashBalance();
+      window.fbReady.then(function(){
+        window.fb.fns.setDoc(window.fb.fns.doc(window.fb.col('settings'), 'cashStart'), { amount: cashStart });
+      });
+    });
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      fns.onSnapshot(fns.doc(window.fb.col('settings'), 'cashStart'), function(snap){
+        if(snap.exists() && typeof snap.data().amount === 'number'){
+          cashStart = snap.data().amount;
+          if(document.activeElement !== cashStartInput){ cashStartInput.value = cashStart; }
+          renderCashBalance();
+        }
+      });
+    });
+
     function renderSummary(items, fallbackRate){
       var byCategory = {}, byDay = {}, total = 0;
       items.forEach(function(e){
@@ -1624,8 +1679,8 @@
         group.className = 'exp-date-group';
         var rowsHtml = byDate[day].map(function(e){
           var r = e.rate || rate;
-          var amtOther = e.currency === 'JPY' ? (r > 0 ? e.amount / r : 0) : e.amount * r;
-          return '<div class="exp-row">' +
+          var amtOther = e.currency === 'JPY' ? (e.amount * r) : (r > 0 ? e.amount / r : 0);
+          return '<div class="exp-row" data-exp-id="' + e.id + '">' +
             '<div class="exp-main">' +
               '<div class="exp-item">' + escapeHtml(e.item || '（未命名）') + '</div>' +
               '<div class="exp-meta"><span>' + e.category + '</span><span>' + e.method + '</span>' +
@@ -1633,7 +1688,10 @@
             '</div>' +
             '<div class="exp-amt">' + (e.currency === 'JPY' ? ('¥' + fmt(e.amount)) : ('NT$' + fmt(e.amount))) +
               '<span class="sec">≈ ' + (e.currency === 'JPY' ? ('NT$' + fmt(amtOther)) : ('¥' + fmt(amtOther))) + '</span></div>' +
-            '<button class="del-btn" data-del-exp="' + e.id + '" aria-label="刪除">' + delIcon + '</button>' +
+            '<div class="row-actions">' +
+              '<button class="edit-btn" data-edit-exp="' + e.id + '" aria-label="編輯">' + editIcon + '</button>' +
+              '<button class="del-btn" data-del-exp="' + e.id + '" aria-label="刪除">' + delIcon + '</button>' +
+            '</div>' +
           '</div>';
         }).join('');
         group.innerHTML = '<h4>' + day + '</h4>' + rowsHtml;
@@ -1641,8 +1699,46 @@
       });
       document.getElementById('expSummary').textContent = items.length + ' 筆紀錄・總計約 NT$ ' + fmt(totalTWD);
       renderSummary(items, rate);
+      renderCashBalance();
     }
     renderExpenses();
+
+    function expEditFormHtml(e){
+      var catOptions = Array.prototype.map.call(
+        document.querySelectorAll('.cat-manager[data-catfield="category"] .cat-chips button'),
+        function(b){ return b.dataset.value; }
+      );
+      if(catOptions.indexOf(e.category) === -1 && e.category){ catOptions.push(e.category); }
+      return '<div class="inline-edit-form">' +
+        '<input type="text" class="ee-item" placeholder="品項" value="' + escapeHtml(e.item || '') + '">' +
+        '<div class="inline-edit-grid">' +
+          '<select class="ee-day">' + selectOptions(dayOrder, e.day) + '</select>' +
+          '<select class="ee-currency">' + selectOptions(['JPY', 'TWD'], e.currency) + '</select>' +
+          '<input type="text" class="ee-amount" inputmode="decimal" style="width:6rem;" value="' + escapeHtml(String(e.amount)) + '">' +
+          '<select class="ee-method">' + selectOptions(['現金', '信用卡', 'Suica', '其他'], e.method) + '</select>' +
+          '<select class="ee-category">' + selectOptions(catOptions, e.category) + '</select>' +
+        '</div>' +
+        '<input type="text" class="ee-location" placeholder="地點（選填）" value="' + escapeHtml(e.location || '') + '">' +
+        '<div class="itin-edit-actions"><button type="button" class="ie-save">儲存</button><button type="button" class="ie-cancel">取消</button></div>' +
+      '</div>';
+    }
+    function enterExpEdit(rowEl, id, e){
+      rowEl.innerHTML = expEditFormHtml(e);
+      rowEl.querySelector('.ie-save').addEventListener('click', function(){
+        var amt = safeEval(rowEl.querySelector('.ee-amount').value);
+        if(!amt || isNaN(amt) || amt <= 0) return;
+        window.fb.fns.updateDoc(window.fb.fns.doc(window.fb.col('expenses'), id), {
+          item: rowEl.querySelector('.ee-item').value.trim(),
+          day: rowEl.querySelector('.ee-day').value,
+          currency: rowEl.querySelector('.ee-currency').value,
+          amount: amt,
+          method: rowEl.querySelector('.ee-method').value,
+          category: rowEl.querySelector('.ee-category').value,
+          location: rowEl.querySelector('.ee-location').value.trim()
+        });
+      });
+      rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ renderExpenses(); });
+    }
 
     window.fbReady.then(function(){
       var fns = window.fb.fns;
@@ -1674,9 +1770,16 @@
         delete locationInput.dataset.lon;
       });
       document.getElementById('expByDate').addEventListener('click', function(ev){
-        var btn = ev.target.closest('[data-del-exp]');
-        if(!btn) return;
-        fns.deleteDoc(fns.doc(col, btn.getAttribute('data-del-exp')));
+        var editBtn = ev.target.closest('[data-edit-exp]');
+        if(editBtn){
+          var id = editBtn.getAttribute('data-edit-exp');
+          var e = expenseItems.filter(function(x){ return String(x.id) === id; })[0];
+          var rowEl = document.querySelector('.exp-row[data-exp-id="' + id + '"]');
+          if(e && rowEl){ enterExpEdit(rowEl, id, e); }
+          return;
+        }
+        var delBtn = ev.target.closest('[data-del-exp]');
+        if(delBtn){ fns.deleteDoc(fns.doc(col, delBtn.getAttribute('data-del-exp'))); }
       });
     });
   })();
@@ -1693,12 +1796,16 @@
           if(it.done) doneCount++;
           var row = document.createElement('div');
           row.className = 'chk-row' + (it.done ? ' is-done' : '');
+          row.setAttribute('data-row-id', it.id);
           row.innerHTML =
             '<input type="checkbox" data-toggle="' + it.id + '" ' + (it.done ? 'checked' : '') + '>' +
             '<span class="chk-text">' + escapeHtml(it.text) + '</span>' +
             '<span class="chk-tag">' + it.category + '</span>' +
             (opts.extraTags ? opts.extraTags(it) : '') +
-            '<button class="del-btn" data-del="' + it.id + '" aria-label="刪除">' + delIcon + '</button>';
+            '<div class="row-actions">' +
+              '<button class="edit-btn" data-edit="' + it.id + '" aria-label="編輯">' + editIcon + '</button>' +
+              '<button class="del-btn" data-del="' + it.id + '" aria-label="刪除">' + delIcon + '</button>' +
+            '</div>';
           list.appendChild(row);
         });
         document.getElementById(opts.summaryEl).textContent = doneCount + ' / ' + items.length + ' ' + opts.doneLabel;
@@ -1731,16 +1838,49 @@
         });
         document.getElementById(opts.listEl).addEventListener('click', function(ev){
           var toggleEl = ev.target.closest('[data-toggle]');
+          var editEl = ev.target.closest('[data-edit]');
           var delEl = ev.target.closest('[data-del]');
-          if(!toggleEl && !delEl) return;
+          if(!toggleEl && !editEl && !delEl) return;
           if(toggleEl){
             var tid = toggleEl.getAttribute('data-toggle');
             var it = items.filter(function(x){ return String(x.id) === tid; })[0];
             fns.updateDoc(fns.doc(col, tid), { done: !(it && it.done) });
+          } else if(editEl){
+            var eid = editEl.getAttribute('data-edit');
+            var editItem = items.filter(function(x){ return String(x.id) === eid; })[0];
+            var rowEl = document.querySelector('.chk-row[data-row-id="' + eid + '"]');
+            if(editItem && rowEl){ enterEdit(rowEl, eid, editItem); }
           } else {
             fns.deleteDoc(fns.doc(col, delEl.getAttribute('data-del')));
           }
         });
+
+        function editFormHtml(it){
+          var catOptions = Array.prototype.map.call(
+            document.querySelectorAll('.cat-manager[data-catfield="' + opts.categoryField + '"] .cat-chips button'),
+            function(b){ return b.dataset.value; }
+          );
+          if(catOptions.indexOf(it.category) === -1 && it.category){ catOptions.push(it.category); }
+          return '<div class="inline-edit-form">' +
+            '<input type="text" class="ce-text" value="' + escapeHtml(it.text || '') + '">' +
+            '<div class="inline-edit-grid">' +
+              '<select class="ce-category">' + selectOptions(catOptions, it.category) + '</select>' +
+              (opts.editExtraFields ? opts.editExtraFields(it) : '') +
+            '</div>' +
+            '<div class="itin-edit-actions"><button type="button" class="ie-save">儲存</button><button type="button" class="ie-cancel">取消</button></div>' +
+          '</div>';
+        }
+        function enterEdit(rowEl, id, it){
+          rowEl.innerHTML = editFormHtml(it);
+          rowEl.querySelector('.ie-save').addEventListener('click', function(){
+            var text = rowEl.querySelector('.ce-text').value.trim();
+            if(!text) return;
+            var updated = { text: text, category: rowEl.querySelector('.ce-category').value };
+            if(opts.editExtraRead){ var extra = opts.editExtraRead(rowEl); for(var k in extra){ updated[k] = extra[k]; } }
+            fns.updateDoc(fns.doc(col, id), updated);
+          });
+          rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ render(); });
+        }
       });
     }
 
@@ -1763,6 +1903,21 @@
         var tags = '<span class="chk-tag">x' + (it.qty || 1) + '</span>';
         if(it.box && it.box !== '未分箱'){ tags += '<span class="chk-tag">' + escapeHtml(it.box) + '</span>'; }
         return tags;
+      },
+      editExtraFields: function(it){
+        var boxOptions = Array.prototype.map.call(
+          document.querySelectorAll('.cat-manager[data-catfield="packBox"] .cat-chips button'),
+          function(b){ return b.dataset.value; }
+        );
+        if(boxOptions.indexOf(it.box) === -1 && it.box){ boxOptions.push(it.box); }
+        return '<input type="number" class="ce-qty" min="1" style="width:5rem;" value="' + (it.qty || 1) + '">' +
+          '<select class="ce-box">' + selectOptions(boxOptions, it.box) + '</select>';
+      },
+      editExtraRead: function(rowEl){
+        return {
+          qty: parseInt(rowEl.querySelector('.ce-qty').value, 10) || 1,
+          box: rowEl.querySelector('.ce-box').value
+        };
       }
     });
   })();
