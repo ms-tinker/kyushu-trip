@@ -844,7 +844,7 @@
         <div class="exp-list" id="expList"></div>
       </div>
 
-      <p class="local-note">目前資料只存在這個瀏覽器裡，還沒有跟另一半同步。等架構確認沒問題，會做成雙人都能即時看到彼此紀錄的線上版本。</p>
+      <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此的紀錄。</p>
     </div>
   </section>
 
@@ -921,7 +921,7 @@
         <div class="chk-list" id="packList"></div>
       </div>
 
-      <p class="local-note">目前資料只存在這個瀏覽器裡，還沒有跟另一半同步。等架構確認沒問題，會做成雙人都能即時看到彼此勾選的線上版本。</p>
+      <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此的勾選。</p>
     </div>
   </section>
 </main>
@@ -1185,6 +1185,37 @@
   })();
 </script>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyCZNBXUNkgYaRanYYtdVbCXLXteQbFCnLI",
+    authDomain: "aug-2026-kyushu-trip.firebaseapp.com",
+    projectId: "aug-2026-kyushu-trip",
+    storageBucket: "aug-2026-kyushu-trip.firebasestorage.app",
+    messagingSenderId: "997858263553",
+    appId: "1:997858263553:web:db258576c2883af4b67600"
+  };
+  var app = initializeApp(firebaseConfig);
+  var auth = getAuth(app);
+  var db = getFirestore(app);
+
+  window.fb = {
+    fns: { collection: collection, doc: doc, addDoc: addDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp },
+    col: function(name){ return collection(db, 'trips', 'kyushu2026', name); }
+  };
+  window.fbReady = new Promise(function(resolve){
+    onAuthStateChanged(auth, function(user){ if(user){ resolve(user); } });
+  });
+  signInAnonymously(auth).catch(function(e){
+    console.error('Firebase 匿名登入失敗', e);
+    window.fbFailed = true;
+  });
+</script>
+
 <script>
   /* ---- button-group helper ---- */
   function wireButtonGroup(container){
@@ -1213,14 +1244,7 @@
     var delIcon = '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5l-10 10"/></svg>';
     var dayOrder = ['8/26（三）','8/27（四）','8/28（五）','8/29（六）','8/30（日）','8/31（一）','9/1（二）'];
 
-    function loadExpenses(){
-      var items = JSON.parse(localStorage.getItem('kyushu-expenses') || 'null');
-      if(items === null){
-        items = [{id:1, day:'8/26（三）', currency:'JPY', amount:3000, method:'現金', category:'餐飲', item:'範例：機場晚餐（可刪除）', by:'你'}];
-        localStorage.setItem('kyushu-expenses', JSON.stringify(items));
-      }
-      return items;
-    }
+    var expenseItems = [];
     function renderSummary(items, rate){
       var byCategory = {}, byDay = {}, total = 0;
       items.forEach(function(e){
@@ -1249,7 +1273,7 @@
     function renderExpenses(){
       var rate = parseFloat(localStorage.getItem('kyushu-rate')) || 0.21;
       document.getElementById('rateInput').value = rate;
-      var items = loadExpenses();
+      var items = expenseItems;
       var list = document.getElementById('expList');
       list.innerHTML = '';
       var totalTWD = 0;
@@ -1272,49 +1296,47 @@
       document.getElementById('expSummary').textContent = items.length + ' 筆紀錄・總計約 NT$ ' + fmt(totalTWD);
       renderSummary(items, rate);
     }
-    document.getElementById('expAddBtn').addEventListener('click', function(){
-      var amount = parseFloat(document.getElementById('expAmount').value);
-      if(!amount || amount <= 0){ return; }
-      var items = loadExpenses();
-      items.push({
-        id: Date.now(),
-        day: groupValue(document.querySelector('.btn-group[data-field="day"]')),
-        currency: groupValue(document.querySelector('.btn-group[data-field="currency"]')),
-        amount: amount,
-        method: groupValue(document.querySelector('.btn-group[data-field="method"]')),
-        category: groupValue(document.querySelector('.btn-group[data-field="category"]')),
-        item: document.getElementById('expItem').value.trim(),
-        by: groupValue(document.querySelector('.btn-group[data-field="by"]'))
-      });
-      localStorage.setItem('kyushu-expenses', JSON.stringify(items));
-      document.getElementById('expAmount').value = '';
-      document.getElementById('expItem').value = '';
-      renderExpenses();
-    });
-    document.getElementById('expList').addEventListener('click', function(ev){
-      var btn = ev.target.closest('[data-del-exp]');
-      if(!btn) return;
-      var id = btn.getAttribute('data-del-exp');
-      var items = loadExpenses().filter(function(e){ return String(e.id) !== id; });
-      localStorage.setItem('kyushu-expenses', JSON.stringify(items));
-      renderExpenses();
-    });
     document.getElementById('rateInput').addEventListener('input', function(){
       var v = parseFloat(this.value);
       if(!isNaN(v) && v > 0){ localStorage.setItem('kyushu-rate', v); renderExpenses(); }
     });
     renderExpenses();
 
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      var col = window.fb.col('expenses');
+      fns.onSnapshot(fns.query(col, fns.orderBy('createdAt', 'asc')), function(snap){
+        expenseItems = snap.docs.map(function(d){ var data = d.data(); data.id = d.id; return data; });
+        renderExpenses();
+      }, function(err){ console.error('expenses sync error', err); });
+
+      document.getElementById('expAddBtn').addEventListener('click', function(){
+        var amount = parseFloat(document.getElementById('expAmount').value);
+        if(!amount || amount <= 0){ return; }
+        fns.addDoc(col, {
+          day: groupValue(document.querySelector('.btn-group[data-field="day"]')),
+          currency: groupValue(document.querySelector('.btn-group[data-field="currency"]')),
+          amount: amount,
+          method: groupValue(document.querySelector('.btn-group[data-field="method"]')),
+          category: groupValue(document.querySelector('.btn-group[data-field="category"]')),
+          item: document.getElementById('expItem').value.trim(),
+          by: groupValue(document.querySelector('.btn-group[data-field="by"]')),
+          createdAt: fns.serverTimestamp()
+        });
+        document.getElementById('expAmount').value = '';
+        document.getElementById('expItem').value = '';
+      });
+      document.getElementById('expList').addEventListener('click', function(ev){
+        var btn = ev.target.closest('[data-del-exp]');
+        if(!btn) return;
+        fns.deleteDoc(fns.doc(col, btn.getAttribute('data-del-exp')));
+      });
+    });
+
     /* ---- todo / packing (shared logic) ---- */
     function setupChecklist(opts){
-      function load(){
-        var items = JSON.parse(localStorage.getItem(opts.storageKey) || 'null');
-        if(items === null){ items = opts.seed; localStorage.setItem(opts.storageKey, JSON.stringify(items)); }
-        return items;
-      }
-      function save(items){ localStorage.setItem(opts.storageKey, JSON.stringify(items)); }
+      var items = [];
       function render(){
-        var items = load();
         var list = document.getElementById(opts.listEl);
         list.innerHTML = '';
         var doneCount = 0;
@@ -1332,56 +1354,52 @@
         });
         document.getElementById(opts.summaryEl).textContent = doneCount + ' / ' + items.length + ' ' + opts.doneLabel;
       }
-      document.getElementById(opts.addBtn).addEventListener('click', function(){
-        var text = document.getElementById(opts.textInput).value.trim();
-        if(!text) return;
-        var items = load();
-        items.push({
-          id: Date.now(),
-          text: text,
-          category: groupValue(document.querySelector('.btn-group[data-field="' + opts.categoryField + '"]')),
-          who: groupValue(document.querySelector('.btn-group[data-field="' + opts.whoField + '"]')),
-          done: false
-        });
-        save(items);
-        document.getElementById(opts.textInput).value = '';
-        render();
-      });
-      document.getElementById(opts.listEl).addEventListener('click', function(ev){
-        var toggleEl = ev.target.closest('[data-toggle]');
-        var delEl = ev.target.closest('[data-del]');
-        if(!toggleEl && !delEl) return;
-        var items = load();
-        if(toggleEl){
-          var tid = toggleEl.getAttribute('data-toggle');
-          items = items.map(function(it){ if(String(it.id) === tid){ it.done = !it.done; } return it; });
-        } else {
-          var did = delEl.getAttribute('data-del');
-          items = items.filter(function(it){ return String(it.id) !== did; });
-        }
-        save(items);
-        render();
-      });
       render();
+
+      window.fbReady.then(function(){
+        var fns = window.fb.fns;
+        var col = window.fb.col(opts.col);
+        fns.onSnapshot(fns.query(col, fns.orderBy('createdAt', 'asc')), function(snap){
+          items = snap.docs.map(function(d){ var data = d.data(); data.id = d.id; return data; });
+          render();
+        }, function(err){ console.error(opts.col + ' sync error', err); });
+
+        document.getElementById(opts.addBtn).addEventListener('click', function(){
+          var text = document.getElementById(opts.textInput).value.trim();
+          if(!text) return;
+          fns.addDoc(col, {
+            text: text,
+            category: groupValue(document.querySelector('.btn-group[data-field="' + opts.categoryField + '"]')),
+            who: groupValue(document.querySelector('.btn-group[data-field="' + opts.whoField + '"]')),
+            done: false,
+            createdAt: fns.serverTimestamp()
+          });
+          document.getElementById(opts.textInput).value = '';
+        });
+        document.getElementById(opts.listEl).addEventListener('click', function(ev){
+          var toggleEl = ev.target.closest('[data-toggle]');
+          var delEl = ev.target.closest('[data-del]');
+          if(!toggleEl && !delEl) return;
+          if(toggleEl){
+            var tid = toggleEl.getAttribute('data-toggle');
+            var it = items.filter(function(x){ return String(x.id) === tid; })[0];
+            fns.updateDoc(fns.doc(col, tid), { done: !(it && it.done) });
+          } else {
+            fns.deleteDoc(fns.doc(col, delEl.getAttribute('data-del')));
+          }
+        });
+      });
     }
 
     setupChecklist({
-      storageKey: 'kyushu-todos', listEl: 'todoList', summaryEl: 'todoSummary',
+      col: 'todos', listEl: 'todoList', summaryEl: 'todoSummary',
       textInput: 'todoText', categoryField: 'todoCategory', whoField: 'todoWho', addBtn: 'todoAddBtn',
-      doneLabel: '已完成',
-      seed: [
-        {id:1, text:'辦理日本簽證', category:'簽證證件', who:'共同', done:false},
-        {id:2, text:'辦理寶寶護照', category:'簽證證件', who:'共同', done:false}
-      ]
+      doneLabel: '已完成'
     });
     setupChecklist({
-      storageKey: 'kyushu-packing', listEl: 'packList', summaryEl: 'packSummary',
+      col: 'packing', listEl: 'packList', summaryEl: 'packSummary',
       textInput: 'packText', categoryField: 'packCategory', whoField: 'packWho', addBtn: 'packAddBtn',
-      doneLabel: '已裝箱',
-      seed: [
-        {id:1, text:'奶瓶', category:'寶寶用品', who:'共同', done:false},
-        {id:2, text:'浴盆', category:'寶寶用品', who:'共同', done:false}
-      ]
+      doneLabel: '已裝箱'
     });
   })();
 
