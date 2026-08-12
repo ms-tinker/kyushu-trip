@@ -116,7 +116,9 @@
   .wx-loc-panel{display:none;}
   .wx-loc-panel.active{display:block;}
   .wx-row{display:flex;flex-direction:column;gap:0.4rem;}
-  .wx-day{display:grid;grid-template-columns:3.6rem 1fr 4.5rem 3.2rem;align-items:center;gap:0.6rem;padding:0.5rem 0;border-top:1px solid var(--line);font-size:0.85rem;}
+  .wx-day{display:grid;grid-template-columns:3.6rem 1fr 4.5rem 3.2rem;align-items:center;gap:0.6rem;padding:0.5rem 0.6rem;border-top:1px solid var(--line);font-size:0.85rem;border-radius:8px;}
+  .wx-day.wx-trip{background:var(--indigo-soft);border-top-color:transparent;}
+  .wx-day.wx-trip .wx-date{color:var(--indigo);font-weight:600;}
   .wx-row .wx-day:first-child{border-top:none;}
   .wx-day .wx-date{color:var(--ink-faint);font-size:0.78rem;}
   .wx-day .wx-label{color:var(--ink-soft);}
@@ -351,7 +353,7 @@
       <div>
         <div class="section-head">
           <h2>天氣預報</h2>
-          <p class="sub">資料來自 Open-Meteo，出發前約 2 週內才抓得到實際預報；平常這裡會顯示暫無資料。</p>
+          <p class="sub">資料來自 Open-Meteo，顯示今天起 16 天的預報；藍色標出的是行程期間（8/26–9/1），出發前會愈來愈準。</p>
         </div>
         <div class="wx-card">
           <div class="wx-loc-tabs" id="wxTabs">
@@ -1005,16 +1007,21 @@
       56:'凍雨',57:'凍雨',61:'小雨',63:'雨',65:'大雨',66:'凍雨',67:'凍雨',71:'小雪',73:'雪',75:'大雪',
       77:'雪粒',80:'陣雨',81:'陣雨',82:'強陣雨',85:'陣雪',86:'陣雪',95:'雷雨',96:'雷雨',99:'雷雨'};
 
+    var TRIP_START = '2026-08-26', TRIP_END = '2026-09-01';
+
     Object.keys(locs).forEach(function(key){
       var loc = locs[key];
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
         '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-        '&timezone=Asia%2FTokyo&start_date=2026-08-26&end_date=2026-09-01';
+        '&timezone=Asia%2FTokyo&forecast_days=16';
       fetch(url).then(function(r){ if(!r.ok) throw new Error('no data'); return r.json(); }).then(function(data){
         var el = document.getElementById('wxRow-' + key);
         if(!data.daily || !data.daily.time || !data.daily.time.length){ throw new Error('empty'); }
         el.innerHTML = '';
+        var anyTripDay = false;
         data.daily.time.forEach(function(dateStr, i){
+          var inTrip = dateStr >= TRIP_START && dateStr <= TRIP_END;
+          if(inTrip) anyTripDay = true;
           var d = new Date(dateStr + 'T00:00:00+09:00');
           var md = (d.getMonth()+1) + '/' + d.getDate();
           var wd = wdMap[d.getDay()];
@@ -1023,7 +1030,7 @@
           var lo = Math.round(data.daily.temperature_2m_min[i]);
           var pop = data.daily.precipitation_probability_max[i];
           var row = document.createElement('div');
-          row.className = 'wx-day';
+          row.className = 'wx-day' + (inTrip ? ' wx-trip' : '');
           row.innerHTML =
             '<span class="wx-date tnum">' + md + '（' + wd + '）</span>' +
             '<span class="wx-label">' + (codeMap[code] || '—') + '</span>' +
@@ -1031,6 +1038,12 @@
             '<span class="wx-pop">' + (pop != null ? pop + '%' : '—') + '</span>';
           el.appendChild(row);
         });
+        if(!anyTripDay){
+          var hint = document.createElement('p');
+          hint.className = 'wx-empty';
+          hint.textContent = '以上是近期預報（先讓你看格式），8/26–9/1 的實際天氣要再接近出發日才會出現。';
+          el.appendChild(hint);
+        }
       }).catch(function(){
         var el = document.getElementById('wxRow-' + key);
         el.innerHTML = '<p class="wx-empty">目前抓不到預報（可能離出發還太久，或沒有網路連線）。出發前 2 週內請再打開看看，或直接看下方 tenki.jp 連結。</p>';
