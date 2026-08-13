@@ -2119,7 +2119,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, increment }
+  import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, increment, writeBatch }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
@@ -2140,6 +2140,7 @@
   window.fb = {
     fns: { collection: collection, doc: doc, addDoc: addDoc, setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc, onSnapshot: onSnapshot, query: query, orderBy: orderBy, serverTimestamp: serverTimestamp, increment: increment },
     col: function(name){ return collection(db, 'trips', 'kyushu2026', name); },
+    batch: function(){ return writeBatch(db); },
     storage: {
       upload: function(path, file){
         var sref = ref(storage, 'trips/kyushu2026/' + path);
@@ -2669,7 +2670,11 @@
             cardEl.remove();
             dragState = null;
             if(orderedIds){
-              orderedIds.forEach(function(id, idx){ fns.updateDoc(fns.doc(col, id), { order: idx * 1000 }); });
+              /* 一次寫成一個 batch，避免每個 item 各自觸發一次 updateDoc、讓
+                 onSnapshot 中途連續重畫好幾次、畫面一度看起來少了幾筆。 */
+              var batch = window.fb.batch();
+              orderedIds.forEach(function(id, idx){ batch.update(fns.doc(col, id), { order: idx * 1000 }); });
+              batch.commit();
             } else {
               render();
             }
