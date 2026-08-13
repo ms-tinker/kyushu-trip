@@ -25,90 +25,47 @@
     --sand-soft:#F0E5D1;
     --neutral:#5C6259;
     --neutral-soft:#E8E9E3;
+    --plum:#8D7F94;
+    --plum-soft:#EAE5EC;
 
     --font-display:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","游明朝",Georgia,serif;
     --font-body:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic Medium","游ゴシック Medium","Noto Sans JP",-apple-system,"Segoe UI",system-ui,sans-serif;
 
     --shadow: 0 1px 2px rgba(30,32,26,0.06), 0 6px 20px -8px rgba(30,32,26,0.18);
     --tabbar-h: 4.6rem;
-    --style-glow: transparent;
     color-scheme: light;
   }
 
-  /* ============================================================
-     STYLE PREVIEW ONLY, round 2 — 5 directions that change texture,
-     card treatment and section rhythm, not just accent color.
-     Remove this whole block + .style-picker2 markup/script once a
-     style is chosen; the winning rules get folded in above.
-     ============================================================ */
-  :root{ --style-pattern: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)); }
-
-  /* -- a: 紙紋日誌 Paper Grain — flatter cards, visible grain, ink underline on headers -- */
-  :root[data-style2="a"]{
-    --shadow: 0 1px 1px rgba(30,32,26,0.05);
-    --style-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  /* -- 墨韻印章：卡片圓潤邊角 + 頂部粗色條，標題用實心色帶 -- */
+  .map-card, .wx-card, .flight-card, .stay-card, .itin-stop, .form-card,
+  .exp-row, .chk-row, .summary-card{
+    border-radius:16px; border-top:4px solid var(--indigo);
   }
-  [data-style2="a"] .map-card, [data-style2="a"] .wx-card, [data-style2="a"] .flight-card,
-  [data-style2="a"] .stay-card, [data-style2="a"] .itin-stop, [data-style2="a"] .form-card,
-  [data-style2="a"] .exp-row, [data-style2="a"] .chk-row, [data-style2="a"] .summary-card{
-    border-radius:10px; border-width:1.5px; border-color:var(--line-strong);
-  }
-  [data-style2="a"] .section-head h2{border-bottom:2px solid var(--indigo); padding-bottom:0.35rem; display:inline-block;}
-
-  /* -- b: 等高線地圖 Topographic — faint contour rings, deeper "lifted pin" shadow, marker-dot headers -- */
-  :root[data-style2="b"]{
-    --shadow: 0 2px 4px rgba(20,24,20,0.07), 0 14px 30px -12px rgba(20,24,20,0.28);
-    --style-pattern: repeating-radial-gradient(circle at 15% -15%, transparent 0 46px, rgba(20,24,20,0.045) 47px 48px);
-  }
-  [data-style2="b"] .section-head h2{position:relative; padding-left:1.1rem;}
-  [data-style2="b"] .section-head h2::before{
-    content:""; position:absolute; left:0; top:0.35em; width:9px; height:9px; border-radius:50%;
-    background:var(--indigo); box-shadow:0 0 0 3px var(--indigo-soft);
-  }
-
-  /* -- c: 登機證票根 Boarding Pass — dashed tear-edge on cards, tag-style uppercase headers -- */
-  :root[data-style2="c"]{
-    --shadow: 0 1px 2px rgba(30,32,26,0.08);
-    --style-pattern: repeating-linear-gradient(115deg, transparent 0 10px, rgba(30,32,26,0.02) 10px 11px);
-  }
-  [data-style2="c"] .map-card, [data-style2="c"] .wx-card, [data-style2="c"] .flight-card,
-  [data-style2="c"] .stay-card, [data-style2="c"] .itin-stop, [data-style2="c"] .form-card,
-  [data-style2="c"] .exp-row, [data-style2="c"] .chk-row, [data-style2="c"] .summary-card{
-    border-radius:8px; border-top:3px dashed var(--line-strong);
-  }
-  [data-style2="c"] .section-head h2{
-    display:inline-flex; align-items:center; gap:0.5rem; text-transform:uppercase; letter-spacing:0.08em; font-size:1.05rem;
-  }
-  [data-style2="c"] .section-head h2::before{ content:""; width:0.6rem; height:0.6rem; background:var(--indigo); flex:none; }
-
-  /* -- d: 手繪速寫 Sketched — offset double-line "hand inked" borders, organic radii, wavy header rule -- */
-  :root[data-style2="d"]{
-    --shadow: 1.5px 1.5px 0 var(--line-strong);
-  }
-  [data-style2="d"] .map-card, [data-style2="d"] .wx-card, [data-style2="d"] .flight-card,
-  [data-style2="d"] .stay-card, [data-style2="d"] .itin-stop, [data-style2="d"] .form-card,
-  [data-style2="d"] .exp-row, [data-style2="d"] .chk-row, [data-style2="d"] .summary-card{
-    border-radius:22px 8px 20px 9px; border-width:1.5px;
-  }
-  [data-style2="d"] .section-head h2{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='10'%3E%3Cpath d='M0 6 Q10 2 20 6 T40 6 T60 6 T80 6 T100 6 T120 6' fill='none' stroke='%2333506E' stroke-width='2'/%3E%3C/svg%3E");
-    background-repeat:repeat-x; background-position:bottom left; background-size:60px 8px;
-    padding-bottom:0.5rem; display:inline-block;
-  }
-
-  /* -- e: 墨韻印章 Ink Ribbon — solid-fill ribbon headers, bold top-stripe cards, flat & graphic -- */
-  :root[data-style2="e"]{
-    --shadow: 0 1px 2px rgba(30,32,26,0.06);
-  }
-  [data-style2="e"] .map-card, [data-style2="e"] .wx-card, [data-style2="e"] .flight-card,
-  [data-style2="e"] .stay-card, [data-style2="e"] .itin-stop, [data-style2="e"] .form-card,
-  [data-style2="e"] .exp-row, [data-style2="e"] .chk-row, [data-style2="e"] .summary-card{
-    border-radius:10px; border-top:4px solid var(--indigo);
-  }
-  [data-style2="e"] .section-head h2{
+  .section-head h2{
     background:var(--indigo); color:var(--surface); display:inline-block;
-    padding:0.3rem 0.8rem; border-radius:4px;
+    padding:0.3rem 0.9rem; border-radius:16px;
   }
+
+  /* 行程：每個地點卡片的粗邊條跟隨那一天的日期顏色（見 stopCardHtml 加的 border-{color} class） */
+  .itin-stop.border-indigo, .exp-row.border-indigo{ border-top-color:var(--indigo); }
+  .itin-stop.border-sand, .exp-row.border-sand{ border-top-color:var(--sand); }
+  .itin-stop.border-moss, .exp-row.border-moss{ border-top-color:var(--moss); }
+  .itin-stop.border-persimmon, .exp-row.border-persimmon{ border-top-color:var(--persimmon); }
+  .itin-stop.border-neutral, .exp-row.border-neutral{ border-top-color:var(--neutral); }
+  .exp-date-group.border-indigo h4{ color:var(--indigo); }
+  .exp-date-group.border-sand h4{ color:var(--sand); }
+  .exp-date-group.border-moss h4{ color:var(--moss); }
+  .exp-date-group.border-persimmon h4{ color:var(--persimmon); }
+  .exp-date-group.border-neutral h4{ color:var(--neutral); }
+
+  /* 清單／連結：待辦、打包、連結各自用不同顏色。用重新指定 --indigo 的方式，
+     讓該區塊裡所有原本吃 --indigo 的元件（邊條、按鈕、勾選框強調色…）自動
+     跟著換色；分頁切換鈕本身在 scope 外面，所以另外補一條規則。 */
+  [data-panel="checklist"] [data-subtabpanel="todo"]{ --indigo:var(--sand); --indigo-soft:var(--sand-soft); }
+  [data-panel="checklist"] [data-subtabpanel="pack"]{ --indigo:var(--moss); --indigo-soft:var(--moss-soft); }
+  [data-panel="checklist"] .subtab-bar button[data-subtab="todo"].active{ background:var(--sand); border-color:var(--sand); }
+  [data-panel="checklist"] .subtab-bar button[data-subtab="pack"].active{ background:var(--moss); border-color:var(--moss); }
+  [data-panel="links"] .panel-inner{ --indigo:var(--plum); --indigo-soft:var(--plum-soft); }
 
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -120,6 +77,7 @@
       --moss:#9BBB8C; --moss-soft:#262F1F;
       --sand:#CFA765; --sand-soft:#362B19;
       --neutral:#AEB3A6; --neutral-soft:#2A2C25;
+      --plum:#A79AAD; --plum-soft:#332E38;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
       color-scheme: dark;
     }
@@ -133,20 +91,14 @@
     --moss:#9BBB8C; --moss-soft:#262F1F;
     --sand:#CFA765; --sand-soft:#362B19;
     --neutral:#AEB3A6; --neutral-soft:#2A2C25;
+    --plum:#A79AAD; --plum-soft:#332E38;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
     color-scheme: dark;
   }
 
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--style-pattern), radial-gradient(ellipse 1100px 550px at 50% -120px, var(--style-glow), transparent), var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
 
-  /* ---- style-preview picker (temporary, local-preview only) ---- */
-  body.has-style-picker{padding-top:3rem;}
-  .style-picker{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.8rem;background:#1c1c1c;overflow-x:auto;font-family:var(--font-body);}
-  .style-picker .sp-label{color:#fff;font-size:0.72rem;flex:none;opacity:0.7;}
-  .style-picker button{flex:none;height:1.9rem;border-radius:999px;border:1.5px solid rgba(255,255,255,0.35);cursor:pointer;padding:0 0.75rem;display:flex;align-items:center;justify-content:center;color:#222;font-size:0.72rem;font-weight:700;white-space:nowrap;background:#fff;}
-  .style-picker button.sp-active{border-color:#fff;box-shadow:0 0 0 2px #1c1c1c, 0 0 0 3px #fff;}
-  .style-picker .sp-reset{width:auto;height:auto;border-radius:999px;padding:0.35rem 0.75rem;font-size:0.68rem;color:#fff;background:#3a3a3a;border:1px solid rgba(255,255,255,0.3);font-weight:600;}
   h1,h2,h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0;color:var(--ink);}
   p{margin:0;}
   ::selection{background:var(--indigo-soft);}
@@ -270,7 +222,7 @@
   button.ov-row .ov-sub{font-size:0.78rem;color:var(--ink-soft);}
 
   /* ---- itinerary tab: date strip + single day ---- */
-  .date-strip{display:flex;align-items:center;gap:0.5rem;}
+  .date-strip{display:flex;align-items:center;gap:0.5rem;position:sticky;top:0;z-index:15;margin:0 -1.5rem;padding:0.7rem 1.5rem;background:color-mix(in srgb, var(--paper) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
   .ds-arrow{flex:none;width:2.1rem;height:2.1rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;}
   .ds-arrow:hover{background:var(--surface-2);}
   .ds-arrow:disabled{opacity:0.35;cursor:default;}
@@ -432,14 +384,31 @@
 
   /* ---- expense summary breakdown ---- */
   .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.2rem 1.3rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:1.1rem;}
-  .summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;}
+  .summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
   .summary-total .st-label{font-size:0.85rem;color:var(--ink-soft);}
-  .summary-total .st-amt{font-family:var(--font-display);font-size:1.5rem;font-weight:700;}
+  .summary-total .st-amt{font-family:var(--font-display);font-size:1.3rem;font-weight:700;}
   .summary-group h4{font-size:0.8rem;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;margin-bottom:0.6rem;}
   .summary-bar-row{display:grid;grid-template-columns:5.4rem 1fr 4.2rem;align-items:center;gap:0.6rem;padding:0.3rem 0;font-size:0.82rem;}
   .summary-bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
   .summary-bar-fill{height:100%;background:var(--indigo);border-radius:999px;transition:width 0.3s ease;}
   .summary-bar-fill.over-threshold{background:var(--persimmon);}
+
+  /* ---- 記帳「依類別」圓餅圖 + 「依日期」長條圖，左右並排 ---- */
+  .summary-columns{display:flex;flex-wrap:wrap;gap:1.6rem;}
+  .summary-columns .summary-group{flex:1 1 220px;min-width:200px;}
+  .pie-chart-wrap{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+  .pie-chart{width:108px;height:108px;border-radius:50%;flex:none;box-shadow:var(--shadow);}
+  .pie-legend{display:flex;flex-direction:column;gap:0.45rem;flex:1;min-width:130px;}
+  .pie-legend-row{display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;}
+  .pie-swatch{width:0.65rem;height:0.65rem;border-radius:50%;flex:none;}
+  .pie-legend-label{flex:1;color:var(--ink-soft);}
+  .pie-legend-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;font-size:0.72rem;line-height:1.35;white-space:nowrap;}
+  .bar-chart{display:flex;flex-direction:column;gap:0.6rem;}
+  .bar-chart-row{display:grid;grid-template-columns:3.2rem 1fr auto;align-items:center;gap:0.55rem;font-size:0.78rem;}
+  .bar-chart-label{color:var(--ink-soft);white-space:nowrap;}
+  .bar-chart-track{height:0.5rem;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+  .bar-chart-fill{display:block;height:100%;border-radius:999px;}
+  .bar-chart-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap;font-size:0.72rem;line-height:1.3;}
   .summary-bar-row .sb-amt{text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
 
   /* ---- checklist sub-tabs ---- */
@@ -466,16 +435,6 @@
 </style>
 </head>
 <body>
-
-<nav class="style-picker" id="stylePicker" aria-label="風格預覽（暫時工具）">
-  <span class="sp-label">風格預覽 R2：</span>
-  <button type="button" class="sp-reset" data-style2="0">原本</button>
-  <button type="button" data-style2="a">紙紋日誌</button>
-  <button type="button" data-style2="b">等高線地圖</button>
-  <button type="button" data-style2="c">登機票根</button>
-  <button type="button" data-style2="d">手繪速寫</button>
-  <button type="button" data-style2="e">墨韻印章</button>
-</nav>
 
 <header class="app-header">
   <p class="eyebrow">九州親子自駕・v3</p>
@@ -646,7 +605,7 @@
             </div>
           </div>
           <div class="flight-meta-row">
-            <span>訂位代號 <b class="tnum">ICW***</b>（完整代號見本機版本）</span>
+            <span>訂位代號 <b class="tnum">ICW***</b></span>
             <span>旅客 <b>成人 x2・嬰兒 x1</b></span>
             <span>訂單金額 <b class="tnum">TWD 21,424</b></span>
             <span>狀態 <b>已確認</b></span>
@@ -786,6 +745,12 @@
             <input type="number" id="rateInput" step="0.001" value="0.21">
             <span>TWD</span>
             <span class="hint" id="rateHint">正在自動抓匯率…也可以自己改，改過之後新紀錄會用你填的。</span>
+          </div>
+          <div class="rate-row">
+            <span>今日匯率</span><span>1 JPY =</span>
+            <input type="number" id="rateInputCNY" step="0.0001" value="0.042">
+            <span>CNY</span>
+            <span class="hint" id="rateHintCNY">正在自動抓匯率…也可以自己改，改過之後新紀錄會用你填的。</span>
           </div>
 
           <div class="field">
@@ -1177,6 +1142,11 @@
     return list.map(function(v){ return '<option value="' + escapeHtml(v) + '"' + (v === selected ? ' selected' : '') + '>' + escapeHtml(v) + '</option>'; }).join('');
   }
   var dayOrder = ['8/26（三）','8/27（四）','8/28（五）','8/29（六）','8/30（日）','8/31（一）','9/1（二）'];
+  /* 跟行程日期同一套顏色（見 DAYS_SEED 裡每天的 color 欄位） */
+  var DAY_COLOR_MAP = {
+    '8/26（三）':'indigo', '8/27（四）':'sand', '8/28（五）':'moss', '8/29（六）':'persimmon',
+    '8/30（日）':'indigo', '8/31（一）':'sand', '9/1（二）':'neutral'
+  };
 
   /* ---- small safe arithmetic evaluator (no eval): supports + - * / ( ) and decimals ---- */
   function safeEval(expr){
@@ -1237,6 +1207,31 @@
     return active ? active.dataset.value : '';
   }
   document.querySelectorAll('.btn-group').forEach(wireButtonGroup);
+
+  /* ---- 記帳新增表單的強調色跟著選到的日期換（重新指定 --indigo/--indigo-soft，
+     整個表單裡吃這兩個變數的東西全部一起換色）。indigo 那幾天本來就是預設色，
+     直接 removeProperty 而不是設成 var(--indigo)，避免自我參照造成的
+     circular custom property（會讓整組變數失效、按鈕整個消失）。 ---- */
+  (function(){
+    var expAddPanel = document.querySelector('[data-subtabpanel="expAdd"]');
+    var dayGroup = expAddPanel && expAddPanel.querySelector('.btn-group[data-field="day"]');
+    if(!expAddPanel || !dayGroup) return;
+    function applyExpDayColor(){
+      var active = dayGroup.querySelector('button.active');
+      var date = active ? active.dataset.value : dayOrder[0];
+      var color = DAY_COLOR_MAP[date] || 'indigo';
+      if(color === 'indigo'){
+        expAddPanel.style.removeProperty('--indigo');
+        expAddPanel.style.removeProperty('--indigo-soft');
+      }else{
+        expAddPanel.style.setProperty('--indigo', 'var(--' + color + ')');
+        expAddPanel.style.setProperty('--indigo-soft', 'var(--' + color + '-soft)');
+      }
+    }
+    dayGroup.addEventListener('click', function(){ setTimeout(applyExpDayColor, 0); });
+    window.__applyExpDayColor = applyExpDayColor;
+    applyExpDayColor();
+  })();
 
   /* ---- reusable: custom + reorderable category manager, synced to Firestore settings docs ---- */
   function setupCategoryManager(container){
@@ -1468,7 +1463,7 @@
       var photoHtml = userPhoto
         ? '<div class="itin-stop-photo"><img src="' + escapeHtml(userPhoto) + '" alt=""></div>'
         : '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>';
-      return '<div class="itin-stop" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
+      return '<div class="itin-stop border-' + color + '" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
         photoHtml +
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
           '<div class="itin-stop-head"><span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
@@ -1835,16 +1830,31 @@
       var v = parseFloat(rateInput.value);
       if(!isNaN(v) && v > 0){ localStorage.setItem('kyushu-rate', v); renderExpenses(); }
     });
-    fetch('https://api.frankfurter.app/latest?from=JPY&to=TWD').then(function(r){ return r.json(); }).then(function(data){
-      var rateHint = document.getElementById('rateHint');
-      if(!manualRate && data && data.rates && data.rates.TWD){
+    var rateInputCNY = document.getElementById('rateInputCNY');
+    var manualRateCNY = false;
+    rateInputCNY.addEventListener('input', function(){
+      manualRateCNY = true;
+      var v = parseFloat(rateInputCNY.value);
+      if(!isNaN(v) && v > 0){ localStorage.setItem('kyushu-rate-cny', v); renderExpenses(); }
+    });
+    /* frankfurter.app（原本用的匯率來源）沒有 TWD，所以改用這個不用金鑰、
+       一次就能拿到 TWD＋CNY 兩個匯率的來源。 */
+    fetch('https://open.er-api.com/v6/latest/JPY').then(function(r){ return r.json(); }).then(function(data){
+      if(!data || data.result !== 'success' || !data.rates) throw new Error('rate fetch failed');
+      if(!manualRate && data.rates.TWD){
         rateInput.value = Math.round(data.rates.TWD * 10000) / 10000;
         localStorage.setItem('kyushu-rate', rateInput.value);
-        rateHint.textContent = '已自動抓取 ' + data.date + ' 的匯率，可自行覆蓋。';
-        renderExpenses();
+        document.getElementById('rateHint').textContent = '已自動抓取最新匯率，可自行覆蓋。';
       }
+      if(!manualRateCNY && data.rates.CNY){
+        rateInputCNY.value = Math.round(data.rates.CNY * 10000) / 10000;
+        localStorage.setItem('kyushu-rate-cny', rateInputCNY.value);
+        document.getElementById('rateHintCNY').textContent = '已自動抓取最新匯率，可自行覆蓋。';
+      }
+      renderExpenses();
     }).catch(function(){
       document.getElementById('rateHint').textContent = '自動抓匯率失敗，先用手動填入的數字（可自行修改）。';
+      document.getElementById('rateHintCNY').textContent = '自動抓匯率失敗，先用手動填入的數字（可自行修改）。';
     });
 
     var cashStart = 0;
@@ -1874,52 +1884,97 @@
       });
     });
 
-    function renderSummary(items, fallbackRate){
-      var byCategory = {}, byDay = {}, total = 0;
+    /* 不管原幣別是什麼，都先換成 JPY 當中間值，再算出 TWD／CNY —— 這樣
+       TWD 記錄也能換出正確的 CNY 金額，不用另外處理。 */
+    function convertAmounts(e, fallbackRate, fallbackRateCNY){
+      var r = e.rate || fallbackRate;
+      var rc = e.rateCNY || fallbackRateCNY;
+      var jpy = e.currency === 'JPY' ? e.amount : (r > 0 ? e.amount / r : 0);
+      var twd = e.currency === 'JPY' ? e.amount * r : e.amount;
+      var cny = jpy * rc;
+      return { jpy: jpy, twd: twd, cny: cny };
+    }
+    var PIE_PALETTE = ['indigo', 'persimmon', 'moss', 'sand', 'plum', 'neutral'];
+    function pieChartHtml(byCategory, byCategoryCNY, total){
+      var keys = Object.keys(byCategory).sort(function(a, b){ return byCategory[b] - byCategory[a]; });
+      if(!keys.length){ return '<p class="wx-empty">還沒有紀錄。</p>'; }
+      var offset = 0;
+      var stops = keys.map(function(k, i){
+        var pct = total > 0 ? (byCategory[k] / total * 100) : 0;
+        var seg = 'var(--' + PIE_PALETTE[i % PIE_PALETTE.length] + ') ' + offset.toFixed(2) + '% ' + (offset + pct).toFixed(2) + '%';
+        offset += pct;
+        return seg;
+      }).join(', ');
+      var legend = keys.map(function(k, i){
+        var color = PIE_PALETTE[i % PIE_PALETTE.length];
+        return '<div class="pie-legend-row"><span class="pie-swatch" style="background:var(--' + color + ')"></span>' +
+          '<span class="pie-legend-label">' + escapeHtml(k) + '</span>' +
+          '<span class="pie-legend-amt">NT$' + fmt(byCategory[k]) + '<br>CN¥' + fmt(byCategoryCNY[k] || 0) + '</span></div>';
+      }).join('');
+      return '<div class="pie-chart-wrap"><div class="pie-chart" style="background:conic-gradient(' + stops + ')"></div>' +
+        '<div class="pie-legend">' + legend + '</div></div>';
+    }
+    function barChartHtml(byDay, byDayCNY){
+      var keys = dayOrder.filter(function(d){ return byDay[d]; });
+      if(!keys.length){ return '<p class="wx-empty">還沒有紀錄。</p>'; }
+      var max = Math.max.apply(null, keys.map(function(k){ return byDay[k]; }));
+      return '<div class="bar-chart">' + keys.map(function(day){
+        var pct = max > 0 ? Math.round(byDay[day] / max * 100) : 0;
+        var color = DAY_COLOR_MAP[day] || 'indigo';
+        return '<div class="bar-chart-row">' +
+          '<span class="bar-chart-label">' + escapeHtml(day.split('（')[0]) + '</span>' +
+          '<span class="bar-chart-track"><span class="bar-chart-fill" style="width:' + pct + '%;background:var(--' + color + ')"></span></span>' +
+          '<span class="bar-chart-amt">NT$' + fmt(byDay[day]) + '<br>CN¥' + fmt(byDayCNY[day] || 0) + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+    function renderSummary(items, fallbackRate, fallbackRateCNY){
+      var byCategory = {}, byCategoryCNY = {}, byDay = {}, byDayCNY = {}, total = 0, totalCNY = 0;
       items.forEach(function(e){
-        var r = e.rate || fallbackRate;
-        var twd = e.currency === 'JPY' ? e.amount * r : e.amount;
-        total += twd;
-        byCategory[e.category] = (byCategory[e.category] || 0) + twd;
-        byDay[e.day] = (byDay[e.day] || 0) + twd;
+        var conv = convertAmounts(e, fallbackRate, fallbackRateCNY);
+        total += conv.twd;
+        totalCNY += conv.cny;
+        byCategory[e.category] = (byCategory[e.category] || 0) + conv.twd;
+        byCategoryCNY[e.category] = (byCategoryCNY[e.category] || 0) + conv.cny;
+        byDay[e.day] = (byDay[e.day] || 0) + conv.twd;
+        byDayCNY[e.day] = (byDayCNY[e.day] || 0) + conv.cny;
       });
       var card = document.getElementById('summaryCard');
       if(items.length === 0){ card.innerHTML = '<p class="wx-empty">還沒有紀錄。</p>'; return; }
-      function rows(obj, order){
-        var keys = order ? order.filter(function(k){ return obj[k]; }) : Object.keys(obj).sort(function(a,b){ return obj[b]-obj[a]; });
-        var max = Math.max.apply(null, keys.map(function(k){ return obj[k]; }));
-        return keys.map(function(k){
-          var pct = max > 0 ? Math.round(obj[k] / max * 100) : 0;
-          return '<div class="summary-bar-row"><span>' + escapeHtml(k) + '</span>' +
-            '<span class="summary-bar-track"><span class="summary-bar-fill" style="width:' + pct + '%"></span></span>' +
-            '<span class="sb-amt">NT$' + fmt(obj[k]) + '</span></div>';
-        }).join('');
-      }
       card.innerHTML =
-        '<div class="summary-total"><span class="st-label">目前總花費（約）</span><span class="st-amt tnum">NT$ ' + fmt(total) + '</span></div>' +
-        '<div class="summary-group"><h4>依類別</h4>' + rows(byCategory) + '</div>' +
-        '<div class="summary-group"><h4>依日期</h4>' + rows(byDay, dayOrder) + '</div>';
+        '<div class="summary-total"><span class="st-label">目前總花費（約）</span>' +
+          '<span class="st-amt tnum">NT$ ' + fmt(total) + '　CN¥ ' + fmt(totalCNY) + '</span></div>' +
+        '<div class="summary-columns">' +
+          '<div class="summary-group"><h4>依類別</h4>' + pieChartHtml(byCategory, byCategoryCNY, total) + '</div>' +
+          '<div class="summary-group"><h4>依日期</h4>' + barChartHtml(byDay, byDayCNY) + '</div>' +
+        '</div>';
     }
     function renderExpenses(){
       var rate = parseFloat(rateInput.value) || parseFloat(localStorage.getItem('kyushu-rate')) || 0.21;
+      var rateCNY = parseFloat(rateInputCNY.value) || parseFloat(localStorage.getItem('kyushu-rate-cny')) || 0.042;
       var items = expenseItems;
       var byDate = {};
-      var totalTWD = 0;
+      var totalTWD = 0, totalCNY = 0;
       items.forEach(function(e){
-        var r = e.rate || rate;
-        totalTWD += e.currency === 'JPY' ? e.amount * r : e.amount;
+        var conv = convertAmounts(e, rate, rateCNY);
+        totalTWD += conv.twd;
+        totalCNY += conv.cny;
         (byDate[e.day] = byDate[e.day] || []).push(e);
       });
       var container = document.getElementById('expByDate');
       container.innerHTML = '';
       dayOrder.forEach(function(day){
         if(!byDate[day]) return;
+        var color = DAY_COLOR_MAP[day] || 'indigo';
         var group = document.createElement('div');
-        group.className = 'exp-date-group';
+        group.className = 'exp-date-group border-' + color;
         var rowsHtml = byDate[day].map(function(e){
-          var r = e.rate || rate;
-          var amtOther = e.currency === 'JPY' ? (e.amount * r) : (r > 0 ? e.amount / r : 0);
-          return '<div class="exp-row" data-exp-id="' + e.id + '">' +
+          var conv = convertAmounts(e, rate, rateCNY);
+          var primary = e.currency === 'JPY' ? ('¥' + fmt(e.amount)) : ('NT$' + fmt(e.amount));
+          var secondary = e.currency === 'JPY'
+            ? ('≈ NT$' + fmt(conv.twd) + '／CN¥' + fmt(conv.cny))
+            : ('≈ ¥' + fmt(conv.jpy) + '／CN¥' + fmt(conv.cny));
+          return '<div class="exp-row border-' + color + '" data-exp-id="' + e.id + '">' +
             '<div class="exp-main">' +
               '<div class="exp-item">' + escapeHtml(e.item || '（未命名）') + '</div>' +
               '<div class="exp-meta"><span>' + e.category + '</span><span>' + e.method + '</span>' +
@@ -1927,8 +1982,7 @@
                 (e.receiptUrl ? '<a class="receipt-thumb" href="' + escapeHtml(e.receiptUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(e.receiptUrl) + '" alt="">收據</a>' : '') +
               '</div>' +
             '</div>' +
-            '<div class="exp-amt">' + (e.currency === 'JPY' ? ('¥' + fmt(e.amount)) : ('NT$' + fmt(e.amount))) +
-              '<span class="sec">≈ ' + (e.currency === 'JPY' ? ('NT$' + fmt(amtOther)) : ('¥' + fmt(amtOther))) + '</span></div>' +
+            '<div class="exp-amt">' + primary + '<span class="sec">' + secondary + '</span></div>' +
             '<div class="row-actions">' +
               '<button class="edit-btn" data-edit-exp="' + e.id + '" aria-label="編輯">' + editIcon + '</button>' +
               '<button class="del-btn" data-del-exp="' + e.id + '" aria-label="刪除">' + delIcon + '</button>' +
@@ -1938,8 +1992,8 @@
         group.innerHTML = '<h4>' + day + '</h4>' + rowsHtml;
         container.appendChild(group);
       });
-      document.getElementById('expSummary').textContent = items.length + ' 筆紀錄・總計約 NT$ ' + fmt(totalTWD);
-      renderSummary(items, rate);
+      document.getElementById('expSummary').textContent = items.length + ' 筆紀錄・總計約 NT$ ' + fmt(totalTWD) + '／CN¥ ' + fmt(totalCNY);
+      renderSummary(items, rate, rateCNY);
       renderCashBalance();
     }
     renderExpenses();
@@ -2016,6 +2070,7 @@
           currency: groupValue(document.querySelector('.btn-group[data-field="currency"]')),
           amount: amount,
           rate: parseFloat(rateInput.value) || 0.21,
+          rateCNY: parseFloat(rateInputCNY.value) || 0.042,
           method: groupValue(document.querySelector('.btn-group[data-field="method"]')),
           category: groupValue(document.querySelector('.btn-group[data-field="category"]')),
           location: locationInput.value.trim(),
@@ -2337,24 +2392,6 @@
         rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ render(); });
       }
     });
-  })();
-
-  /* ---- style-preview picker wiring (temporary, local-preview only) ---- */
-  (function(){
-    var picker = document.getElementById('stylePicker');
-    if(!picker) return;
-    document.body.classList.add('has-style-picker');
-    var buttons = picker.querySelectorAll('button[data-style2]');
-    function apply(n){
-      if(n === '0'){ document.documentElement.removeAttribute('data-style2'); }
-      else{ document.documentElement.setAttribute('data-style2', n); }
-      buttons.forEach(function(b){ b.classList.toggle('sp-active', b.dataset.style2 === n); });
-      try{ localStorage.setItem('kyushu-style-preview2', n); }catch(e){}
-    }
-    buttons.forEach(function(b){ b.addEventListener('click', function(){ apply(b.dataset.style2); }); });
-    var saved = '0';
-    try{ saved = localStorage.getItem('kyushu-style-preview2') || '0'; }catch(e){}
-    apply(saved);
   })();
 </script>
 </body>
