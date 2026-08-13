@@ -52,11 +52,8 @@
   .itin-stop.border-moss, .exp-row.border-moss{ border-top-color:var(--moss); }
   .itin-stop.border-persimmon, .exp-row.border-persimmon{ border-top-color:var(--persimmon); }
   .itin-stop.border-neutral, .exp-row.border-neutral{ border-top-color:var(--neutral); }
-  .exp-date-group.border-indigo h4{ color:var(--indigo); }
-  .exp-date-group.border-sand h4{ color:var(--sand); }
-  .exp-date-group.border-moss h4{ color:var(--moss); }
-  .exp-date-group.border-persimmon h4{ color:var(--persimmon); }
-  .exp-date-group.border-neutral h4{ color:var(--neutral); }
+  /* 明細的日期標題固定用黑色字，顏色只留給下面的 records */
+  .exp-date-group h4{ color:var(--ink); }
 
   /* 清單／連結：待辦、打包、連結各自用不同顏色。用重新指定 --indigo 的方式，
      讓該區塊裡所有原本吃 --indigo 的元件（邊條、按鈕、勾選框強調色…）自動
@@ -261,7 +258,12 @@
   .day-card{display:flex;flex-direction:column;gap:1.3rem;}
   .slot-block .slot-head{font-family:var(--font-display);font-size:0.92rem;font-weight:700;color:var(--ink-soft);margin-bottom:0.6rem;}
   .slot-stops{display:flex;flex-direction:column;gap:0.7rem;}
-  .itin-stop{display:flex;gap:0.9rem;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0.9rem 1rem;box-shadow:var(--shadow);}
+  .itin-stop{position:relative;display:flex;gap:0.9rem;background:var(--surface);border:1px solid var(--line);border-top-width:6px;border-radius:16px;padding:0.9rem 2.6rem 0.9rem 1rem;box-shadow:var(--shadow);}
+  .ia-drag{position:absolute;top:0.5rem;right:0.5rem;width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--ink-faint);cursor:grab;touch-action:none;border-radius:8px;padding:0;}
+  .ia-drag:hover{background:var(--surface-2);color:var(--ink-soft);}
+  .ia-drag:active{cursor:grabbing;}
+  .itin-stop.itin-dragging{opacity:0.55;}
+  .drag-placeholder{border:2px dashed var(--line-strong);border-radius:16px;background:var(--surface-2);}
   .itin-stop-photo{flex:none;width:80px;height:80px;border-radius:12px;overflow:hidden;background:var(--surface-2);}
   .itin-stop-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .itin-stop-body{flex:1;min-width:0;}
@@ -281,6 +283,10 @@
   .itin-edit-form input, .itin-edit-form textarea{font:inherit;font-size:0.86rem;padding:0.5rem 0.65rem;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);width:100%;}
   .itin-edit-form textarea{resize:vertical;min-height:3rem;}
   .itin-edit-form label{font-size:0.72rem;color:var(--ink-faint);}
+  .itin-move-row{display:flex;flex-direction:column;gap:0.35rem;padding:0.6rem;background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;}
+  .itin-move-selects{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+  .itin-move-selects select{font:inherit;font-size:0.82rem;padding:0.4rem 0.5rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);flex:1;min-width:6.5rem;}
+  .itin-move-selects .ie-move-btn{flex:none;font-size:0.8rem;font-weight:600;padding:0.4rem 0.9rem;border-radius:999px;border:1px solid var(--indigo);background:var(--surface);color:var(--indigo);cursor:pointer;}
   .itin-edit-actions{display:flex;gap:0.6rem;margin-top:0.2rem;}
   .itin-edit-actions button{font-size:0.82rem;font-weight:600;padding:0.45rem 1.1rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;}
   .itin-edit-actions .ie-save{background:var(--indigo);border-color:var(--indigo);color:var(--surface);}
@@ -309,6 +315,7 @@
   /* ---- button-group (used in expenses / checklist forms) ---- */
   .btn-group{display:flex;flex-wrap:wrap;gap:0.4rem;}
   .btn-group button{font-size:0.82rem;padding:0.45rem 0.85rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;}
+  .cat-icon{margin-right:0.3rem;}
   .btn-group button:hover{border-color:var(--line-strong);}
   .btn-group button.active{background:var(--indigo);border-color:var(--indigo);color:var(--surface);font-weight:600;}
   .btn-group button:focus-visible{outline:2px solid var(--indigo);outline-offset:1px;}
@@ -329,7 +336,7 @@
   .local-note{font-size:0.76rem;color:var(--ink-faint);background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;padding:0.55rem 0.75rem;}
 
   .exp-list, .chk-list{display:flex;flex-direction:column;gap:0.5rem;}
-  .exp-row{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0.7rem 0.9rem;display:flex;align-items:center;gap:0.7rem;box-shadow:var(--shadow);}
+  .exp-row{background:var(--surface);border:1px solid var(--line);border-top-width:6px;border-radius:14px;padding:0.7rem 0.9rem;display:flex;align-items:center;gap:0.7rem;box-shadow:var(--shadow);}
   .exp-row .exp-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:0.15rem;}
   .exp-row .exp-item{font-weight:700;font-size:0.9rem;}
   .exp-row .exp-meta{font-size:0.74rem;color:var(--ink-faint);display:flex;gap:0.45rem;flex-wrap:wrap;}
@@ -756,7 +763,7 @@
           <div class="field">
             <label>日期</label>
             <div class="btn-group" data-field="day">
-              <button type="button" class="active" data-value="8/26（三）">8/26</button>
+              <button type="button" data-value="8/26（三）">8/26</button>
               <button type="button" data-value="8/27（四）">8/27</button>
               <button type="button" data-value="8/28（五）">8/28</button>
               <button type="button" data-value="8/29（六）">8/29</button>
@@ -764,6 +771,18 @@
               <button type="button" data-value="8/31（一）">8/31</button>
               <button type="button" data-value="9/1（二）">9/1</button>
             </div>
+          </div>
+
+          <div class="field">
+            <label>類別</label>
+            <div class="cat-manager" data-catdoc="expenseCategories" data-catfield="category" data-catversion="icons-2026-08"
+                 data-catdefault='["機票","住宿","交通","早餐","午餐","晚餐","點心","觀光","購物","其他"]'></div>
+          </div>
+
+          <div class="field">
+            <label>金額</label>
+            <input type="text" inputmode="decimal" id="expAmount" placeholder="例如：583+256">
+            <div class="calc-preview" id="expAmountPreview"></div>
           </div>
 
           <div class="field">
@@ -775,25 +794,13 @@
           </div>
 
           <div class="field">
-            <label>金額</label>
-            <input type="text" inputmode="decimal" id="expAmount" placeholder="例如：583+256">
-            <div class="calc-preview" id="expAmountPreview"></div>
-          </div>
-
-          <div class="field">
             <label>支付方式</label>
             <div class="btn-group" data-field="method">
-              <button type="button" class="active" data-value="現金">現金</button>
-              <button type="button" data-value="信用卡">信用卡</button>
-              <button type="button" data-value="Suica">Suica</button>
-              <button type="button" data-value="其他">其他</button>
+              <button type="button" class="active" data-value="現金">💴 現金</button>
+              <button type="button" data-value="信用卡">💳 信用卡</button>
+              <button type="button" data-value="日本儲值卡">🚃 日本儲值卡</button>
+              <button type="button" data-value="其他">✨ 其他</button>
             </div>
-          </div>
-
-          <div class="field">
-            <label>類別</label>
-            <div class="cat-manager" data-catdoc="expenseCategories" data-catfield="category"
-                 data-catdefault='["餐飲","住宿","交通","門票體驗","購物","寶寶用品","其他"]'></div>
           </div>
 
           <div class="field has-suggest">
@@ -855,8 +862,8 @@
           </div>
           <div class="field">
             <label>分類</label>
-            <div class="cat-manager" data-catdoc="todoCategories" data-catfield="todoCategory"
-                 data-catdefault='["簽證證件","預約","採買","其他"]'></div>
+            <div class="cat-manager" data-catdoc="todoCategories" data-catfield="todoCategory" data-catversion="icons-2026-08"
+                 data-catdefault='["證件","寶寶","行前採買","行程","餐廳","購物","其他"]'></div>
           </div>
           <button class="btn-primary" id="todoAddBtn" type="button">新增待辦</button>
         </div>
@@ -872,8 +879,8 @@
           </div>
           <div class="field">
             <label>分類</label>
-            <div class="cat-manager" data-catdoc="packCategories" data-catfield="packCategory"
-                 data-catdefault='["寶寶用品","衣物","藥品","證件","3C","其他"]'></div>
+            <div class="cat-manager" data-catdoc="packCategories" data-catfield="packCategory" data-catversion="icons-2026-08"
+                 data-catdefault='["證件","寶寶","衣物","3C","藥品","其他"]'></div>
           </div>
           <div class="field">
             <label>數量</label>
@@ -1147,7 +1154,6 @@
     '8/26（三）':'indigo', '8/27（四）':'sand', '8/28（五）':'moss', '8/29（六）':'persimmon',
     '8/30（日）':'indigo', '8/31（一）':'sand', '9/1（二）':'neutral'
   };
-
   /* ---- small safe arithmetic evaluator (no eval): supports + - * / ( ) and decimals ---- */
   function safeEval(expr){
     var s = String(expr).replace(/,/g, '').trim();
@@ -1208,6 +1214,26 @@
   }
   document.querySelectorAll('.btn-group').forEach(wireButtonGroup);
 
+  /* 記帳新增的「日期」預設選今天（如果今天落在這趟行程 8/26–9/1 裡）；
+     還沒到或已經過了，就先選 8/26。 */
+  (function(){
+    var dayGroup = document.querySelector('[data-subtabpanel="expAdd"] .btn-group[data-field="day"]');
+    if(!dayGroup) return;
+    var tripDates = [
+      ['8/26（三）', 2026, 7, 26], ['8/27（四）', 2026, 7, 27], ['8/28（五）', 2026, 7, 28],
+      ['8/29（六）', 2026, 7, 29], ['8/30（日）', 2026, 7, 30], ['8/31（一）', 2026, 7, 31],
+      ['9/1（二）', 2026, 8, 1]
+    ];
+    var now = new Date();
+    var match = tripDates.filter(function(t){
+      return t[1] === now.getFullYear() && t[2] === now.getMonth() && t[3] === now.getDate();
+    })[0];
+    var defaultValue = match ? match[0] : '8/26（三）';
+    dayGroup.querySelectorAll('button').forEach(function(b){
+      b.classList.toggle('active', b.dataset.value === defaultValue);
+    });
+  })();
+
   /* ---- 記帳新增表單的強調色跟著選到的日期換（重新指定 --indigo/--indigo-soft，
      整個表單裡吃這兩個變數的東西全部一起換色）。indigo 那幾天本來就是預設色，
      直接 removeProperty 而不是設成 var(--indigo)，避免自我參照造成的
@@ -1229,15 +1255,33 @@
       }
     }
     dayGroup.addEventListener('click', function(){ setTimeout(applyExpDayColor, 0); });
-    window.__applyExpDayColor = applyExpDayColor;
     applyExpDayColor();
   })();
+
+  /* 已知類別名稱對應的彩色小 icon（記帳類別／支付方式／待辦事項／打包清單共用同一份；
+     使用者自己新增的自訂類別沒有對應 icon 時就不加，純文字顯示） */
+  var CATEGORY_ICONS = {
+    '機票':'✈️', '住宿':'🏨', '交通':'🚗', '早餐':'🍳', '午餐':'🍱', '晚餐':'🍽️',
+    '點心':'🍡', '觀光':'🎡', '購物':'🛍️',
+    '現金':'💴', '信用卡':'💳', '日本儲值卡':'🚃',
+    '證件':'🛂', '寶寶':'👶', '行前採買':'🛒', '行程':'🗺️', '餐廳':'🍽️',
+    '衣物':'👕', '3C':'🔌', '藥品':'💊',
+    '其他':'✨'
+  };
+  function catIconHtml(name){
+    var icon = CATEGORY_ICONS[name];
+    return icon ? '<span class="cat-icon">' + icon + '</span>' : '';
+  }
 
   /* ---- reusable: custom + reorderable category manager, synced to Firestore settings docs ---- */
   function setupCategoryManager(container){
     var field = container.dataset.catfield;
     var docName = container.dataset.catdoc;
     var defaultList = JSON.parse(container.dataset.catdefault);
+    /* 只有標了 data-catversion 的（這次改了預設類別的那幾個）才會在版本不符時
+       強制重設成新的預設清單；沒標的（例如打包箱子）維持原本「雲端已有資料就用
+       雲端資料」的邏輯，不會動到使用者自己命名的箱子。 */
+    var catVersion = container.dataset.catversion || null;
     container.innerHTML =
       '<div class="btn-group cat-chips" data-field="' + field + '"></div>' +
       '<div class="cat-tools">' +
@@ -1263,7 +1307,7 @@
         var b = document.createElement('button');
         b.type = 'button';
         b.dataset.value = name;
-        b.textContent = name;
+        b.innerHTML = catIconHtml(name) + escapeHtml(name);
         if(prevActive ? prevActive === name : idx === 0){ b.classList.add('active'); }
         chips.appendChild(b);
       });
@@ -1322,11 +1366,15 @@
       var fns = window.fb.fns;
       var ref = fns.doc(window.fb.col('settings'), docName);
       fns.onSnapshot(ref, function(snap){
-        if(snap.exists() && snap.data().items && snap.data().items.length){
-          currentList = snap.data().items;
+        var data = snap.exists() ? snap.data() : null;
+        var stale = catVersion && (!data || data.catVersion !== catVersion);
+        if(data && data.items && data.items.length && !stale){
+          currentList = data.items;
         } else {
           currentList = defaultList.slice();
-          fns.setDoc(ref, { items: currentList });
+          var payload = { items: currentList };
+          if(catVersion){ payload.catVersion = catVersion; }
+          fns.setDoc(ref, payload);
         }
         renderChips(true);
         renderReorder();
@@ -1464,6 +1512,13 @@
         ? '<div class="itin-stop-photo"><img src="' + escapeHtml(userPhoto) + '" alt=""></div>'
         : '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>';
       return '<div class="itin-stop border-' + color + '" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
+        '<button type="button" class="ia-drag" aria-label="拖曳排序" title="按住拖曳，可以搬到其他時段">' +
+          '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
+            '<circle cx="7" cy="4" r="1.5"/><circle cx="13" cy="4" r="1.5"/>' +
+            '<circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/>' +
+            '<circle cx="7" cy="16" r="1.5"/><circle cx="13" cy="16" r="1.5"/>' +
+          '</svg>' +
+        '</button>' +
         photoHtml +
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
           '<div class="itin-stop-head"><span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
@@ -1478,8 +1533,14 @@
         '</div></div>' +
       '</div>';
     }
-    function editFormHtml(stop){
+    function editFormHtml(stop, dayId, slotKey){
       var photos = stop.photos || [];
+      var dayOptions = DAYS_SEED.map(function(s){
+        return '<option value="' + s.id + '"' + (s.id === dayId ? ' selected' : '') + '>' + s.date + s.weekday + '</option>';
+      }).join('');
+      var slotOptions = SLOT_ORDER.map(function(k){
+        return '<option value="' + k + '"' + (k === slotKey ? ' selected' : '') + '>' + SLOT_LABELS[k] + '</option>';
+      }).join('');
       return '<div class="itin-edit-form">' +
         '<div><label>地點名稱</label><input type="text" class="ie-name" value="' + escapeHtml(stop.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
         '<div class="geo-suggest-list ie-suggest"></div>' +
@@ -1489,6 +1550,13 @@
           '<input type="file" accept="image/*" class="ie-photo-input">' +
           '<p class="ie-photo-status"></p>' +
           '<div class="ie-photo-gallery">' + photoGalleryHtml(photos) + '</div>' +
+        '</div>' +
+        '<div class="itin-move-row"><label>搬到其他天／時段</label>' +
+          '<div class="itin-move-selects">' +
+            '<select class="ie-move-day">' + dayOptions + '</select>' +
+            '<select class="ie-move-slot">' + slotOptions + '</select>' +
+            '<button type="button" class="ie-move-btn">搬移</button>' +
+          '</div>' +
         '</div>' +
         '<div class="itin-edit-actions">' +
           '<button type="button" class="ie-save">儲存</button>' +
@@ -1528,11 +1596,20 @@
       persistDay(dayId);
       renderDay(dayId);
     }
+    function moveStop(fromDayId, fromSlotKey, fromIdx, toDayId, toSlotKey){
+      var stopObj = DAYS[fromDayId].slots[fromSlotKey].splice(fromIdx, 1)[0];
+      if(!DAYS[toDayId].slots[toSlotKey]){ DAYS[toDayId].slots[toSlotKey] = []; }
+      DAYS[toDayId].slots[toSlotKey].push(stopObj);
+      persistDay(fromDayId);
+      if(toDayId !== fromDayId){ persistDay(toDayId); }
+      renderDay(fromDayId);
+      redrawOverviewMap();
+    }
     function enterEdit(cardEl, dayId, slotKey, idx){
       var stop = DAYS[dayId].slots[slotKey][idx] || {name:'', time:'', note:''};
       if(!stop.photos){ stop.photos = []; }
       var body = cardEl.querySelector('.itin-stop-body');
-      body.innerHTML = editFormHtml(stop);
+      body.innerHTML = editFormHtml(stop, dayId, slotKey);
       var nameInput = body.querySelector('.ie-name');
       setupLocationSearch(nameInput, body.querySelector('.ie-suggest'));
       if(stop.lat != null){ nameInput.dataset.lat = stop.lat; nameInput.dataset.lon = stop.lon; }
@@ -1580,6 +1657,12 @@
         else if(stop.lat != null){ updated.lat = stop.lat; updated.lon = stop.lon; }
         if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
         saveStop(dayId, slotKey, idx, updated);
+      });
+      body.querySelector('.ie-move-btn').addEventListener('click', function(){
+        var toDayId = body.querySelector('.ie-move-day').value;
+        var toSlotKey = body.querySelector('.ie-move-slot').value;
+        if(toDayId === dayId && toSlotKey === slotKey) return;
+        moveStop(dayId, slotKey, idx, toDayId, toSlotKey);
       });
       body.querySelector('.ie-cancel').addEventListener('click', function(){ renderDay(dayId); });
       body.querySelector('.ie-del').addEventListener('click', function(){
@@ -1679,7 +1762,7 @@
           return html;
         }).join('');
         block.innerHTML = '<h4 class="slot-head">' + SLOT_LABELS[slotKey] + '</h4>' +
-          '<div class="slot-stops">' + stopsHtml + '</div>' +
+          '<div class="slot-stops" data-slot="' + slotKey + '">' + stopsHtml + '</div>' +
           '<button class="slot-add" type="button" data-slot="' + slotKey + '">＋ 新增地點</button>';
         card.appendChild(block);
       });
@@ -1746,6 +1829,103 @@
         }, function(err){ console.error('itinerary day ' + seed.id + ' sync error', err); });
       });
     });
+
+    /* ---- 拖曳排序：可以把地點卡片拖到同一天的其他時段（block）；#dayRender
+       每次 renderDay 都會整個重畫，所以這裡的事件監聽只掛在 document／host 上
+       一次，用 delegation 抓 .ia-drag，不會因為重畫而重複綁定或失效。
+       跨天搬移不用拖曳，走編輯表單裡的「移動到」。 ---- */
+    (function(){
+      var host = document.getElementById('dayRender');
+      var dragState = null;
+
+      function endDrag(commit){
+        if(!dragState) return;
+        var cardEl = dragState.cardEl, placeholder = dragState.placeholder;
+        var targetContainer = placeholder.parentNode;
+        var targetSlot = targetContainer ? targetContainer.dataset.slot : dragState.sourceSlot;
+        var targetIdx = targetContainer ? Array.prototype.indexOf.call(targetContainer.children, placeholder) : dragState.sourceIdx;
+        var dayId = dragState.dayId, sourceSlot = dragState.sourceSlot, sourceIdx = dragState.sourceIdx;
+
+        cardEl.remove();
+        placeholder.remove();
+        dragState = null;
+
+        if(!commit || (sourceSlot === targetSlot && sourceIdx === targetIdx)){
+          renderDay(dayId);
+          return;
+        }
+        var stopObj = DAYS[dayId].slots[sourceSlot].splice(sourceIdx, 1)[0];
+        if(!DAYS[dayId].slots[targetSlot]){ DAYS[dayId].slots[targetSlot] = []; }
+        DAYS[dayId].slots[targetSlot].splice(targetIdx, 0, stopObj);
+        persistDay(dayId);
+        renderDay(dayId);
+      }
+
+      host.addEventListener('pointerdown', function(ev){
+        var handle = ev.target.closest('.ia-drag');
+        if(!handle) return;
+        var cardEl = handle.closest('.itin-stop');
+        if(!cardEl) return;
+        ev.preventDefault();
+
+        var rect = cardEl.getBoundingClientRect();
+        var placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = rect.height + 'px';
+        cardEl.parentNode.insertBefore(placeholder, cardEl);
+
+        dragState = {
+          cardEl: cardEl,
+          placeholder: placeholder,
+          dayId: cardEl.dataset.day,
+          sourceSlot: cardEl.dataset.slot,
+          sourceIdx: Number(cardEl.dataset.idx),
+          offsetX: ev.clientX - rect.left,
+          offsetY: ev.clientY - rect.top,
+          pointerId: ev.pointerId
+        };
+        cardEl.classList.add('itin-dragging');
+        cardEl.style.position = 'fixed';
+        cardEl.style.width = rect.width + 'px';
+        cardEl.style.left = rect.left + 'px';
+        cardEl.style.top = rect.top + 'px';
+        cardEl.style.margin = '0';
+        cardEl.style.zIndex = '300';
+        cardEl.style.pointerEvents = 'none';
+        document.body.appendChild(cardEl);
+        try{ handle.setPointerCapture(ev.pointerId); }catch(e){}
+      });
+
+      document.addEventListener('pointermove', function(ev){
+        if(!dragState || ev.pointerId !== dragState.pointerId) return;
+        var cardEl = dragState.cardEl;
+        cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
+        cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
+
+        var el = document.elementFromPoint(ev.clientX, ev.clientY);
+        if(!el) return;
+        var block = el.closest('.slot-block');
+        if(!block || !host.contains(block)) return;
+        var container = block.querySelector('.slot-stops');
+        var overStop = el.closest('.itin-stop');
+        if(overStop && container.contains(overStop) && overStop !== cardEl){
+          var r = overStop.getBoundingClientRect();
+          var before = (ev.clientY - r.top) < r.height / 2;
+          container.insertBefore(dragState.placeholder, before ? overStop : overStop.nextSibling);
+        } else if(!overStop){
+          container.appendChild(dragState.placeholder);
+        }
+      });
+
+      document.addEventListener('pointerup', function(ev){
+        if(!dragState || ev.pointerId !== dragState.pointerId) return;
+        endDrag(true);
+      });
+      document.addEventListener('pointercancel', function(ev){
+        if(!dragState || ev.pointerId !== dragState.pointerId) return;
+        endDrag(false);
+      });
+    })();
   })();
 </script>
 
@@ -2010,7 +2190,7 @@
           '<select class="ee-day">' + selectOptions(dayOrder, e.day) + '</select>' +
           '<select class="ee-currency">' + selectOptions(['JPY', 'TWD'], e.currency) + '</select>' +
           '<input type="text" class="ee-amount" inputmode="decimal" style="width:6rem;" value="' + escapeHtml(String(e.amount)) + '">' +
-          '<select class="ee-method">' + selectOptions(['現金', '信用卡', 'Suica', '其他'], e.method) + '</select>' +
+          '<select class="ee-method">' + selectOptions(['現金', '信用卡', '日本儲值卡', 'Suica', '其他'], e.method) + '</select>' +
           '<select class="ee-category">' + selectOptions(catOptions, e.category) + '</select>' +
         '</div>' +
         '<input type="text" class="ee-location" placeholder="地點（選填）" value="' + escapeHtml(e.location || '') + '">' +
