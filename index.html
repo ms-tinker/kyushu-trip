@@ -258,8 +258,8 @@
   .day-card{display:flex;flex-direction:column;gap:1.3rem;}
   .slot-block .slot-head{font-family:var(--font-display);font-size:0.92rem;font-weight:700;color:var(--ink-soft);margin-bottom:0.6rem;}
   .slot-stops{display:flex;flex-direction:column;gap:0.7rem;}
-  .itin-stop{position:relative;display:flex;gap:0.9rem;background:var(--surface);border:1px solid var(--line);border-top-width:6px;border-radius:16px;padding:0.9rem 2.6rem 0.9rem 1rem;box-shadow:var(--shadow);}
-  .ia-drag{position:absolute;top:0.5rem;right:0.5rem;width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--ink-faint);cursor:grab;touch-action:none;border-radius:8px;padding:0;}
+  .itin-stop{position:relative;display:flex;gap:0.9rem;background:var(--surface);border:1px solid var(--line);border-top-width:6px;border-radius:16px;padding:0.9rem 1rem 0.9rem 2.6rem;box-shadow:var(--shadow);}
+  .ia-drag{position:absolute;top:0.5rem;left:0.5rem;width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--ink-faint);cursor:grab;touch-action:none;border-radius:8px;padding:0;}
   .ia-drag:hover{background:var(--surface-2);color:var(--ink-soft);}
   .ia-drag:active{cursor:grabbing;}
   .itin-stop.itin-dragging{opacity:0.55;}
@@ -315,7 +315,7 @@
   /* ---- button-group (used in expenses / checklist forms) ---- */
   .btn-group{display:flex;flex-wrap:wrap;gap:0.4rem;}
   .btn-group button{font-size:0.82rem;padding:0.45rem 0.85rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;}
-  .cat-icon{margin-right:0.3rem;}
+  .cat-icon{width:1.15rem;height:1.15rem;margin-right:0.3rem;vertical-align:-0.28rem;flex:none;}
   .btn-group button:hover{border-color:var(--line-strong);}
   .btn-group button.active{background:var(--indigo);border-color:var(--indigo);color:var(--surface);font-weight:600;}
   .btn-group button:focus-visible{outline:2px solid var(--indigo);outline-offset:1px;}
@@ -343,6 +343,18 @@
   .exp-row .exp-amt{text-align:right;font-family:var(--font-display);font-weight:700;font-size:0.98rem;white-space:nowrap;}
   .exp-row .exp-amt .sec{display:block;font-size:0.72rem;font-family:var(--font-body);color:var(--ink-faint);font-weight:400;}
 
+  .chk-list-head{display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.6rem;}
+  .chk-collapse-btns{display:flex;gap:0.5rem;}
+  .chk-collapse-btns button{font-size:0.74rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);padding:0.3rem 0.7rem;border-radius:999px;cursor:pointer;}
+  .chk-group{margin-bottom:0.9rem;}
+  .chk-group summary{display:flex;align-items:center;gap:0.5rem;cursor:pointer;list-style:none;font-size:1.05rem;font-weight:700;color:var(--ink);padding:0.3rem 0;}
+  .chk-group summary::-webkit-details-marker{display:none;}
+  .chk-group summary::before{content:"▸";font-size:0.8rem;color:var(--ink-faint);transition:transform 0.15s ease;flex:none;}
+  .chk-group[open] summary::before{transform:rotate(90deg);}
+  .chk-group summary .cat-icon{width:1.5rem;height:1.5rem;margin-right:0;}
+  .chk-group-title{flex:1;}
+  .chk-group-count{font-size:0.76rem;font-weight:400;color:var(--ink-faint);white-space:nowrap;}
+  .chk-group-body{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;padding-left:0.3rem;}
   .chk-row{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:0.7rem;box-shadow:var(--shadow);}
   .chk-row input[type="checkbox"]{width:1.15rem;height:1.15rem;accent-color:var(--indigo);flex:none;}
   .chk-row .chk-text{flex:1;min-width:0;font-size:0.88rem;}
@@ -393,7 +405,8 @@
   .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.2rem 1.3rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:1.1rem;}
   .summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
   .summary-total .st-label{font-size:0.85rem;color:var(--ink-soft);}
-  .summary-total .st-amt{font-family:var(--font-display);font-size:1.3rem;font-weight:700;}
+  .summary-total .st-amt{font-family:var(--font-display);font-size:1.3rem;font-weight:700;text-align:right;line-height:1.3;}
+  .amt-cny{display:block;font-family:var(--font-body);font-size:0.6em;font-weight:400;color:var(--ink-faint);margin-top:0.3em;}
   .summary-group h4{font-size:0.8rem;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;margin-bottom:0.6rem;}
   .summary-bar-row{display:grid;grid-template-columns:5.4rem 1fr 4.2rem;align-items:center;gap:0.6rem;padding:0.3rem 0;font-size:0.82rem;}
   .summary-bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
@@ -442,6 +455,131 @@
 </style>
 </head>
 <body>
+
+<svg style="display:none" aria-hidden="true">
+  <!-- 手繪風格分類 icon（呼應副食品 app 的畫法：64x64、fill+stroke 分層、暖色調） -->
+  <symbol id="ic-flight" viewBox="0 0 64 64">
+    <path d="M10 34L54 12 34 54l-4-16-16-4z" fill="#bcd9f0" stroke="#4f7a94" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M30 38l6-6" stroke="#4f7a94" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-stay" viewBox="0 0 64 64">
+    <path d="M10 30L32 12l22 18" fill="none" stroke="#b0532a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M16 28h32v22a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V28z" fill="#f3e2c9" stroke="#b0532a" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="27" y="38" width="10" height="14" rx="1.5" fill="#eb9a55" stroke="#8a5a2a" stroke-width="2"/>
+  </symbol>
+  <symbol id="ic-transport" viewBox="0 0 64 64">
+    <path d="M12 40c0-4 2-7 5-9l4-9c1-2 3-3 5-3h12c2 0 4 1 5 3l4 9c3 2 5 5 5 9v6a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2H20v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-6z" fill="#7fa8c9" stroke="#3f6a8a" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="20" cy="46" r="4.5" fill="#3f4a52" stroke="#22282c" stroke-width="1.6"/>
+    <circle cx="44" cy="46" r="4.5" fill="#3f4a52" stroke="#22282c" stroke-width="1.6"/>
+    <path d="M18 30h28" stroke="#3f6a8a" stroke-width="2" opacity=".5"/>
+  </symbol>
+  <symbol id="ic-breakfast" viewBox="0 0 64 64">
+    <path d="M32 12c-11 0-19 9-19 19a19 15 0 0 0 38 0c0-3-1-5-3-6 2-3 1-7-2-9-1-3-4-5-7-5-2-2-5-3-7 1z" fill="#fdf6e3" stroke="#e2c99a" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="34" cy="34" r="10" fill="#f0b13d" stroke="#c9861f" stroke-width="2.6"/>
+    <circle cx="31" cy="31" r="2.6" fill="#fbdb8a" opacity=".8"/>
+  </symbol>
+  <symbol id="ic-lunch" viewBox="0 0 64 64">
+    <rect x="10" y="20" width="44" height="30" rx="5" fill="#d9453a" stroke="#8a2a22" stroke-width="3"/>
+    <rect x="14" y="24" width="18" height="22" rx="2.5" fill="#fdf6e3" stroke="#c9b98a" stroke-width="2"/>
+    <rect x="35" y="24" width="15" height="10" rx="2.5" fill="#7fa851" stroke="#527431" stroke-width="2"/>
+    <rect x="35" y="37" width="15" height="9" rx="2.5" fill="#eb9a55" stroke="#a5763f" stroke-width="2"/>
+  </symbol>
+  <symbol id="ic-dinner" viewBox="0 0 64 64">
+    <circle cx="34" cy="34" r="17" fill="#fdf6e3" stroke="#c9b98a" stroke-width="3"/>
+    <circle cx="34" cy="34" r="9" fill="none" stroke="#c9b98a" stroke-width="1.6" opacity=".6"/>
+    <g stroke="#8a6a3f" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path d="M11 12v12M15 12v12M19 12v12M11 18h8M15 24v28"/>
+    </g>
+  </symbol>
+  <symbol id="ic-snack" viewBox="0 0 64 64">
+    <path d="M32 14v40" stroke="#a5763f" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="32" cy="22" r="8" fill="#f6c9d2" stroke="#c97a8a" stroke-width="2.6"/>
+    <circle cx="32" cy="34" r="8" fill="#fdf6e3" stroke="#c9b98a" stroke-width="2.6"/>
+    <circle cx="32" cy="46" r="8" fill="#7fa851" stroke="#527431" stroke-width="2.6"/>
+  </symbol>
+  <symbol id="ic-sightseeing" viewBox="0 0 64 64">
+    <rect x="10" y="22" width="44" height="30" rx="5" fill="#7fa8c9" stroke="#3f6a8a" stroke-width="3"/>
+    <rect x="24" y="14" width="16" height="10" rx="2.5" fill="#7fa8c9" stroke="#3f6a8a" stroke-width="3"/>
+    <circle cx="32" cy="37" r="10" fill="#eaf3fa" stroke="#3f6a8a" stroke-width="3"/>
+    <circle cx="32" cy="37" r="5" fill="#3f6a8a"/>
+    <circle cx="46" cy="28" r="2" fill="#eaf3fa"/>
+  </symbol>
+  <symbol id="ic-shopping" viewBox="0 0 64 64">
+    <path d="M16 24h32l-3 28a3 3 0 0 1-3 3H22a3 3 0 0 1-3-3l-3-28z" fill="#eb9a55" stroke="#a5763f" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M22 24v-4a10 10 0 0 1 20 0v4" fill="none" stroke="#8a5a2a" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-other" viewBox="0 0 64 64">
+    <path d="M32 10c1 10 4 13 14 14-10 1-13 4-14 14-1-10-4-13-14-14 10-1 13-4 14-14z" fill="#e8c56a" stroke="#b98a24" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M48 40c.6 5 2 6.4 7 7-5 .6-6.4 2-7 7-.6-5-2-6.4-7-7 5-.6 6.4-2 7-7z" fill="#e8c56a" stroke="#b98a24" stroke-width="2"/>
+  </symbol>
+  <symbol id="ic-cash" viewBox="0 0 64 64">
+    <rect x="8" y="20" width="48" height="26" rx="3" fill="#dcefd8" stroke="#5c8a4a" stroke-width="3"/>
+    <circle cx="32" cy="33" r="9" fill="#eef6ec" stroke="#5c8a4a" stroke-width="2"/>
+    <path d="M28 28l4 6 4-6M32 34v5M29 36h6M29 39h6" stroke="#3a6b30" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  </symbol>
+  <symbol id="ic-creditcard" viewBox="0 0 64 64">
+    <rect x="8" y="16" width="48" height="32" rx="5" fill="#8bb0c9" stroke="#4f7a94" stroke-width="3"/>
+    <rect x="8" y="24" width="48" height="7" fill="#2f4a5a"/>
+    <rect x="14" y="38" width="14" height="4" rx="2" fill="#eaf3fa" opacity=".8"/>
+  </symbol>
+  <symbol id="ic-transit" viewBox="0 0 64 64">
+    <rect x="8" y="16" width="48" height="32" rx="8" fill="#6ab5a0" stroke="#3d7a63" stroke-width="3"/>
+    <path d="M22 32a10 10 0 0 1 20 0M26 36a5.5 5.5 0 0 1 12 0" fill="none" stroke="#eaf7f2" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="32" cy="38" r="2" fill="#eaf7f2"/>
+  </symbol>
+  <symbol id="ic-documents" viewBox="0 0 64 64">
+    <rect x="16" y="10" width="32" height="44" rx="3" fill="#3a5a7a" stroke="#22344a" stroke-width="3"/>
+    <circle cx="32" cy="26" r="7" fill="none" stroke="#e8c56a" stroke-width="2.4"/>
+    <path d="M24 44h16M24 49h16" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-baby" viewBox="0 0 64 64">
+    <rect x="22" y="8" width="10" height="6" rx="2" fill="#f0b13d" stroke="#c9861f" stroke-width="2"/>
+    <path d="M20 14h14v6h-14z" fill="#bcd9f0" stroke="#4f7a94" stroke-width="2.6"/>
+    <path d="M18 20h18a4 4 0 0 1 4 4v22a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6V24a4 4 0 0 1 4-4z" fill="#eaf3fa" stroke="#4f7a94" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M14 32h24" stroke="#4f7a94" stroke-width="1.6" opacity=".5"/>
+  </symbol>
+  <symbol id="ic-precart" viewBox="0 0 64 64">
+    <path d="M10 12h6l6 28h26l6-18H20" fill="none" stroke="#a5763f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="26" cy="48" r="4" fill="#8a6a3f" stroke="#5c3f22" stroke-width="1.6"/>
+    <circle cx="42" cy="48" r="4" fill="#8a6a3f" stroke="#5c3f22" stroke-width="1.6"/>
+  </symbol>
+  <symbol id="ic-schedule" viewBox="0 0 64 64">
+    <path d="M14 16h36v4H14z" fill="#7fa8c9" stroke="#3f6a8a" stroke-width="2.6"/>
+    <path d="M12 20l4 30 16 4 16-4 4-30" fill="#eaf3fa" stroke="#3f6a8a" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M32 20v34" stroke="#3f6a8a" stroke-width="1.6" opacity=".4"/>
+    <circle cx="24" cy="32" r="2.4" fill="#d9453a"/>
+    <circle cx="40" cy="38" r="2.4" fill="#d9453a"/>
+  </symbol>
+  <symbol id="ic-restaurant" viewBox="0 0 64 64">
+    <g transform="rotate(-18 32 32)" fill="#c9a876" stroke="#8a6a3f" stroke-width="1.6" stroke-linejoin="round">
+      <rect x="19" y="9" width="3.4" height="14" rx="1.7"/>
+      <rect x="24.5" y="9" width="3.4" height="14" rx="1.7"/>
+      <rect x="30" y="9" width="3.4" height="14" rx="1.7"/>
+      <rect x="18" y="22" width="16" height="4.5" rx="2.2"/>
+      <rect x="23.5" y="25.5" width="5" height="27.5" rx="2.5"/>
+    </g>
+    <g transform="rotate(18 32 32)" fill="#c9a876" stroke="#8a6a3f" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M37 9l11 13-11 3z"/>
+      <rect x="36" y="24" width="5" height="29" rx="2.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-clothing" viewBox="0 0 64 64">
+    <path d="M24 12l8 6 8-6 10 8-6 8-4-2v26a2 2 0 0 1-2 2H26a2 2 0 0 1-2-2V26l-4 2-6-8z" fill="#8bb0c9" stroke="#4f7a94" stroke-width="3" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-electronics" viewBox="0 0 64 64">
+    <rect x="20" y="8" width="24" height="48" rx="5" fill="#3a4a52" stroke="#22282c" stroke-width="3"/>
+    <rect x="24" y="14" width="16" height="30" rx="1.5" fill="#bcd9f0"/>
+    <circle cx="32" cy="49" r="2.6" fill="#7fa8c9"/>
+  </symbol>
+  <symbol id="ic-medicine" viewBox="0 0 64 64">
+    <g transform="rotate(-30 32 34)">
+      <rect x="10" y="26" width="44" height="16" rx="8" fill="#eaf3fa"/>
+      <rect x="14" y="26" width="16" height="16" fill="#e0605a"/>
+      <rect x="10" y="26" width="44" height="16" rx="8" fill="none" stroke="#4f7a94" stroke-width="3"/>
+      <line x1="30" y1="26" x2="30" y2="42" stroke="#4f7a94" stroke-width="2"/>
+    </g>
+  </symbol>
+</svg>
 
 <header class="app-header">
   <p class="eyebrow">九州親子自駕・v3</p>
@@ -796,10 +934,10 @@
           <div class="field">
             <label>支付方式</label>
             <div class="btn-group" data-field="method">
-              <button type="button" class="active" data-value="現金">💴 現金</button>
-              <button type="button" data-value="信用卡">💳 信用卡</button>
-              <button type="button" data-value="日本儲值卡">🚃 日本儲值卡</button>
-              <button type="button" data-value="其他">✨ 其他</button>
+              <button type="button" class="active" data-value="現金"><svg class="cat-icon" viewBox="0 0 64 64"><use href="#ic-cash"></use></svg>現金</button>
+              <button type="button" data-value="信用卡"><svg class="cat-icon" viewBox="0 0 64 64"><use href="#ic-creditcard"></use></svg>信用卡</button>
+              <button type="button" data-value="日本儲值卡"><svg class="cat-icon" viewBox="0 0 64 64"><use href="#ic-transit"></use></svg>日本儲值卡</button>
+              <button type="button" data-value="其他"><svg class="cat-icon" viewBox="0 0 64 64"><use href="#ic-other"></use></svg>其他</button>
             </div>
           </div>
 
@@ -867,7 +1005,13 @@
           </div>
           <button class="btn-primary" id="todoAddBtn" type="button">新增待辦</button>
         </div>
-        <p class="list-progress" id="todoSummary" style="margin-bottom:0.6rem;"></p>
+        <div class="chk-list-head">
+          <p class="list-progress" id="todoSummary"></p>
+          <div class="chk-collapse-btns">
+            <button type="button" class="chk-expand-all" data-list="todoList">全部展開</button>
+            <button type="button" class="chk-collapse-all" data-list="todoList">全部收合</button>
+          </div>
+        </div>
         <div class="chk-list" id="todoList"></div>
       </div>
 
@@ -893,7 +1037,13 @@
           </div>
           <button class="btn-primary" id="packAddBtn" type="button">新增品項</button>
         </div>
-        <p class="list-progress" id="packSummary" style="margin-bottom:0.6rem;"></p>
+        <div class="chk-list-head">
+          <p class="list-progress" id="packSummary"></p>
+          <div class="chk-collapse-btns">
+            <button type="button" class="chk-expand-all" data-list="packList">全部展開</button>
+            <button type="button" class="chk-collapse-all" data-list="packList">全部收合</button>
+          </div>
+        </div>
         <div class="chk-list" id="packList"></div>
       </div>
 
@@ -1258,19 +1408,30 @@
     applyExpDayColor();
   })();
 
-  /* 已知類別名稱對應的彩色小 icon（記帳類別／支付方式／待辦事項／打包清單共用同一份；
+  /* 已知類別名稱對應的手繪風格 icon（symbol id，見 body 開頭那組隱藏 svg sprite，
+     風格照著副食品 app 的畫法：記帳類別／支付方式／待辦事項／打包清單共用同一份；
      使用者自己新增的自訂類別沒有對應 icon 時就不加，純文字顯示） */
   var CATEGORY_ICONS = {
-    '機票':'✈️', '住宿':'🏨', '交通':'🚗', '早餐':'🍳', '午餐':'🍱', '晚餐':'🍽️',
-    '點心':'🍡', '觀光':'🎡', '購物':'🛍️',
-    '現金':'💴', '信用卡':'💳', '日本儲值卡':'🚃',
-    '證件':'🛂', '寶寶':'👶', '行前採買':'🛒', '行程':'🗺️', '餐廳':'🍽️',
-    '衣物':'👕', '3C':'🔌', '藥品':'💊',
-    '其他':'✨'
+    '機票':'ic-flight', '住宿':'ic-stay', '交通':'ic-transport', '早餐':'ic-breakfast',
+    '午餐':'ic-lunch', '晚餐':'ic-dinner', '點心':'ic-snack', '觀光':'ic-sightseeing',
+    '購物':'ic-shopping',
+    '現金':'ic-cash', '信用卡':'ic-creditcard', '日本儲值卡':'ic-transit',
+    '證件':'ic-documents', '寶寶':'ic-baby', '行前採買':'ic-precart', '行程':'ic-schedule',
+    '餐廳':'ic-restaurant',
+    '衣物':'ic-clothing', '3C':'ic-electronics', '藥品':'ic-medicine',
+    '其他':'ic-other'
   };
   function catIconHtml(name){
     var icon = CATEGORY_ICONS[name];
-    return icon ? '<span class="cat-icon">' + icon + '</span>' : '';
+    return icon ? '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + icon + '"></use></svg>' : '';
+  }
+  /* 讀某個 cat-manager 目前實際的分類順序（使用者自己排過序也算），
+     其他清單要「跟著記帳新增的排序走」都用這個。 */
+  function getCategoryOrder(catfield){
+    return Array.prototype.map.call(
+      document.querySelectorAll('.cat-manager[data-catfield="' + catfield + '"] .cat-chips button'),
+      function(b){ return b.dataset.value; }
+    );
   }
 
   /* ---- reusable: custom + reorderable category manager, synced to Firestore settings docs ---- */
@@ -2075,6 +2236,10 @@
       return { jpy: jpy, twd: twd, cny: cny };
     }
     var PIE_PALETTE = ['indigo', 'persimmon', 'moss', 'sand', 'plum', 'neutral'];
+    /* NT$ 主要金額在第一行，CN¥ 放小括號、字小一點顏色淡一點放第二行 */
+    function dualAmountHtml(twd, cny){
+      return 'NT$' + fmt(twd) + '<span class="amt-cny">(CN¥' + fmt(cny) + ')</span>';
+    }
     function pieChartHtml(byCategory, byCategoryCNY, total){
       var keys = Object.keys(byCategory).sort(function(a, b){ return byCategory[b] - byCategory[a]; });
       if(!keys.length){ return '<p class="wx-empty">還沒有紀錄。</p>'; }
@@ -2088,8 +2253,9 @@
       var legend = keys.map(function(k, i){
         var color = PIE_PALETTE[i % PIE_PALETTE.length];
         return '<div class="pie-legend-row"><span class="pie-swatch" style="background:var(--' + color + ')"></span>' +
+          catIconHtml(k) +
           '<span class="pie-legend-label">' + escapeHtml(k) + '</span>' +
-          '<span class="pie-legend-amt">NT$' + fmt(byCategory[k]) + '<br>CN¥' + fmt(byCategoryCNY[k] || 0) + '</span></div>';
+          '<span class="pie-legend-amt">' + dualAmountHtml(byCategory[k], byCategoryCNY[k] || 0) + '</span></div>';
       }).join('');
       return '<div class="pie-chart-wrap"><div class="pie-chart" style="background:conic-gradient(' + stops + ')"></div>' +
         '<div class="pie-legend">' + legend + '</div></div>';
@@ -2104,7 +2270,7 @@
         return '<div class="bar-chart-row">' +
           '<span class="bar-chart-label">' + escapeHtml(day.split('（')[0]) + '</span>' +
           '<span class="bar-chart-track"><span class="bar-chart-fill" style="width:' + pct + '%;background:var(--' + color + ')"></span></span>' +
-          '<span class="bar-chart-amt">NT$' + fmt(byDay[day]) + '<br>CN¥' + fmt(byDayCNY[day] || 0) + '</span>' +
+          '<span class="bar-chart-amt">' + dualAmountHtml(byDay[day], byDayCNY[day] || 0) + '</span>' +
         '</div>';
       }).join('') + '</div>';
     }
@@ -2123,7 +2289,7 @@
       if(items.length === 0){ card.innerHTML = '<p class="wx-empty">還沒有紀錄。</p>'; return; }
       card.innerHTML =
         '<div class="summary-total"><span class="st-label">目前總花費（約）</span>' +
-          '<span class="st-amt tnum">NT$ ' + fmt(total) + '　CN¥ ' + fmt(totalCNY) + '</span></div>' +
+          '<span class="st-amt tnum">' + dualAmountHtml(total, totalCNY) + '</span></div>' +
         '<div class="summary-columns">' +
           '<div class="summary-group"><h4>依類別</h4>' + pieChartHtml(byCategory, byCategoryCNY, total) + '</div>' +
           '<div class="summary-group"><h4>依日期</h4>' + barChartHtml(byDay, byDayCNY) + '</div>' +
@@ -2143,12 +2309,18 @@
       });
       var container = document.getElementById('expByDate');
       container.innerHTML = '';
+      var catOrder = getCategoryOrder('category');
       dayOrder.forEach(function(day){
         if(!byDate[day]) return;
         var color = DAY_COLOR_MAP[day] || 'indigo';
         var group = document.createElement('div');
         group.className = 'exp-date-group border-' + color;
-        var rowsHtml = byDate[day].map(function(e){
+        var dayItems = byDate[day].slice().sort(function(a, b){
+          var ai = catOrder.indexOf(a.category); if(ai === -1){ ai = catOrder.length; }
+          var bi = catOrder.indexOf(b.category); if(bi === -1){ bi = catOrder.length; }
+          return ai - bi;
+        });
+        var rowsHtml = dayItems.map(function(e){
           var conv = convertAmounts(e, rate, rateCNY);
           var primary = e.currency === 'JPY' ? ('¥' + fmt(e.amount)) : ('NT$' + fmt(e.amount));
           var secondary = e.currency === 'JPY'
@@ -2157,7 +2329,9 @@
           return '<div class="exp-row border-' + color + '" data-exp-id="' + e.id + '">' +
             '<div class="exp-main">' +
               '<div class="exp-item">' + escapeHtml(e.item || '（未命名）') + '</div>' +
-              '<div class="exp-meta"><span>' + e.category + '</span><span>' + e.method + '</span>' +
+              '<div class="exp-meta">' +
+                '<span>' + catIconHtml(e.category) + escapeHtml(e.category) + '</span>' +
+                '<span>' + catIconHtml(e.method) + escapeHtml(e.method) + '</span>' +
                 (e.location ? '<span>' + escapeHtml(e.location.split('、')[0] || e.location) + '</span>' : '') +
                 (e.receiptUrl ? '<a class="receipt-thumb" href="' + escapeHtml(e.receiptUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(e.receiptUrl) + '" alt="">收據</a>' : '') +
               '</div>' +
@@ -2300,29 +2474,55 @@
   (function(){
     function setupChecklist(opts){
       var items = [];
+      function rowHtml(it){
+        return '<div class="chk-row' + (it.done ? ' is-done' : '') + '" data-row-id="' + it.id + '">' +
+          '<input type="checkbox" data-toggle="' + it.id + '" ' + (it.done ? 'checked' : '') + '>' +
+          '<span class="chk-text">' + escapeHtml(it.text) + (opts.itemSuffix ? opts.itemSuffix(it) : '') + '</span>' +
+          (opts.extraTags ? opts.extraTags(it) : '') +
+          '<div class="row-actions">' +
+            '<button class="edit-btn" data-edit="' + it.id + '" aria-label="編輯">' + editIcon + '</button>' +
+            '<button class="del-btn" data-del="' + it.id + '" aria-label="刪除">' + delIcon + '</button>' +
+          '</div>' +
+        '</div>';
+      }
+      /* 依分類分組，用 <details> 做可收合的區塊；分類順序跟著「新增」表單那邊
+         的分類順序走（含使用者自己排過的順序），category 沒對到已知分類的
+         就沒有 icon，純文字顯示。 */
       function render(){
         var list = document.getElementById(opts.listEl);
-        list.innerHTML = '';
+        var catOrder = getCategoryOrder(opts.categoryField);
+        var byCat = {};
         var doneCount = 0;
         items.forEach(function(it){
           if(it.done) doneCount++;
-          var row = document.createElement('div');
-          row.className = 'chk-row' + (it.done ? ' is-done' : '');
-          row.setAttribute('data-row-id', it.id);
-          row.innerHTML =
-            '<input type="checkbox" data-toggle="' + it.id + '" ' + (it.done ? 'checked' : '') + '>' +
-            '<span class="chk-text">' + escapeHtml(it.text) + '</span>' +
-            '<span class="chk-tag">' + it.category + '</span>' +
-            (opts.extraTags ? opts.extraTags(it) : '') +
-            '<div class="row-actions">' +
-              '<button class="edit-btn" data-edit="' + it.id + '" aria-label="編輯">' + editIcon + '</button>' +
-              '<button class="del-btn" data-del="' + it.id + '" aria-label="刪除">' + delIcon + '</button>' +
-            '</div>';
-          list.appendChild(row);
+          (byCat[it.category] = byCat[it.category] || []).push(it);
         });
+        var cats = Object.keys(byCat).sort(function(a, b){
+          var ai = catOrder.indexOf(a); if(ai === -1){ ai = catOrder.length; }
+          var bi = catOrder.indexOf(b); if(bi === -1){ bi = catOrder.length; }
+          return ai - bi;
+        });
+        list.innerHTML = cats.map(function(cat){
+          var catItems = byCat[cat];
+          var catDone = catItems.filter(function(x){ return x.done; }).length;
+          return '<details class="chk-group" open>' +
+            '<summary>' + catIconHtml(cat) +
+              '<span class="chk-group-title">' + escapeHtml(cat) + '</span>' +
+              '<span class="chk-group-count">' + catDone + '/' + catItems.length + '</span>' +
+            '</summary>' +
+            '<div class="chk-group-body">' + catItems.map(rowHtml).join('') + '</div>' +
+          '</details>';
+        }).join('');
         document.getElementById(opts.summaryEl).textContent = doneCount + ' / ' + items.length + ' ' + opts.doneLabel;
       }
       render();
+
+      document.querySelector('.chk-expand-all[data-list="' + opts.listEl + '"]').addEventListener('click', function(){
+        document.querySelectorAll('#' + opts.listEl + ' details').forEach(function(d){ d.open = true; });
+      });
+      document.querySelector('.chk-collapse-all[data-list="' + opts.listEl + '"]').addEventListener('click', function(){
+        document.querySelectorAll('#' + opts.listEl + ' details').forEach(function(d){ d.open = false; });
+      });
 
       window.fbReady.then(function(){
         var fns = window.fb.fns;
@@ -2411,10 +2611,9 @@
           box: groupValue(document.querySelector('.btn-group[data-field="packBox"]'))
         };
       },
+      itemSuffix: function(it){ return ' x' + (it.qty || 1); },
       extraTags: function(it){
-        var tags = '<span class="chk-tag">x' + (it.qty || 1) + '</span>';
-        if(it.box && it.box !== '未分箱'){ tags += '<span class="chk-tag">' + escapeHtml(it.box) + '</span>'; }
-        return tags;
+        return (it.box && it.box !== '未分箱') ? ('<span class="chk-tag">' + escapeHtml(it.box) + '</span>') : '';
       },
       editExtraFields: function(it){
         var boxOptions = Array.prototype.map.call(
