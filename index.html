@@ -2668,37 +2668,36 @@
               dragState.container.insertBefore(dragState.placeholder, before ? overRow : overRow.nextSibling);
             }
           });
+          function resetCardStyle(cardEl){
+            cardEl.classList.remove('itin-dragging');
+            cardEl.style.position = '';
+            cardEl.style.width = '';
+            cardEl.style.left = '';
+            cardEl.style.top = '';
+            cardEl.style.margin = '';
+            cardEl.style.zIndex = '';
+          }
           function endDrag(commit){
             if(!dragState) return;
             var cardEl = dragState.cardEl, placeholder = dragState.placeholder, container = dragState.container;
-            var orderedIds = null;
-            if(commit){
-              container.insertBefore(cardEl, placeholder);
-              placeholder.remove();
-              /* placeholder 一定要先移除再讀 children，不然它也會被當成一筆
-                 （沒有 data-row-id，讀出來是 null），後面 fns.doc(col, null)
-                 會直接丟例外，導致卡片已經從畫面移除、但 Firestore 沒寫成功、
-                 也就永遠等不到 onSnapshot 把畫面畫回來——卡片就「消失」了。 */
-              orderedIds = Array.prototype.map.call(container.children, function(el){ return el.getAttribute('data-row-id'); });
-            }
+            /* 不管有沒有真的移動位置，都馬上把卡片放回畫面上原本／新的位置，
+               不要整個移除掉、等網路那趟 Firestore 來回才畫回來——手機網路
+               忽快忽慢，等待期間卡片就會像消失一樣。Firestore 之後同步回來的
+               render() 只是把畫面「校正」成跟現在一樣的順序，不會再有空窗期。 */
+            container.insertBefore(cardEl, placeholder);
             placeholder.remove();
-            cardEl.remove();
+            resetCardStyle(cardEl);
             dragState = null;
-            if(orderedIds){
+            if(!commit) return;
+            var orderedIds = Array.prototype.map.call(container.children, function(el){ return el.getAttribute('data-row-id'); });
+            try{
               /* 一次寫成一個 batch，避免每個 item 各自觸發一次 updateDoc、讓
                  onSnapshot 中途連續重畫好幾次、畫面一度看起來少了幾筆。 */
-              try{
-                var batch = window.fb.batch();
-                orderedIds.forEach(function(id, idx){ batch.update(fns.doc(col, id), { order: idx * 1000 }); });
-                batch.commit().catch(function(err){ console.error('reorder batch failed', err); render(); });
-              }catch(err){
-                /* 任何寫入相關的例外都保底重畫一次，避免卡片卡在「已從畫面移除、
-                   但沒有東西會把它畫回來」的狀態。 */
-                console.error('reorder failed', err);
-                render();
-              }
-            } else {
-              render();
+              var batch = window.fb.batch();
+              orderedIds.forEach(function(id, idx){ batch.update(fns.doc(col, id), { order: idx * 1000 }); });
+              batch.commit().catch(function(err){ console.error('reorder batch failed', err); });
+            }catch(err){
+              console.error('reorder failed', err);
             }
           }
           document.addEventListener('pointerup', function(ev){
