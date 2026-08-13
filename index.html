@@ -1311,6 +1311,18 @@
     });
   }
   function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+  /* 拖曳排序共用：找出座標下方、但排除正在拖曳那張卡片本身（含其內容）的元素。
+     故意不用「把拖曳中的卡片設成 pointer-events:none」這招，因為手機上
+     setPointerCapture + 把卡片搬到 body 底下 + pointer-events:none 三個疊在一起，
+     偶爾會讓瀏覽器直接不再送出後續的 pointer 事件（尤其是 pointerup），
+     卡片就會卡在 body 下面「消失」，要重新整理才會回來。 */
+  function dropTargetFromPoint(x, y, excludeEl){
+    var stack = document.elementsFromPoint(x, y);
+    for(var i = 0; i < stack.length; i++){
+      if(!excludeEl.contains(stack[i])){ return stack[i]; }
+    }
+    return null;
+  }
   var delIcon = '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5l-10 10"/></svg>';
   var editIcon = '<svg viewBox="0 0 20 20"><path d="M4 16l1-4 9-9 3 3-9 9-4 1z"/><path d="M12 5l3 3"/></svg>';
   function selectOptions(list, selected){
@@ -2078,7 +2090,6 @@
         cardEl.style.top = rect.top + 'px';
         cardEl.style.margin = '0';
         cardEl.style.zIndex = '300';
-        cardEl.style.pointerEvents = 'none';
         document.body.appendChild(cardEl);
         try{ handle.setPointerCapture(ev.pointerId); }catch(e){}
       });
@@ -2089,7 +2100,7 @@
         cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
         cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
 
-        var el = document.elementFromPoint(ev.clientX, ev.clientY);
+        var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
         if(!el) return;
         var block = el.closest('.slot-block');
         if(!block || !host.contains(block)) return;
@@ -2640,7 +2651,6 @@
             cardEl.style.top = rect.top + 'px';
             cardEl.style.margin = '0';
             cardEl.style.zIndex = '300';
-            cardEl.style.pointerEvents = 'none';
             document.body.appendChild(cardEl);
             try{ handle.setPointerCapture(ev.pointerId); }catch(e){}
           });
@@ -2649,7 +2659,7 @@
             var cardEl = dragState.cardEl;
             cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
             cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
-            var el = document.elementFromPoint(ev.clientX, ev.clientY);
+            var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
             if(!el) return;
             var overRow = el.closest('.chk-row');
             if(overRow && overRow !== cardEl && overRow.parentElement === dragState.container){
