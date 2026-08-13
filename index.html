@@ -53,7 +53,7 @@
   .itin-stop.border-persimmon, .exp-row.border-persimmon{ border-top-color:var(--persimmon); }
   .itin-stop.border-neutral, .exp-row.border-neutral{ border-top-color:var(--neutral); }
   /* 明細的日期標題固定用黑色字，顏色只留給下面的 records */
-  .exp-date-group h4{ color:var(--ink); }
+  .exp-date-group summary{ color:var(--ink); }
 
   /* 清單／連結：待辦、打包、連結各自用不同顏色。用重新指定 --indigo 的方式，
      讓該區塊裡所有原本吃 --indigo 的元件（邊條、按鈕、勾選框強調色…）自動
@@ -399,14 +399,20 @@
   .geo-suggest-list button:hover{background:var(--surface-2);color:var(--ink);}
 
   .exp-date-group{margin-bottom:1.1rem;}
-  .exp-date-group h4{font-family:var(--font-display);font-size:0.92rem;font-weight:700;margin-bottom:0.6rem;}
+  .exp-date-group summary{display:flex;align-items:center;gap:0.5rem;cursor:pointer;list-style:none;font-family:var(--font-display);font-size:0.92rem;font-weight:700;}
+  .exp-date-group summary::-webkit-details-marker{display:none;}
+  .exp-date-group summary::before{content:"▸";font-size:0.75rem;color:var(--ink-faint);transition:transform 0.15s ease;flex:none;}
+  .exp-date-group[open] summary::before{transform:rotate(90deg);}
+  .exp-date-group .exp-date-label{flex:1;}
+  .exp-date-group .chk-group-count{font-family:var(--font-body);font-size:0.72rem;font-weight:400;color:var(--ink-faint);white-space:nowrap;}
+  .exp-date-body{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.6rem;}
 
   /* ---- expense summary breakdown ---- */
   .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.2rem 1.3rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:1.1rem;}
   .summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
   .summary-total .st-label{font-size:0.85rem;color:var(--ink-soft);}
   .summary-total .st-amt{font-family:var(--font-display);font-size:1.3rem;font-weight:700;text-align:right;line-height:1.3;}
-  .amt-cny{display:block;font-family:var(--font-body);font-size:0.6em;font-weight:400;color:var(--ink-faint);margin-top:0.3em;}
+  .amt-cny{display:block;font-family:var(--font-body);font-size:0.85em;font-weight:400;color:var(--ink-faint);margin-top:0.45em;}
   .summary-group h4{font-size:0.8rem;color:var(--ink-faint);font-weight:600;letter-spacing:0.02em;margin-bottom:0.6rem;}
   .summary-bar-row{display:grid;grid-template-columns:5.4rem 1fr 4.2rem;align-items:center;gap:0.6rem;padding:0.3rem 0;font-size:0.82rem;}
   .summary-bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
@@ -418,17 +424,17 @@
   .summary-columns .summary-group{flex:1 1 220px;min-width:200px;}
   .pie-chart-wrap{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
   .pie-chart{width:108px;height:108px;border-radius:50%;flex:none;box-shadow:var(--shadow);}
-  .pie-legend{display:flex;flex-direction:column;gap:0.45rem;flex:1;min-width:130px;}
+  .pie-legend{display:flex;flex-direction:column;gap:0.85rem;flex:1;min-width:130px;}
   .pie-legend-row{display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;}
   .pie-swatch{width:0.65rem;height:0.65rem;border-radius:50%;flex:none;}
   .pie-legend-label{flex:1;color:var(--ink-soft);}
-  .pie-legend-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;font-size:0.72rem;line-height:1.35;white-space:nowrap;}
-  .bar-chart{display:flex;flex-direction:column;gap:0.6rem;}
+  .pie-legend-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;font-size:0.82rem;line-height:1.4;white-space:nowrap;}
+  .bar-chart{display:flex;flex-direction:column;gap:0.9rem;}
   .bar-chart-row{display:grid;grid-template-columns:3.2rem 1fr auto;align-items:center;gap:0.55rem;font-size:0.78rem;}
   .bar-chart-label{color:var(--ink-soft);white-space:nowrap;}
   .bar-chart-track{height:0.5rem;border-radius:999px;background:var(--surface-2);overflow:hidden;}
   .bar-chart-fill{display:block;height:100%;border-radius:999px;}
-  .bar-chart-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap;font-size:0.72rem;line-height:1.3;}
+  .bar-chart-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap;font-size:0.82rem;line-height:1.4;}
   .summary-bar-row .sb-amt{text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
 
   /* ---- checklist sub-tabs ---- */
@@ -549,19 +555,6 @@
     <path d="M32 20v34" stroke="#3f6a8a" stroke-width="1.6" opacity=".4"/>
     <circle cx="24" cy="32" r="2.4" fill="#d9453a"/>
     <circle cx="40" cy="38" r="2.4" fill="#d9453a"/>
-  </symbol>
-  <symbol id="ic-restaurant" viewBox="0 0 64 64">
-    <g transform="rotate(-18 32 32)" fill="#c9a876" stroke="#8a6a3f" stroke-width="1.6" stroke-linejoin="round">
-      <rect x="19" y="9" width="3.4" height="14" rx="1.7"/>
-      <rect x="24.5" y="9" width="3.4" height="14" rx="1.7"/>
-      <rect x="30" y="9" width="3.4" height="14" rx="1.7"/>
-      <rect x="18" y="22" width="16" height="4.5" rx="2.2"/>
-      <rect x="23.5" y="25.5" width="5" height="27.5" rx="2.5"/>
-    </g>
-    <g transform="rotate(18 32 32)" fill="#c9a876" stroke="#8a6a3f" stroke-width="1.6" stroke-linejoin="round">
-      <path d="M37 9l11 13-11 3z"/>
-      <rect x="36" y="24" width="5" height="29" rx="2.5"/>
-    </g>
   </symbol>
   <symbol id="ic-clothing" viewBox="0 0 64 64">
     <path d="M24 12l8 6 8-6 10 8-6 8-4-2v26a2 2 0 0 1-2 2H26a2 2 0 0 1-2-2V26l-4 2-6-8z" fill="#8bb0c9" stroke="#4f7a94" stroke-width="3" stroke-linejoin="round"/>
@@ -971,7 +964,13 @@
           <div class="summary-total"><span class="st-label">目前現金餘額（約，依「現金」＋JPY 的紀錄扣除）</span><span class="st-amt tnum" id="cashBalanceAmt">¥ —</span></div>
         </div>
         <div class="summary-card" id="summaryCard"></div>
-        <p class="list-progress" id="expSummary" style="margin:1rem 0 0.7rem;"></p>
+        <div class="chk-list-head" style="margin-top:1rem;">
+          <p class="list-progress" id="expSummary"></p>
+          <div class="chk-collapse-btns">
+            <button type="button" class="chk-expand-all" data-list="expByDate">全部展開</button>
+            <button type="button" class="chk-collapse-all" data-list="expByDate">全部收合</button>
+          </div>
+        </div>
         <div id="expByDate"></div>
       </div>
 
@@ -1417,9 +1416,11 @@
     '購物':'ic-shopping',
     '現金':'ic-cash', '信用卡':'ic-creditcard', '日本儲值卡':'ic-transit',
     '證件':'ic-documents', '寶寶':'ic-baby', '行前採買':'ic-precart', '行程':'ic-schedule',
-    '餐廳':'ic-restaurant',
+    '餐廳':'ic-dinner',
     '衣物':'ic-clothing', '3C':'ic-electronics', '藥品':'ic-medicine',
-    '其他':'ic-other'
+    '其他':'ic-other',
+    /* 舊測試資料留下來的分類名稱，對應到新版最接近的 icon，避免舊紀錄的分類群組沒有 icon */
+    '簽證證件':'ic-documents', '預約':'ic-schedule', '採買':'ic-precart', '寶寶用品':'ic-baby'
   };
   function catIconHtml(name){
     var icon = CATEGORY_ICONS[name];
@@ -2313,8 +2314,9 @@
       dayOrder.forEach(function(day){
         if(!byDate[day]) return;
         var color = DAY_COLOR_MAP[day] || 'indigo';
-        var group = document.createElement('div');
+        var group = document.createElement('details');
         group.className = 'exp-date-group border-' + color;
+        group.open = true;
         var dayItems = byDate[day].slice().sort(function(a, b){
           var ai = catOrder.indexOf(a.category); if(ai === -1){ ai = catOrder.length; }
           var bi = catOrder.indexOf(b.category); if(bi === -1){ bi = catOrder.length; }
@@ -2343,7 +2345,9 @@
             '</div>' +
           '</div>';
         }).join('');
-        group.innerHTML = '<h4>' + day + '</h4>' + rowsHtml;
+        group.innerHTML = '<summary><span class="exp-date-label">' + day + '</span>' +
+            '<span class="chk-group-count">' + dayItems.length + ' 筆</span></summary>' +
+          '<div class="exp-date-body">' + rowsHtml + '</div>';
         container.appendChild(group);
       });
       document.getElementById('expSummary').textContent = items.length + ' 筆紀錄・總計約 NT$ ' + fmt(totalTWD) + '／CN¥ ' + fmt(totalCNY);
@@ -2351,6 +2355,12 @@
       renderCashBalance();
     }
     renderExpenses();
+    document.querySelector('.chk-expand-all[data-list="expByDate"]').addEventListener('click', function(){
+      document.querySelectorAll('#expByDate details').forEach(function(d){ d.open = true; });
+    });
+    document.querySelector('.chk-collapse-all[data-list="expByDate"]').addEventListener('click', function(){
+      document.querySelectorAll('#expByDate details').forEach(function(d){ d.open = false; });
+    });
 
     function expEditFormHtml(e){
       var catOptions = Array.prototype.map.call(
