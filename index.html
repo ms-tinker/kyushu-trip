@@ -167,6 +167,15 @@
   .wx-daycard .wxc-wd{font-size:0.64rem;color:var(--ink-faint);}
   .wx-daycard.wx-trip .wxc-wd{color:var(--indigo);}
   .wx-daycard .wxc-icon svg{width:26px;height:26px;display:block;}
+  .wx-mode-tabs{margin:0 0 0.9rem;}
+  .wx-hour-daypick{display:flex;gap:0.4rem;overflow-x:auto;padding-bottom:0.5rem;}
+  .wx-hour-daypick button{flex:none;font-size:0.76rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;white-space:nowrap;}
+  .wx-hour-daypick button.active{background:var(--indigo);border-color:var(--indigo);color:var(--surface);font-weight:600;}
+  .wx-hour-daypick button.wx-trip-btn:not(.active){border-color:var(--indigo);color:var(--indigo);}
+  .wx-hourcard{width:3.8rem;}
+  .wx-day-strip{margin-top:1rem;padding:1rem 1.2rem;}
+  .wx-day-strip-label{font-size:0.82rem;font-weight:600;color:var(--ink-soft);margin-bottom:0.2rem;}
+  .wx-day-strip .wx-strip{padding-top:0.6rem;}
   .wx-daycard .wxc-temp{font-size:0.78rem;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;}
   .wx-daycard .wxc-temp .lo{color:var(--ink-faint);}
   .wx-daycard .wxc-pop{font-size:0.7rem;color:var(--indigo);font-variant-numeric:tabular-nums;}
@@ -185,9 +194,9 @@
   .fl-point{display:flex;flex-direction:column;gap:0.1rem;}
   .fl-point.end{align-items:flex-end;text-align:right;}
   .fl-time{font-family:var(--font-display);font-size:1.3rem;font-weight:700;}
-  .fl-air{font-size:0.76rem;color:var(--ink-soft);}
+  .fl-air{font-size:0.86rem;color:var(--ink-soft);}
   .fl-arrow{font-size:0.7rem;color:var(--ink-faint);text-align:center;white-space:nowrap;line-height:1.3;}
-  .fl-sub{font-size:0.76rem;color:var(--ink-faint);margin-top:0.5rem;}
+  .fl-sub{font-size:0.92rem;font-weight:600;color:var(--ink);margin-top:0.5rem;}
   .flight-meta-row{display:flex;flex-wrap:wrap;gap:0.5rem 1.4rem;font-size:0.78rem;color:var(--ink-soft);padding-top:1.1rem;margin-top:1.2rem;border-top:1px solid var(--line);}
   .flight-meta-row b{color:var(--ink);font-weight:600;}
 
@@ -265,8 +274,21 @@
   .bucket-cat[open] summary::before{transform:rotate(90deg);}
   .bucket-cat .chk-group-title{flex:1;}
   .bucket-layer-list{display:flex;flex-direction:column;gap:0.7rem;margin-top:0.6rem;}
+  /* 巢狀 <details>（圖層裡面還有分類）在「全部收合」後，用 JS 把外層圖層重新展開時，
+     Chrome 對「曾經展開過、現在關閉中」的巢狀 details 有時會保留一塊舊的版面高度
+     （content-visibility 記住的舊尺寸），造成收合的分類底下留一大塊空白。用明確的
+     display:none 蓋掉，不要依賴瀏覽器內部那套「記住尺寸」的隱藏機制。 */
+  .bucket-cat:not([open]) > .bucket-layer-list{display:none;}
+  .bucket-layer:not([open]) > .bucket-layer-map,
+  .bucket-layer:not([open]) > .bucket-cat{display:none;}
   .itin-stop.border-plum{border-top-color:var(--plum);}
   .stop-map-num.c-plum{background:var(--plum);color:var(--surface);}
+  .bucket-item-added{opacity:0.55;}
+  .bucket-item-added .stop-name{text-decoration:line-through;}
+  .bk-in-trip-tag{font-size:0.7rem;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0.1rem 0.5rem;white-space:nowrap;}
+  .bk-tab-count{font-size:0.72rem;opacity:0.75;}
+  .bk-layer-tabs, .bk-cat-tabs{margin-bottom:0.8rem;}
+  .bk-cat-tabs{padding-bottom:0.8rem;border-bottom:1px dashed var(--line);}
   .bk-preset-row{display:flex;flex-wrap:wrap;gap:0.5rem;}
 
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
@@ -300,6 +322,7 @@
   .stop-map-num.c-neutral{background:var(--neutral);color:var(--surface);}
   .itin-stop .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;white-space:nowrap;}
   .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;}
+  .itin-stop .stop-hours{font-size:0.78rem;color:var(--ink-soft);margin-top:0.3rem;}
   .itin-stop-actions{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.65rem;align-items:center;}
   .ia-btn{font-size:0.76rem;color:var(--indigo);text-decoration:none;font-weight:600;background:none;border:none;padding:0;cursor:pointer;}
   .ia-btn:hover{text-decoration:underline;}
@@ -373,6 +396,11 @@
   .modal-close:hover{background:var(--surface-2);}
   .modal-body{overflow-y:auto;padding:1rem 0.6rem calc(1rem + env(safe-area-inset-bottom));}
   .modal-body .form-card{border:none;box-shadow:none;padding:1.3rem;}
+  .modal-sheet-sm{max-width:420px;}
+  .confirm-modal-msg{font-size:0.92rem;color:var(--ink);margin-bottom:1.1rem;}
+  .confirm-modal-actions{margin-top:0;}
+  .confirm-modal-actions .cf-cancel{flex:1;}
+  .confirm-modal-actions .cf-ok{flex:1;background:var(--persimmon);border-color:var(--persimmon);color:var(--surface);}
   .btn-primary:hover{opacity:0.9;}
 
   .list-progress{font-size:0.8rem;color:var(--ink-soft);}
@@ -413,9 +441,14 @@
   .del-btn svg, .edit-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;}
   .row-actions{display:flex;gap:0.2rem;flex:none;}
   .inline-edit-form{display:flex;flex-direction:column;gap:0.5rem;width:100%;}
-  .inline-edit-grid{display:flex;flex-wrap:wrap;gap:0.5rem;}
+  .inline-edit-grid{display:flex;flex-wrap:wrap;gap:0.7rem;}
   .inline-edit-form input, .inline-edit-form select{font:inherit;font-size:0.84rem;padding:0.45rem 0.6rem;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);}
   .inline-edit-form input[type="text"].ee-item, .inline-edit-form input.ee-location{width:100%;}
+  .inline-edit-field{display:flex;flex-direction:column;gap:0.3rem;flex:1 1 45%;min-width:150px;}
+  .inline-edit-field label{font-size:0.72rem;color:var(--ink-soft);font-weight:600;}
+  .inline-edit-field .btn-group{gap:0.35rem;}
+  .inline-edit-field .btn-group button{font-size:0.76rem;padding:0.35rem 0.6rem;}
+  .inline-edit-field .amount-row{gap:0.5rem;}
 
   .sub-head{font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
 
@@ -734,17 +767,41 @@
           <div class="wx-loc-panel active" data-wxpanel="fukuoka">
             <p class="wx-empty" id="wxEmpty-fukuoka">讀取中…</p>
             <div class="wx-current" id="wxCurrent-fukuoka" style="display:none;"></div>
+            <div class="wx-loc-tabs wx-mode-tabs" data-wxmode-for="fukuoka">
+              <button type="button" class="active" data-wxmode="daily">每日</button>
+              <button type="button" data-wxmode="hourly">每小時</button>
+            </div>
             <div class="wx-strip" id="wxStrip-fukuoka"></div>
+            <div class="wx-hourly" id="wxHourly-fukuoka" style="display:none;">
+              <div class="wx-hour-daypick" id="wxHourDayPick-fukuoka"></div>
+              <div class="wx-strip wx-hour-strip" id="wxHourStrip-fukuoka"></div>
+            </div>
           </div>
           <div class="wx-loc-panel" data-wxpanel="yufuin">
             <p class="wx-empty" id="wxEmpty-yufuin">讀取中…</p>
             <div class="wx-current" id="wxCurrent-yufuin" style="display:none;"></div>
+            <div class="wx-loc-tabs wx-mode-tabs" data-wxmode-for="yufuin">
+              <button type="button" class="active" data-wxmode="daily">每日</button>
+              <button type="button" data-wxmode="hourly">每小時</button>
+            </div>
             <div class="wx-strip" id="wxStrip-yufuin"></div>
+            <div class="wx-hourly" id="wxHourly-yufuin" style="display:none;">
+              <div class="wx-hour-daypick" id="wxHourDayPick-yufuin"></div>
+              <div class="wx-strip wx-hour-strip" id="wxHourStrip-yufuin"></div>
+            </div>
           </div>
           <div class="wx-loc-panel" data-wxpanel="aso">
             <p class="wx-empty" id="wxEmpty-aso">讀取中…</p>
             <div class="wx-current" id="wxCurrent-aso" style="display:none;"></div>
+            <div class="wx-loc-tabs wx-mode-tabs" data-wxmode-for="aso">
+              <button type="button" class="active" data-wxmode="daily">每日</button>
+              <button type="button" data-wxmode="hourly">每小時</button>
+            </div>
             <div class="wx-strip" id="wxStrip-aso"></div>
+            <div class="wx-hourly" id="wxHourly-aso" style="display:none;">
+              <div class="wx-hour-daypick" id="wxHourDayPick-aso"></div>
+              <div class="wx-strip wx-hour-strip" id="wxHourStrip-aso"></div>
+            </div>
           </div>
           <div class="wx-legend">說明：資料來自 Open-Meteo 即時氣象。離出發越近，預報越準。<b>藍色</b>標示的是行程期間（8/26–9/1）。</div>
           <div class="wx-note" id="wxTenkiLinks">
@@ -766,7 +823,7 @@
             <div class="flight-leg">
               <span class="fl-badge c-indigo">去程</span>
               <div class="fl-route">
-                <div class="fl-point"><span class="fl-time tnum">14:15</span><span class="fl-air">台北（桃園）TPE</span></div>
+                <div class="fl-point"><span class="fl-time tnum">14:15</span><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
                 <div class="fl-arrow">✈<br>2 小時 35 分</div>
                 <div class="fl-point end"><span class="fl-time tnum">17:50</span><span class="fl-air">福岡 FUK</span></div>
               </div>
@@ -777,7 +834,7 @@
               <div class="fl-route">
                 <div class="fl-point"><span class="fl-time tnum">10:55</span><span class="fl-air">福岡 FUK</span></div>
                 <div class="fl-arrow">✈<br>2 小時 30 分</div>
-                <div class="fl-point end"><span class="fl-time tnum">12:25</span><span class="fl-air">台北（桃園）TPE</span></div>
+                <div class="fl-point end"><span class="fl-time tnum">12:25</span><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
               </div>
               <p class="fl-sub tnum">IT 241・2026/09/01（二）</p>
             </div>
@@ -897,6 +954,11 @@
       <div id="dayNoteHost"></div>
 
       <div id="dayMap" class="day-mini-map"></div>
+
+      <div class="wx-card wx-day-strip" id="dayWxStrip" style="display:none;">
+        <p class="wx-day-strip-label" id="dayWxStripLabel"></p>
+        <div class="wx-strip wx-hour-strip" id="dayWxHourStrip"></div>
+      </div>
 
       <div id="dayRender"></div>
 
@@ -1154,6 +1216,25 @@
       <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此新增的連結。</p>
     </div>
   </section>
+
+  <!-- 共用的刪除二次確認彈窗，取代醜醜的瀏覽器內建 confirm() -->
+  <div class="modal-overlay" id="confirmModal" hidden>
+    <div class="modal-sheet modal-sheet-sm">
+      <div class="modal-head">
+        <h3>確定要刪除嗎？</h3>
+        <button type="button" class="modal-close" id="confirmModalCloseBtn" aria-label="關閉">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-card">
+          <p class="confirm-modal-msg" id="confirmModalMsg"></p>
+          <div class="itin-edit-actions confirm-modal-actions">
+            <button type="button" class="cf-cancel" id="confirmModalCancelBtn">取消</button>
+            <button type="button" class="cf-ok" id="confirmModalOkBtn">刪除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -1291,15 +1372,68 @@
 
     var TRIP_START = '2026-08-26', TRIP_END = '2026-09-01';
 
+    /* 逐日／逐時的卡片外觀共用同一個 renderer，逐時只是多帶「這是第幾小時」
+       而不是「這是第幾天」而已，樣式沿用 .wx-daycard。 */
+    function hourCardHtml(hh, code, temp, pop){
+      return '<span class="wxc-date">' + hh + ':00</span>' +
+        '<span class="wxc-icon">' + wxIcon(code) + '</span>' +
+        '<span class="wxc-temp">' + Math.round(temp) + '°</span>' +
+        '<span class="wxc-pop">' + (pop != null ? pop + '%' : '—') + '</span>';
+    }
+    function renderHourStrip(container, hourly, dateStr){
+      if(!container) return;
+      container.innerHTML = '';
+      if(!hourly || !hourly.time) return;
+      hourly.time.forEach(function(t, i){
+        if(t.slice(0, 10) !== dateStr) return;
+        var card = document.createElement('div');
+        card.className = 'wx-daycard wx-hourcard';
+        card.innerHTML = hourCardHtml(t.slice(11, 13), hourly.weathercode[i], hourly.temperature_2m[i],
+          hourly.precipitation_probability ? hourly.precipitation_probability[i] : null);
+        container.appendChild(card);
+      });
+    }
+    function renderHourDayPicker(container, dailyTimes, selectedDate, onSelect){
+      if(!container) return;
+      container.innerHTML = dailyTimes.map(function(dateStr){
+        var inTrip = dateStr >= TRIP_START && dateStr <= TRIP_END;
+        var d = new Date(dateStr + 'T00:00:00+09:00');
+        var md = (d.getMonth() + 1) + '/' + d.getDate();
+        var wd = wdMap[d.getDay()];
+        return '<button type="button" class="' + (dateStr === selectedDate ? 'active' : '') + (inTrip ? ' wx-trip-btn' : '') +
+          '" data-date="' + dateStr + '">' + md + '（' + wd + '）</button>';
+      }).join('');
+      Array.prototype.forEach.call(container.querySelectorAll('button'), function(b){
+        b.addEventListener('click', function(){
+          Array.prototype.forEach.call(container.querySelectorAll('button'), function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          onSelect(b.dataset.date);
+        });
+      });
+    }
+
+    /* 天氣資料抓一次、快取起來，總覽的天氣卡片跟「行程」每天下面的逐時
+       小卡都共用同一份，不用重複打 API。 */
+    var wxCache = {};
+    var wxCacheResolvers = {};
+    window.__wxCacheReady = {};
+    window.__renderWxHourStrip = renderHourStrip;
+    Object.keys(locs).forEach(function(key){
+      window.__wxCacheReady[key] = new Promise(function(resolve){ wxCacheResolvers[key] = resolve; });
+    });
+
     Object.keys(locs).forEach(function(key){
       var loc = locs[key];
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
         '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode' +
         '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+        '&hourly=temperature_2m,weathercode,precipitation_probability' +
         '&timezone=Asia%2FTokyo&forecast_days=16';
       fetch(url).then(function(r){ if(!r.ok) throw new Error('no data'); return r.json(); }).then(function(data){
         if(!data.daily || !data.daily.time || !data.daily.time.length){ throw new Error('empty'); }
         document.getElementById('wxEmpty-' + key).style.display = 'none';
+        wxCache[key] = data;
+        wxCacheResolvers[key](data);
 
         if(data.current){
           var c = data.current;
@@ -1347,8 +1481,36 @@
           hint.textContent = '以上是近期預報（先讓你看格式），8/26–9/1 的實際天氣要再接近出發日才會出現。';
           strip.parentNode.appendChild(hint);
         }
+
+        if(data.hourly && data.hourly.time && data.hourly.time.length){
+          var dayPickEl = document.getElementById('wxHourDayPick-' + key);
+          var hourStripEl = document.getElementById('wxHourStrip-' + key);
+          var tripDates = data.daily.time.filter(function(d){ return d >= TRIP_START && d <= TRIP_END; });
+          var defaultDate = tripDates[0] || data.daily.time[0];
+          renderHourDayPicker(dayPickEl, data.daily.time, defaultDate, function(dateStr){
+            renderHourStrip(hourStripEl, data.hourly, dateStr);
+          });
+          renderHourStrip(hourStripEl, data.hourly, defaultDate);
+        }
       }).catch(function(){
         document.getElementById('wxEmpty-' + key).textContent = '目前抓不到預報（可能離出發還太久，或沒有網路連線）。出發前 2 週內請再打開看看，或直接看下方 tenki.jp 連結。';
+        wxCacheResolvers[key](null);
+      });
+    });
+
+    /* 每日／每小時切換（總覽的天氣卡片） */
+    document.querySelectorAll('.wx-mode-tabs').forEach(function(bar){
+      var key = bar.getAttribute('data-wxmode-for');
+      var dailyEl = document.getElementById('wxStrip-' + key);
+      var hourlyEl = document.getElementById('wxHourly-' + key);
+      Array.prototype.forEach.call(bar.querySelectorAll('button'), function(b){
+        b.addEventListener('click', function(){
+          Array.prototype.forEach.call(bar.querySelectorAll('button'), function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          var isHourly = b.dataset.wxmode === 'hourly';
+          if(dailyEl){ dailyEl.style.display = isHourly ? 'none' : ''; }
+          if(hourlyEl){ hourlyEl.style.display = isHourly ? '' : 'none'; }
+        });
       });
     });
 
@@ -1386,8 +1548,11 @@
   }
   var delIcon = '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5l-10 10"/></svg>';
   var editIcon = '<svg viewBox="0 0 20 20"><path d="M4 16l1-4 9-9 3 3-9 9-4 1z"/><path d="M12 5l3 3"/></svg>';
-  function selectOptions(list, selected){
-    return list.map(function(v){ return '<option value="' + escapeHtml(v) + '"' + (v === selected ? ' selected' : '') + '>' + escapeHtml(v) + '</option>'; }).join('');
+  /* edit 表單裡改用跟新增表單一樣的 button-group，取代下拉選單（手機比較好選） */
+  function btnGroupOptions(list, selected){
+    return list.map(function(v){
+      return '<button type="button" class="' + (v === selected ? 'active' : '') + '" data-value="' + escapeHtml(v) + '">' + catIconHtml(v) + escapeHtml(v) + '</button>';
+    }).join('');
   }
   var dayOrder = ['8/26（三）','8/27（四）','8/28（五）','8/29（六）','8/30（日）','8/31（一）','9/1（二）'];
   /* 跟行程日期同一套顏色（見 DAYS_SEED 裡每天的 color 欄位） */
@@ -1454,6 +1619,30 @@
     return active ? active.dataset.value : '';
   }
   document.querySelectorAll('.btn-group').forEach(wireButtonGroup);
+
+  /* ---- 共用的刪除二次確認彈窗（取代 window.confirm，樣式跟其他彈窗一致） ---- */
+  (function(){
+    var modal = document.getElementById('confirmModal');
+    var msgEl = document.getElementById('confirmModalMsg');
+    var okBtn = document.getElementById('confirmModalOkBtn');
+    var cancelBtn = document.getElementById('confirmModalCancelBtn');
+    var closeBtn = document.getElementById('confirmModalCloseBtn');
+    var pending = null;
+    function close(){ modal.hidden = true; pending = null; }
+    window.confirmDelete = function(message, onConfirm){
+      msgEl.textContent = message;
+      pending = onConfirm;
+      modal.hidden = false;
+    };
+    okBtn.addEventListener('click', function(){
+      var fn = pending;
+      close();
+      if(fn){ fn(); }
+    });
+    cancelBtn.addEventListener('click', close);
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', function(ev){ if(ev.target === modal){ close(); } });
+  })();
 
   /* 記帳新增的「日期」預設選今天（如果今天落在這趟行程 8/26–9/1 裡）；
      還沒到或已經過了，就先選 8/26。 */
@@ -1641,12 +1830,18 @@
   /* Google Places Autocomplete — replaces the old Nominatim/OSM search.
      suggestBox is kept as a param for call-site compatibility but is unused:
      Google renders its own dropdown (.pac-container) under the input. */
-  function setupLocationSearch(input, suggestBox){
+  function setupLocationSearch(input, suggestBox, opts){
+    opts = opts || {};
     window.__gmapsReady.then(function(){
       try{
+        /* opts.hours 才多要 opening_hours 欄位——這個欄位算 Places 的 Contact Data，
+           會多一點點費用，所以只有真的要顯示營業時間的地方（行程地點）才要求，
+           口袋清單、記帳地點搜尋維持原本只拿 Basic Data。 */
+        var fields = ['name', 'formatted_address', 'geometry'];
+        if(opts.hours){ fields.push('opening_hours'); }
         var ac = new google.maps.places.Autocomplete(input, {
           componentRestrictions: {country: 'jp'},
-          fields: ['name', 'formatted_address', 'geometry']
+          fields: fields
         });
         ac.addListener('place_changed', function(){
           var place = ac.getPlace();
@@ -1654,11 +1849,34 @@
             input.value = place.name ? place.name : (place.formatted_address || input.value);
             input.dataset.lat = place.geometry.location.lat();
             input.dataset.lon = place.geometry.location.lng();
+            if(opts.hours){
+              input.dataset.hours = (place.opening_hours && place.opening_hours.periods)
+                ? JSON.stringify(simplifyOpeningPeriods(place.opening_hours.periods))
+                : '';
+            }
           }
         });
       }catch(e){ /* leave as a plain text field if Places fails to attach */ }
     });
   }
+  /* Google 回傳的 opening_hours.periods 是 {open:{day:0-6,time:'0900'}, close:{...}}
+     這種格式；24 小時營業的地點只會回一筆 day:0 time:'0000' 又沒有 close，代表
+     「全年無休、每天都開」，不是「只有星期日開」，所以特別處理成 {always:true}。
+     其他情況整理成「星期幾（0=日）→ 當天營業時段陣列」，方便之後照行程日期查。 */
+  function simplifyOpeningPeriods(periods){
+    if(periods && periods.length === 1 && periods[0].open && periods[0].open.day === 0 && periods[0].open.time === '0000' && !periods[0].close){
+      return { always: true };
+    }
+    var byDay = {};
+    (periods || []).forEach(function(p){
+      if(!p.open) return;
+      var d = p.open.day;
+      if(!byDay[d]){ byDay[d] = []; }
+      byDay[d].push({ open: p.open.time, close: p.close ? p.close.time : null });
+    });
+    return byDay;
+  }
+  function fmtHHMM(t){ return t.slice(0, 2) + ':' + t.slice(2, 4); }
 
   /* ---- generic sub-tab bars (each scoped to its own panel, so switching one
          section's sub-tabs never touches another section's panels) ---- */
@@ -1684,25 +1902,25 @@
     var MAPCODE_TOOL = 'https://japanmapcode.com/zh-TW';
 
     var DAYS_SEED = [
-      { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo',
+      { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo', wxLoc:'fukuoka',
         note:'這天完全不排景點，先讓寶寶適應環境。IT720 17:50 抵達福岡機場，領行李、取車後直接前往飯店。', warn:false,
         slots:{
           start:[{name:'福岡機場', time:'IT720 17:50 抵達', note:'抵達後領行李、取車。', lat:33.5859, lon:130.4515}],
           end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'整天・入住休息', note:'入住 15:00 起。', lat:33.5874, lon:130.40703}]
         } },
-      { id:'2', date:'8/27', weekday:'（四）', wd3:'THU', monthLabel:'08月', theme:'福岡 → 門司港 → 福岡', color:'sand', note:'', warn:false,
+      { id:'2', date:'8/27', weekday:'（四）', wd3:'THU', monthLabel:'08月', theme:'福岡 → 門司港 → 福岡', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
         slots:{
           start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
           morning:[{name:'門司港', time:'約 3～3.5 小時・開車 1 小時 20 分', note:'慢慢逛門司港車站、懷舊街區、海邊、展望室。', lat:33.9495, lon:130.9628, wikiTitle:'門司港レトロ'}],
           end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'下午～晚上・開車 1 小時 20 分', note:'回飯店休息。', lat:33.5874, lon:130.40703}]
         } },
-      { id:'3', date:'8/28', weekday:'（五）', wd3:'FRI', monthLabel:'08月', theme:'福岡 → African Safari → 由布院', color:'moss', note:'', warn:false,
+      { id:'3', date:'8/28', weekday:'（五）', wd3:'FRI', monthLabel:'08月', theme:'福岡 → African Safari → 由布院', color:'moss', wxLoc:'yufuin', note:'', warn:false,
         slots:{
           start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
           morning:[{name:'African Safari', time:'約 2.5～3 小時・開車 2 小時 15 分', note:'以自駕 Safari 為主，這天不需要趕。', lat:33.352022, lon:131.413506, wikiTitle:'九州自然動物公園アフリカンサファリ'}],
           end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 2 小時 15 分', note:'Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。', lat:33.2645, lon:131.3550}]
         } },
-      { id:'4', date:'8/29', weekday:'（六）', wd3:'SAT', monthLabel:'08月', theme:'由布院 → 阿蘇景觀自駕 → 由布院', color:'persimmon',
+      { id:'4', date:'8/29', weekday:'（六）', wd3:'SAT', monthLabel:'08月', theme:'由布院 → 阿蘇景觀自駕 → 由布院', color:'persimmon', wxLoc:'aso',
         note:'全程最密集的一天，當成「景觀自駕日」，每個點都不要停太久。', warn:false,
         slots:{
           start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
@@ -1719,19 +1937,19 @@
           ],
           end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 1 小時 20 分', note:'回到由布院吃飯、泡湯、休息。', lat:33.2645, lon:131.3550}]
         } },
-      { id:'5', date:'8/30', weekday:'（日）', wd3:'SUN', monthLabel:'08月', theme:'由布院 → 福岡', color:'indigo', note:'', warn:false,
+      { id:'5', date:'8/30', weekday:'（日）', wd3:'SUN', monthLabel:'08月', theme:'由布院 → 福岡', color:'indigo', wxLoc:'yufuin', note:'', warn:false,
         slots:{
           start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
           morning:[{name:'由布院自由活動', time:'約 2～3 小時', note:'若前一天太累就慢慢退房；若寶寶精神好，可去湯之坪街道或金鱗湖。Yufuin Covaco 退房時間 06:00～10:00。', lat:33.2645, lon:131.3550}],
           end:[{name:'HOTEL Sui HARUYOSHI', time:'晚上・住宿・開車 2 小時 20 分', note:'回到福岡，休息。入住 15:00～22:00。', lat:33.58675, lon:130.4068}]
         } },
-      { id:'6', date:'8/31', weekday:'（一）', wd3:'MON', monthLabel:'08月', theme:'福岡自由日', color:'sand', note:'', warn:false,
+      { id:'6', date:'8/31', weekday:'（一）', wd3:'MON', monthLabel:'08月', theme:'福岡自由日', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
         slots:{
           start:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}],
           morning:[{name:'博多站／天神商圈', time:'整天・開車 10～20 分', note:'購物、嬰兒用品、伴手禮、晚餐。', lat:33.5902, lon:130.4017, wikiTitle:'天神 (福岡市)'}],
           end:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}]
         } },
-      { id:'7', date:'9/1', weekday:'（二）', wd3:'TUE', monthLabel:'09月', theme:'福岡 → 台灣', color:'neutral',
+      { id:'7', date:'9/1', weekday:'（二）', wd3:'TUE', monthLabel:'09月', theme:'福岡 → 台灣', color:'neutral', wxLoc:'fukuoka',
         note:'HOTEL Sui HARUYOSHI 退房 10:00 前，IT241 10:55 起飛——時間非常緊，建議前一晚打包好行李、退房後直接上車。', warn:true,
         slots:{
           start:[{name:'HOTEL Sui HARUYOSHI', time:'退房 10:00 前', note:'', lat:33.58675, lon:130.4068}],
@@ -1756,10 +1974,28 @@
       return url;
     }
 
+    /* 依照這個地點存的 opening_hours 資料，算出「這一天（stop 所在的行程日期）」
+       實際星期幾的營業時間文字。stop.hours 是重新搜尋地點時才會抓到的（見
+       setupLocationSearch 的 opts.hours），舊資料、或當初手動輸入沒有重新搜尋過
+       的地點就沒有這欄，直接不顯示，不會顯示錯誤或假資料。 */
+    function openingHoursText(stop, dayId){
+      if(!stop.hours) return '';
+      if(stop.hours.always) return '24 小時營業';
+      var day = DAYS_SEED.filter(function(s){ return s.id === dayId; })[0];
+      if(!day) return '';
+      var parts = day.date.split('/');
+      var jsDate = new Date(2026, Number(parts[0]) - 1, Number(parts[1]));
+      var todays = stop.hours[jsDate.getDay()];
+      if(!todays || !todays.length) return '本日公休';
+      return '營業時間 ' + todays.map(function(p){
+        return p.close ? (fmtHHMM(p.open) + '–' + fmtHHMM(p.close)) : '24 小時營業';
+      }).join('、');
+    }
     function stopCardHtml(stop, idx, slotKey, dayId, color, prevStop, mapNumber){
       var hasGeo = stop.lat != null && stop.lon != null;
       var hasPrevGeo = prevStop && prevStop.lat != null && prevStop.lon != null;
       var coordsText = hasGeo ? (Number(stop.lat).toFixed(5) + ', ' + Number(stop.lon).toFixed(5)) : '';
+      var hoursText = hasGeo ? openingHoursText(stop, dayId) : '';
       var navLabel = hasPrevGeo ? ('導航（從' + escapeHtml(prevStop.name || '上一站') + '）') : '導航';
       var userPhoto = (stop.photos && stop.photos.length) ? stop.photos[stop.photos.length - 1].url : null;
       var photoHtml = userPhoto
@@ -1780,6 +2016,7 @@
             '<span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
             (stop.time ? '<span class="stop-stay c-' + color + '">' + escapeHtml(stop.time) + '</span>' : '') + '</div>' +
           (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
+          (hoursText ? '<p class="stop-hours">🕒 ' + escapeHtml(hoursText) + '</p>' : '') +
           '<div class="itin-stop-actions">' +
             (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon, hasPrevGeo ? prevStop.lat : null, hasPrevGeo ? prevStop.lon : null) + '" target="_blank" rel="noopener">' + navLabel + '</a>' : '') +
             (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
@@ -1865,7 +2102,7 @@
       var body = cardEl.querySelector('.itin-stop-body');
       body.innerHTML = editFormHtml(stop, dayId, slotKey);
       var nameInput = body.querySelector('.ie-name');
-      setupLocationSearch(nameInput, body.querySelector('.ie-suggest'));
+      setupLocationSearch(nameInput, body.querySelector('.ie-suggest'), {hours: true});
       if(stop.lat != null){ nameInput.dataset.lat = stop.lat; nameInput.dataset.lon = stop.lon; }
       wireButtonGroup(body.querySelector('.ie-move-day'));
       wireButtonGroup(body.querySelector('.ie-move-slot'));
@@ -1911,6 +2148,8 @@
         };
         if(nameInput.dataset.lat){ updated.lat = parseFloat(nameInput.dataset.lat); updated.lon = parseFloat(nameInput.dataset.lon); }
         else if(stop.lat != null){ updated.lat = stop.lat; updated.lon = stop.lon; }
+        if(nameInput.dataset.hours !== undefined){ updated.hours = nameInput.dataset.hours ? JSON.parse(nameInput.dataset.hours) : null; }
+        else if(stop.hours){ updated.hours = stop.hours; }
         if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
         saveStop(dayId, slotKey, idx, updated);
       });
@@ -2031,6 +2270,39 @@
       wireStopActions(dayId);
       loadStopPhotos(host);
       renderDayMiniMap(d);
+      renderDayWeatherStrip(d, dayId);
+    }
+
+    var WX_LOC_LABEL = {fukuoka:'福岡', yufuin:'由布院', aso:'阿蘇'};
+    function isoDateFromShort(dateShort){
+      var parts = dateShort.split('/');
+      return '2026-' + ('0' + parts[0]).slice(-2) + '-' + ('0' + parts[1]).slice(-2);
+    }
+    /* 這天的逐時天氣小卡，放在小地圖下面、起點卡片上面；跟總覽頁的天氣
+       共用同一份快取資料（見天氣模組的 window.__wxCacheReady），不用重複打 API。 */
+    function renderDayWeatherStrip(d, dayId){
+      var wrap = document.getElementById('dayWxStrip');
+      var labelEl = document.getElementById('dayWxStripLabel');
+      var hourEl = document.getElementById('dayWxHourStrip');
+      if(!wrap || !d.wxLoc || !window.__wxCacheReady || !window.__wxCacheReady[d.wxLoc]){
+        if(wrap){ wrap.style.display = 'none'; }
+        return;
+      }
+      wrap.style.display = '';
+      labelEl.textContent = d.date + d.weekday + '・' + (WX_LOC_LABEL[d.wxLoc] || d.wxLoc) + ' 逐時天氣';
+      hourEl.innerHTML = '<p class="wx-empty">讀取中…</p>';
+      var isoDate = isoDateFromShort(d.date);
+      window.__wxCacheReady[d.wxLoc].then(function(data){
+        if(String(window.__currentDay) !== dayId) return; /* 天氣抓好的時候使用者可能已經切到別天了 */
+        if(!data || !data.hourly){
+          hourEl.innerHTML = '<p class="wx-empty">目前抓不到逐時預報。</p>';
+          return;
+        }
+        window.__renderWxHourStrip(hourEl, data.hourly, isoDate);
+        if(!hourEl.children.length){
+          hourEl.innerHTML = '<p class="wx-empty">這天還沒有逐時預報資料（離出發太久，出發前會出現）。</p>';
+        }
+      });
     }
 
     function renderDateStrip(){
@@ -2233,21 +2505,89 @@
       }
       /* 從你的 My Maps KML 匯入的真實資料，依圖層（Folder）分組。分類是我從
          KML 裡每個點的圖示顏色反推的（購物=黃、觀光=藍、餐廳=紫、交通/住宿=橘，
-         同一個橘色底下又依圖示編號拆成交通／住宿兩類），原本的城市地標（福岡市／
-         由布院／別府市，黑色圖示）跟一筆重複的「PARCO福岡 新館」沒有匯入。 */
+         同一個橘色底下又依圖示編號拆成交通／住宿兩類）。城市/地區地標（黑色圖示：
+         福岡市、太宰府市、由布院、別府市、北濱 Kitahama）跟一筆重複的「PARCO福岡
+         新館」沒有匯入——這次重新匯入是整批比照最新 KML（見『口袋清單資料怎麼
+         更新』），上一版舊資料（例如 African Safari、瀬之本、牧之戶峠等）如果這次
+         KML 裡沒有就不在這份清單了。 */
       var BUCKET_SEED_BY_LAYER = {
+        '阿蘇市': [
+          { name:'阿蘇中岳火山口', note:'', lat:32.884907, lon:131.0849344, preset:'sightseeing' },
+          { name:'草千里展望所', note:'', lat:32.8863481, lon:131.0521391, preset:'sightseeing' },
+          { name:'大觀峰', note:'', lat:32.9963701, lon:131.0673096, preset:'sightseeing' },
+          { name:'米塚', note:'', lat:32.9055361, lon:131.0445091, preset:'sightseeing' },
+          { name:'草千里（草千里之濱）', note:'', lat:32.8818249, lon:131.0533279, preset:'sightseeing' },
+          { name:'草千里珈琲焙煎所 / 山ノ駅物産館', note:'', lat:32.8860479, lon:131.0543251, preset:'restaurant' },
+          { name:'Milk Road', note:'', lat:33.0108333, lon:131.0520518, preset:'sightseeing' },
+          { name:'阿蘇スカイライン展望所 (Skyline)', note:'', lat:32.999913, lon:131.018136, preset:'sightseeing' },
+          { name:'阿蘇火山博物館', note:'展望台可以看風景, 但博物館很舊,  可以不用進去', lat:32.8855511, lon:131.0521423, preset:'sightseeing' },
+          { name:'阿蘇山上ターミナル (ASO SANJO TERMINAL)', note:'伴手禮, 小吃, 咖啡', lat:32.8799648, lon:131.0743293, preset:'sightseeing' },
+          { name:'阿蘇山噴煙展望公園', note:'', lat:32.8803266, lon:131.0742988, preset:'sightseeing' },
+          { name:'砂千里 (砂千里ヶ浜)', note:'像月球表面', lat:32.8758971, lon:131.0863947, preset:'sightseeing' },
+          { name:'阿蘇神社', note:'', lat:32.9480333, lon:131.1158274, preset:'sightseeing' },
+          { name:'白川水源', note:'', lat:32.8253719, lon:131.0953099, preset:'sightseeing' },
+          { name:'南阿蘇全景路線展望台', note:'', lat:32.8528549, lon:131.0430178, preset:'sightseeing' },
+          { name:'上色見熊野座神社', note:'若是時間不夠的話, 可以來神社就好, 來回30分鐘', lat:32.8537942, lon:131.1585205, preset:'sightseeing' },
+          { name:'穿戶岩', note:'從神社再往上走10分鐘', lat:32.8531506, lon:131.1581332, preset:'sightseeing' },
+          { name:'当地郷土料理 高森田楽村 阿蘇', note:'烤肉, 烤魚, 其他烤物', lat:32.853822, lon:131.143817, preset:'restaurant' },
+          { name:'新阿蘇大橋展望台 Yo Myuru', note:'', lat:32.8761759, lon:130.9887076, preset:'sightseeing' },
+          { name:'門前町商店街', note:'', lat:32.9488141, lon:131.1166837, preset:'shopping' },
+          { name:'miumilk (鮮奶油可麗餅)', note:'', lat:32.9303871, lon:131.0226692, preset:'restaurant' },
+          { name:'景觀餐廳 新草千里', note:'', lat:32.8861255, lon:131.0542104, preset:'restaurant' },
+          { name:'米塚展望地', note:'', lat:32.9028285, lon:131.0527943, preset:'sightseeing' },
+          { name:'やまなみハイウェイ展望台', note:'', lat:33.0856305, lon:131.1930868, preset:'sightseeing' },
+          { name:'九重“夢”大吊橋 (08:30 – 18:00, ￥500)', note:'', lat:33.1727765, lon:131.2255586, preset:'sightseeing' },
+          { name:'長者原ビジターセンター', note:'', lat:33.1189491, lon:131.2304315, preset:'sightseeing' },
+          { name:'やまなみハイウェイ (Yamanami Highway)', note:'', lat:33.0949839, lon:131.2065057, preset:'sightseeing' },
+          { name:'牧ノ戸峠第一展望台', note:'', lat:33.0956021, lon:131.2116731, preset:'sightseeing' },
+          { name:'瀬の本高原', note:'', lat:33.070965, lon:131.1877926, preset:'sightseeing' }
+        ],
+        '由布院 別府': [
+          { name:'九州自然動物園', note:'', lat:33.3509251, lon:131.4137658, preset:'sightseeing' },
+          { name:'湯之坪街道', note:'', lat:33.2673861, lon:131.3645627, preset:'sightseeing' },
+          { name:'金鱗湖', note:'', lat:33.2666644, lon:131.3690272, preset:'sightseeing' },
+          { name:'湯布院花卉村', note:'', lat:33.2674871, lon:131.3655357, preset:'sightseeing' },
+          { name:'狭霧台 (登高看由布院風景)', note:'', lat:33.2600229, lon:131.3825262, preset:'sightseeing' },
+          { name:'史奴比茶屋', note:'', lat:33.2665748, lon:131.3656171, preset:'shopping' },
+          { name:'蛋糕卷 B SPEAK 本店 (生乳卷)', note:'', lat:33.2653853, lon:131.3593844, preset:'restaurant' },
+          { name:'由布釜飯 「心」金鱗湖本店 (10:30-17:30)', note:'', lat:33.2671853, lon:131.3678529, preset:'restaurant' },
+          { name:'由布釜飯 「心」湯布院站前店 (10:30-19:00)', note:'', lat:33.2629646, lon:131.3556746, preset:'restaurant' },
+          { name:'石臼挽手打十割蕎麥麵 溫川', note:'', lat:33.2676117, lon:131.367823, preset:'restaurant' },
+          { name:'七厘焼き和作 (燒肉, 17:00-22:30)', note:'', lat:33.2639317, lon:131.356976, preset:'restaurant' },
+          { name:'中津からあげ専門店 吉吾 湯布院店', note:'', lat:33.2669511, lon:131.3634117, preset:'restaurant' },
+          { name:'CARNE (雞肉串燒店)', note:'', lat:33.264856, lon:131.3563542, preset:'restaurant' },
+          { name:'たけお (日式丼飯, 11:30～14:30；17:00～20:00)', note:'', lat:33.262878, lon:131.3575296, preset:'restaurant' },
+          { name:'ゆふいんバーガーハウス (漢堡)', note:'', lat:33.2645627, lon:131.3584444, preset:'restaurant' },
+          { name:'花野そば', note:'', lat:33.2653115, lon:131.3640292, preset:'restaurant' },
+          { name:'地雞拉麵 福助', note:'', lat:33.2643226, lon:131.3580751, preset:'restaurant' },
+          { name:'烏龍麵 田舍庵 (手打烏龍麵)', note:'', lat:33.2673721, lon:131.3621169, preset:'restaurant' },
+          { name:'おむすびCafé TABIMUSUBI (飯糰)', note:'', lat:33.2625285, lon:131.3554899, preset:'restaurant' },
+          { name:'海地獄 (大, 鈷藍色池水)', note:'', lat:33.3168115, lon:131.4687384, preset:'sightseeing' },
+          { name:'灶地獄 (豐富多樣的地獄遊行)', note:'', lat:33.3163879, lon:131.4723906, preset:'sightseeing' },
+          { name:'血池地獄 (紅色熱泥漿)', note:'', lat:33.3271734, lon:131.4781731, preset:'sightseeing' },
+          { name:'鬼石坊主地獄 (灰色熱泥漿)', note:'', lat:33.3152885, lon:131.4696131, preset:'sightseeing' },
+          { name:'龍卷地獄 (間歇泉, 30-40分鐘噴發一次)', note:'', lat:33.3271408, lon:131.4794006, preset:'sightseeing' },
+          { name:'世界之塔 (可以登高看別府灣 ￥300)', note:'', lat:33.2831944, lon:131.4861111, preset:'sightseeing' },
+          { name:'地獄蒸布丁 岡本屋', note:'', lat:33.3180542, lon:131.4526114, preset:'restaurant' },
+          { name:'民芸茶屋 味蔵 (Local便宜定食, 10:30–14:30, 17:00–21:00)', note:'燒肉定食推, 煙多', lat:33.2987428, lon:131.4972382, preset:'restaurant' },
+          { name:'燒肉 円円', note:'', lat:33.279124, lon:131.5036828, preset:'restaurant' },
+          { name:'Beppu Risana', note:'', lat:33.2774807, lon:131.4981576, preset:'stay' },
+          { name:'TOKIWA 別府店', note:'', lat:33.2803239, lon:131.5053767, preset:'shopping' },
+          { name:'YouMe Town Beppu (9:30-21:00)', note:'', lat:33.2762149, lon:131.5075326, preset:'shopping' },
+          { name:'ドン・キホーテ 別府店 (9:00-2:00)', note:'', lat:33.2835722, lon:131.504482, preset:'shopping' }
+        ],
+        '高千穗': [
+          { name:'高千穗峽', note:'', lat:32.7012777, lon:131.3007272, preset:'sightseeing' }
+        ],
         '福岡市': [
           { name:'福岡國際機場', note:'', lat:33.5849988, lon:130.4490906, preset:'transport' },
           { name:'博多駅', note:'', lat:33.5897275, lon:130.4207274, preset:'transport' },
           { name:'天神駅', note:'', lat:33.5914006, lon:130.3988788, preset:'transport' },
           { name:'Orix天神大名店', note:'', lat:33.5900212, lon:130.3941, preset:'transport' },
-          { name:'門司港懷舊', note:'', lat:33.9462036, lon:130.9630099, preset:'sightseeing' },
-          { name:'小倉城', note:'', lat:33.8844357, lon:130.8742541, preset:'sightseeing' },
-          { name:'門司港懷舊展望室 (眺望關門海峽)', note:'', lat:33.9484054, lon:130.9641174, preset:'sightseeing' },
-          { name:'九州自然動物園', note:'', lat:33.3509251, lon:131.4137658, preset:'sightseeing' },
-          { name:'湯之坪街道', note:'', lat:33.2673861, lon:131.3645627, preset:'sightseeing' },
-          { name:'金鱗湖', note:'', lat:33.2666644, lon:131.3690272, preset:'sightseeing' },
-          { name:'Curry Nile', note:'', lat:33.589315, lon:130.4198979, preset:'restaurant' },
+          { name:'SPAZIO 3 Life More Haruyoshi Annex', note:'', lat:33.587489, lon:130.4070359, preset:'stay' },
+          { name:'福岡麵包超人兒童博物館 in 購物商場', note:'', lat:33.5951049, lon:130.4058425, preset:'sightseeing' },
+          { name:'teamLab森林 福岡 - SBI SECURITIES Co., Ltd.', note:'', lat:33.5949959, lon:130.3636745, preset:'sightseeing' },
+          { name:'櫛田神社 (有名)', note:'想去第一名', lat:33.5929546, lon:130.4104589, preset:'sightseeing' },
           { name:'BIC CAMERA 天神1號館', note:'', lat:33.5875219, lon:130.4007108, preset:'shopping' },
           { name:'BIC CAMERA 天神二號店 (麵包超人玩具)', note:'', lat:33.587547, lon:130.398624, preset:'shopping' },
           { name:'Yodobashi 友都八喜 博多', note:'', lat:33.5883051, lon:130.4216938, preset:'shopping' },
@@ -2258,56 +2598,31 @@
           { name:'天神地下街', note:'', lat:33.5895719, lon:130.3997484, preset:'shopping' },
           { name:'Mina 天神 (B1有3 coins)', note:'', lat:33.5927599, lon:130.3985129, preset:'shopping' },
           { name:'MARK IS (偏小但人少好逛，3F多小孩東西)', note:'UQ(1F)、GU(3F)、Big camera (5樓)', lat:33.592234, lon:130.3645564, preset:'shopping' },
-          { name:'teamLab森林 福岡 - SBI SECURITIES Co., Ltd.', note:'', lat:33.5949959, lon:130.3636745, preset:'sightseeing' },
           { name:'LaLaport 福岡', note:'', lat:33.5651676, lon:130.4409414, preset:'shopping' },
-          { name:'福岡麵包超人兒童博物館 in 購物商場', note:'', lat:33.5951049, lon:130.4058425, preset:'sightseeing' },
-          { name:'焗烤咖哩飯 BEAR FRUITS 本店', note:'', lat:33.9455425, lon:130.9610642, preset:'restaurant' },
           { name:'大丸 福岡天神店', note:'', lat:33.5886461, lon:130.4011817, preset:'shopping' },
-          { name:'皿倉山展望台', note:'', lat:33.8467326, lon:130.7968029, preset:'sightseeing' },
-          { name:'關門橋', note:'', lat:33.9607324, lon:130.9605432, preset:'sightseeing' },
-          { name:'九州鐵道紀念館', note:'', lat:33.9431488, lon:130.9617938, preset:'sightseeing' },
-          { name:'Shiroya シロヤ (奶油蛋糕, Sunny pane サニーパン)', note:'', lat:33.8858996, lon:130.881091, preset:'restaurant' },
           { name:'索拉利亞廣場', note:'', lat:33.5890853, lon:130.3988213, preset:'shopping' },
           { name:'福岡三越', note:'', lat:33.588698, lon:130.3999632, preset:'shopping' },
           { name:'VIORO', note:'', lat:33.5897222, lon:130.3983333, preset:'shopping' },
+          { name:'博多運河城', note:'', lat:33.5896305, lon:130.4109478, preset:'shopping' },
+          { name:'Curry Nile', note:'', lat:33.589315, lon:130.4198979, preset:'restaurant' },
           { name:'かつ丼わか葉 今泉店 (福岡有名豬排)', note:'', lat:33.5868209, lon:130.399183, preset:'restaurant' },
           { name:'とんかつ わか葉 (福岡有名豬排)', note:'', lat:33.5925574, lon:130.4021945, preset:'restaurant' },
           { name:'Shin-Shin 博多拉麵 福岡PARCO店', note:'', lat:33.590874, lon:130.39855, preset:'restaurant' },
           { name:'博多拉麵 ShinShin 天神本店', note:'', lat:33.5927497, lon:130.3968446, preset:'restaurant' },
           { name:'極味屋 福岡Parco店 (漢堡排)', note:'', lat:33.5906182, lon:130.3986779, preset:'restaurant' },
-          { name:'海地獄 (大, 鈷藍色池水)', note:'', lat:33.3168115, lon:131.4687384, preset:'sightseeing' },
-          { name:'灶地獄 (豐富多樣的地獄遊行)', note:'', lat:33.3163879, lon:131.4723906, preset:'sightseeing' },
-          { name:'血池地獄 (紅色熱泥漿)', note:'', lat:33.3271734, lon:131.4781731, preset:'sightseeing' },
-          { name:'鬼石坊主地獄 (灰色熱泥漿)', note:'', lat:33.3152885, lon:131.4696131, preset:'sightseeing' },
-          { name:'龍卷地獄 (間歇泉, 30-40分鐘噴發一次)', note:'', lat:33.3271408, lon:131.4794006, preset:'sightseeing' },
           { name:'太宰府天滿宮', note:'', lat:33.5213697, lon:130.5348239, preset:'sightseeing' },
-          { name:'星巴克 太宰府天滿宮表參道店', note:'', lat:33.5197185, lon:130.5333683, preset:'sightseeing' },
-          { name:'博多運河城', note:'', lat:33.5896305, lon:130.4109478, preset:'shopping' },
-          { name:'蛋糕卷 B SPEAK 本店 (生乳卷)', note:'', lat:33.2653853, lon:131.3593844, preset:'restaurant' },
-          { name:'湯布院花卉村', note:'', lat:33.2674871, lon:131.3655357, preset:'sightseeing' },
-          { name:'LAMP LIGHT BOOKS HOTEL fukuoka', note:'', lat:33.5869418, lon:130.3953066, preset:'stay' },
-          { name:'SPAZIO 3 Life More Haruyoshi Annex', note:'', lat:33.587489, lon:130.4070359, preset:'stay' },
-          { name:'由布釜飯 「心」金鱗湖本店 (10:30-17:30)', note:'', lat:33.2671853, lon:131.3678529, preset:'restaurant' },
-          { name:'由布釜飯 「心」湯布院站前店 (10:30-19:00)', note:'', lat:33.2629646, lon:131.3556746, preset:'restaurant' },
-          { name:'石臼挽手打十割蕎麥麵 溫川', note:'', lat:33.2676117, lon:131.367823, preset:'restaurant' },
-          { name:'資先生烏龍麵魚町店', note:'', lat:33.8834968, lon:130.880783, preset:'restaurant' },
-          { name:'七厘焼き和作 (17:00-22:30)', note:'', lat:33.2639317, lon:131.356976, preset:'restaurant' },
-          { name:'中津からあげ専門店 吉吾 湯布院店', note:'', lat:33.2669511, lon:131.3634117, preset:'restaurant' },
-          { name:'狭霧台 (登高看由布院風景)', note:'', lat:33.2600229, lon:131.3825262, preset:'sightseeing' },
-          { name:'地獄蒸布丁 岡本屋', note:'', lat:33.3180542, lon:131.4526114, preset:'restaurant' },
-          { name:'高千穗峽', note:'', lat:32.7012777, lon:131.3007272, preset:'sightseeing' },
-          { name:'櫛田神社 (有名)', note:'想去第一名', lat:33.5929546, lon:130.4104589, preset:'sightseeing' }
+          { name:'星巴克 太宰府天滿宮表參道店', note:'', lat:33.5197185, lon:130.5333683, preset:'sightseeing' }
         ],
-        '阿蘇市': [
-          { name:'阿蘇中岳火山口', note:'', lat:32.884907, lon:131.0849344, preset:'sightseeing' },
-          { name:'草千里展望所', note:'', lat:32.8863481, lon:131.0521391, preset:'sightseeing' },
-          { name:'大觀峰', note:'', lat:32.9963701, lon:131.0673096, preset:'sightseeing' },
-          { name:'米塚', note:'', lat:32.9055361, lon:131.0445091, preset:'sightseeing' },
-          { name:'草千里（草千里之濱）', note:'', lat:32.8818249, lon:131.0533279, preset:'sightseeing' },
-          { name:'草千里珈琲焙煎所 / 山ノ駅物産館', note:'', lat:32.8860479, lon:131.0543251, preset:'restaurant' },
-          { name:'Milk Road', note:'', lat:33.0108333, lon:131.0520518, preset:'sightseeing' },
-          { name:'阿蘇スカイライン展望所 (Skyline)', note:'', lat:32.999913, lon:131.018136, preset:'sightseeing' },
-          { name:'阿蘇火山博物館', note:'展望台可以看風景', lat:32.8855511, lon:131.0521423, preset:'sightseeing' }
+        '門司港': [
+          { name:'門司港懷舊', note:'', lat:33.9462036, lon:130.9630099, preset:'sightseeing' },
+          { name:'門司港懷舊展望室 (眺望關門海峽)', note:'', lat:33.9484054, lon:130.9641174, preset:'sightseeing' },
+          { name:'皿倉山展望台', note:'', lat:33.8467326, lon:130.7968029, preset:'sightseeing' },
+          { name:'關門橋', note:'', lat:33.9607324, lon:130.9605432, preset:'sightseeing' },
+          { name:'九州鐵道紀念館', note:'', lat:33.9431488, lon:130.9617938, preset:'sightseeing' },
+          { name:'小倉城', note:'', lat:33.8844357, lon:130.8742541, preset:'sightseeing' },
+          { name:'焗烤咖哩飯 BEAR FRUITS 本店', note:'', lat:33.9455425, lon:130.9610642, preset:'restaurant' },
+          { name:'Shiroya シロヤ', note:'奶油蛋糕, Sunny pane サニーパン', lat:33.8858996, lon:130.881091, preset:'restaurant' },
+          { name:'資先生烏龍麵魚町店', note:'', lat:33.8834968, lon:130.880783, preset:'restaurant' }
         ]
       };
       var bucketItems = [];
@@ -2323,11 +2638,31 @@
         });
       });
 
+      /* 判斷這個口袋地點是不是已經被「加入行程」過——「加入行程」寫進行程時
+         是直接複製 lat/lon（見 bkAddConfirmBtn handler），所以用經緯度完全相等
+         來比對即可，不需要模糊比對名稱。 */
+      function bucketItemAlreadyInItinerary(it){
+        if(it.lat == null || it.lon == null) return false;
+        for(var dayId in DAYS){
+          var slots = DAYS[dayId].slots || {};
+          for(var slotKey in slots){
+            var arr = slots[slotKey] || [];
+            for(var i = 0; i < arr.length; i++){
+              var s = arr[i];
+              if(s.lat != null && s.lon != null && Math.abs(s.lat - it.lat) < 1e-6 && Math.abs(s.lon - it.lon) < 1e-6){
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
       function bucketItemHtml(it, idx){
         var preset = bucketPreset(it.preset);
         var hasGeo = it.lat != null && it.lon != null;
         var coordsText = hasGeo ? (Number(it.lat).toFixed(5) + ', ' + Number(it.lon).toFixed(5)) : '';
-        return '<div class="itin-stop bucket-item border-' + preset.color + '" data-bucket-id="' + it.id + '">' +
+        var inTrip = bucketItemAlreadyInItinerary(it);
+        return '<div class="itin-stop bucket-item border-' + preset.color + (inTrip ? ' bucket-item-added' : '') + '" data-bucket-id="' + it.id + '">' +
           '<button type="button" class="ia-drag" aria-label="拖曳排序">' +
             '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
               '<circle cx="7" cy="4" r="1.5"/><circle cx="13" cy="4" r="1.5"/>' +
@@ -2340,12 +2675,13 @@
               '<span class="stop-map-num c-' + preset.color + '">' + (idx + 1) + '</span>' +
               '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + preset.icon + '"></use></svg>' +
               '<span class="stop-name">' + escapeHtml(it.name || '（未命名）') + '</span>' +
+              (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
             '</div>' +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
             '<div class="itin-stop-actions">' +
               (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(it.lat, it.lon, null, null) + '" target="_blank" rel="noopener">導航</a>' : '') +
               (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
-              '<button class="ia-btn bk-add-open" type="button">＋加入行程</button>' +
+              (inTrip ? '' : '<button class="ia-btn bk-add-open" type="button">＋加入行程</button>') +
               '<button class="ia-btn ia-edit" type="button">編輯</button>' +
               '<button class="ia-btn ia-del" type="button">刪除</button>' +
             '</div>' +
@@ -2376,26 +2712,55 @@
         }catch(e){ mapEl.style.display = 'none'; }
       }
 
-      function renderBucketList(){
-        var host = document.getElementById('bucketLayers');
+      var bucketTabLayer = null;
+      var bucketTabCat = 'all';
+
+      function bucketGroupByLayer(){
         var byLayer = {};
         bucketItems.forEach(function(it){ (byLayer[it.layer] = byLayer[it.layer] || []).push(it); });
-        var layers = Object.keys(byLayer);
-        if(!layers.length){
+        return byLayer;
+      }
+
+      function renderBucketList(){
+        var host = document.getElementById('bucketLayers');
+        if(!bucketItems.length){
           host.innerHTML = '<p class="wx-empty">還沒有口袋地點，點上面「＋ 新增口袋地點」開始加。</p>';
           return;
         }
-        var sortedByLayer = {};
-        host.innerHTML = layers.map(function(layer, li){
-          var layerItems = byLayer[layer].slice().sort(function(a, b){ return (a.order || 0) - (b.order || 0); });
-          sortedByLayer[layer] = layerItems;
-          /* 地圖上的編號是整個圖層一起排的，這樣不管展開哪個分類，地圖跟卡片上的
-             數字都對得起來；分類本身的排列順序跟著 BUCKET_PRESETS 走。 */
-          var numByItem = {};
-          layerItems.forEach(function(it, idx){ numByItem[it.id] = idx; });
-          var byPreset = {};
-          layerItems.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
-          var catsHtml = BUCKET_PRESETS.filter(function(p){ return byPreset[p.key] && byPreset[p.key].length; }).map(function(preset){
+        renderBucketTabs(host);
+      }
+
+      /* 跟行程的日期列一樣：先選圖層（分頁），再選分類（分頁），一次只看
+         一個圖層＋一個分類的清單。地圖固定顯示整個圖層的點（不會因為選了
+         分類就跟著篩選），方便看整體位置。 */
+      function renderBucketTabs(host){
+        var byLayer = bucketGroupByLayer();
+        var layers = Object.keys(byLayer);
+        if(!bucketTabLayer || layers.indexOf(bucketTabLayer) === -1){ bucketTabLayer = layers[0]; }
+        var layerItems = byLayer[bucketTabLayer].slice().sort(function(a, b){ return (a.order || 0) - (b.order || 0); });
+        var numByItem = {};
+        layerItems.forEach(function(it, idx){ numByItem[it.id] = idx; });
+        var byPreset = {};
+        layerItems.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
+        var presetsPresent = BUCKET_PRESETS.filter(function(p){ return byPreset[p.key] && byPreset[p.key].length; });
+        if(bucketTabCat !== 'all' && !byPreset[bucketTabCat]){ bucketTabCat = 'all'; }
+
+        var layerTabsHtml = layers.map(function(layer){
+          return '<button type="button" class="' + (layer === bucketTabLayer ? 'active' : '') + '" data-value="' + escapeHtml(layer) + '">' +
+            escapeHtml(layer) + ' <span class="bk-tab-count">' + byLayer[layer].length + '</span></button>';
+        }).join('');
+        var catTabsHtml = '<button type="button" class="' + (bucketTabCat === 'all' ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + layerItems.length + '</span></button>' +
+          presetsPresent.map(function(p){
+            return '<button type="button" class="' + (p.key === bucketTabCat ? 'active' : '') + '" data-value="' + p.key + '">' +
+              p.label + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
+          }).join('');
+
+        /* 選「全部」的時候還是要依分類分組、可收合，不能把全部類別混在一起
+           排序（不然找起來反而更亂）；選了特定分類才顯示那個分類自己的扁平
+           清單（本來就已經篩到只剩一類，不需要再分組）。 */
+        var listHtml;
+        if(bucketTabCat === 'all'){
+          listHtml = presetsPresent.map(function(preset){
             var catItems = byPreset[preset.key];
             return '<details class="bucket-cat" open>' +
               '<summary>' +
@@ -2403,18 +2768,37 @@
                 '<span class="chk-group-title">' + preset.label.replace(/^\S+\s*/, '') + '</span>' +
                 '<span class="chk-group-count">' + catItems.length + '</span>' +
               '</summary>' +
-              '<div class="bucket-layer-list" data-layer="' + escapeHtml(layer) + '">' +
+              '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
                 catItems.map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('') +
               '</div>' +
             '</details>';
           }).join('');
-          return '<details class="bucket-layer" open>' +
-            '<summary><h3>' + escapeHtml(layer) + '</h3><span class="chk-group-count">' + layerItems.length + ' 個地點</span></summary>' +
-            '<div class="bucket-layer-map" id="bucketMap-' + li + '"></div>' +
-            catsHtml +
-          '</details>';
-        }).join('');
-        layers.forEach(function(layer, li){ renderBucketLayerMap('bucketMap-' + li, sortedByLayer[layer]); });
+        } else {
+          listHtml = '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
+            byPreset[bucketTabCat].map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('') +
+          '</div>';
+        }
+
+        host.innerHTML =
+          '<div class="btn-group bk-layer-tabs" id="bkTabLayer">' + layerTabsHtml + '</div>' +
+          '<div class="btn-group bk-cat-tabs" id="bkTabCat">' + catTabsHtml + '</div>' +
+          '<div class="bucket-layer-map" id="bucketMap-tabs"></div>' +
+          listHtml;
+
+        renderBucketLayerMap('bucketMap-tabs', layerItems);
+        host.querySelector('#bkTabLayer').addEventListener('click', function(ev){
+          var btn = ev.target.closest('button');
+          if(!btn) return;
+          bucketTabLayer = btn.dataset.value;
+          bucketTabCat = 'all';
+          renderBucketList();
+        });
+        host.querySelector('#bkTabCat').addEventListener('click', function(ev){
+          var btn = ev.target.closest('button');
+          if(!btn) return;
+          bucketTabCat = btn.dataset.value;
+          renderBucketList();
+        });
         wireBucketActions();
       }
 
@@ -2449,9 +2833,10 @@
         });
         body.querySelector('.ie-cancel').addEventListener('click', function(){ renderBucketList(); });
         body.querySelector('.ie-del').addEventListener('click', function(){
-          if(!confirm('確定要刪除這個口袋地點嗎？')) return;
-          bucketItems = bucketItems.filter(function(x){ return x.id !== it.id; });
-          renderBucketList();
+          confirmDelete('確定要刪除這個口袋地點嗎？', function(){
+            bucketItems = bucketItems.filter(function(x){ return x.id !== it.id; });
+            renderBucketList();
+          });
         });
       }
 
@@ -2465,9 +2850,10 @@
           var delBtn = cardEl.querySelector('.ia-del');
           if(delBtn){
             delBtn.addEventListener('click', function(){
-              if(!confirm('確定要刪除這個口袋地點嗎？')) return;
-              bucketItems = bucketItems.filter(function(x){ return x.id !== id; });
-              renderBucketList();
+              confirmDelete('確定要刪除這個口袋地點嗎？', function(){
+                bucketItems = bucketItems.filter(function(x){ return x.id !== id; });
+                renderBucketList();
+              });
             });
           }
           var addOpenBtn = cardEl.querySelector('.bk-add-open');
@@ -2508,15 +2894,22 @@
         persistDay(dayId);
         redrawOverviewMap();
         closeBkAddModal();
+        renderBucketList();
       });
 
       document.getElementById('bucketAddOpenBtn').addEventListener('click', function(){
         var defaultLayer = bucketItems.length ? bucketItems[bucketItems.length - 1].layer : Object.keys(BUCKET_SEED_BY_LAYER)[0];
         var it = { id:'demo-' + (nextBucketId++), name:'', note:'', preset:'other', layer:defaultLayer, order:Date.now() };
         bucketItems.push(it);
+        /* 一定要先切到新地點所在的圖層／分類分頁，不然新卡片會加在使用者
+           目前完全沒在看的分頁裡，畫面上什麼都看不到——之前這裡沒切分頁，
+           就是「按了新增沒反應」那個 bug 的真正原因。 */
+        bucketTabLayer = defaultLayer;
+        bucketTabCat = 'other';
         renderBucketList();
         setTimeout(function(){
           var cardEl = document.querySelector('.bucket-item[data-bucket-id="' + it.id + '"]');
+          if(cardEl){ cardEl.scrollIntoView({behavior:'smooth', block:'center'}); }
           var editBtn = cardEl && cardEl.querySelector('.ia-edit');
           if(editBtn){ editBtn.click(); }
         }, 0);
@@ -2873,14 +3266,16 @@
         function(b){ return b.dataset.value; }
       );
       if(catOptions.indexOf(e.category) === -1 && e.category){ catOptions.push(e.category); }
+      var dayBtns = dayOrder.map(function(d){
+        return '<button type="button" class="' + (d === e.day ? 'active' : '') + '" data-value="' + escapeHtml(d) + '">' + escapeHtml(d.replace(/（.+）$/, '')) + '</button>';
+      }).join('');
       return '<div class="inline-edit-form">' +
         '<input type="text" class="ee-item" placeholder="品項" value="' + escapeHtml(e.item || '') + '">' +
         '<div class="inline-edit-grid">' +
-          '<select class="ee-day">' + selectOptions(dayOrder, e.day) + '</select>' +
-          '<select class="ee-currency">' + selectOptions(['JPY', 'TWD'], e.currency) + '</select>' +
-          '<input type="text" class="ee-amount" inputmode="decimal" style="width:6rem;" value="' + escapeHtml(String(e.amount)) + '">' +
-          '<select class="ee-method">' + selectOptions(['現金', '信用卡', '日本儲值卡', 'Suica', '其他'], e.method) + '</select>' +
-          '<select class="ee-category">' + selectOptions(catOptions, e.category) + '</select>' +
+          '<div class="inline-edit-field"><label>日期</label><div class="btn-group ee-day">' + dayBtns + '</div></div>' +
+          '<div class="inline-edit-field"><label>金額</label><div class="amount-row"><input type="text" class="ee-amount" inputmode="decimal" value="' + escapeHtml(String(e.amount)) + '"><div class="btn-group ee-currency">' + btnGroupOptions(['JPY', 'TWD'], e.currency) + '</div></div></div>' +
+          '<div class="inline-edit-field"><label>支付方式</label><div class="btn-group ee-method">' + btnGroupOptions(['現金', '信用卡', '日本儲值卡', 'Suica', '其他'], e.method) + '</div></div>' +
+          '<div class="inline-edit-field"><label>類別</label><div class="btn-group ee-category">' + btnGroupOptions(catOptions, e.category) + '</div></div>' +
         '</div>' +
         '<input type="text" class="ee-location" placeholder="地點（選填）" value="' + escapeHtml(e.location || '') + '">' +
         (e.receiptUrl
@@ -2891,6 +3286,7 @@
     }
     function enterExpEdit(rowEl, id, e){
       rowEl.innerHTML = expEditFormHtml(e);
+      rowEl.querySelectorAll('.inline-edit-grid .btn-group').forEach(wireButtonGroup);
       var removeReceipt = false;
       var delBtn = rowEl.querySelector('.ee-receipt-del');
       if(delBtn){
@@ -2904,11 +3300,11 @@
         if(!amt || isNaN(amt) || amt <= 0) return;
         var updated = {
           item: rowEl.querySelector('.ee-item').value.trim(),
-          day: rowEl.querySelector('.ee-day').value,
-          currency: rowEl.querySelector('.ee-currency').value,
+          day: groupValue(rowEl.querySelector('.ee-day')),
+          currency: groupValue(rowEl.querySelector('.ee-currency')),
           amount: amt,
-          method: rowEl.querySelector('.ee-method').value,
-          category: rowEl.querySelector('.ee-category').value,
+          method: groupValue(rowEl.querySelector('.ee-method')),
+          category: groupValue(rowEl.querySelector('.ee-category')),
           location: rowEl.querySelector('.ee-location').value.trim()
         };
         if(removeReceipt && e.receiptUrl){
@@ -2973,14 +3369,15 @@
         }
         var delBtn = ev.target.closest('[data-del-exp]');
         if(delBtn){
-          if(!confirm('確定要刪除這筆紀錄嗎？')) return;
           var delId = delBtn.getAttribute('data-del-exp');
-          var delItem = expenseItems.filter(function(x){ return String(x.id) === delId; })[0];
-          if(delItem && delItem.receiptPath){
-            window.fb.storage.remove(delItem.receiptPath);
-            window.recordStorageDelta(-(delItem.receiptSize || 0));
-          }
-          fns.deleteDoc(fns.doc(col, delId));
+          confirmDelete('確定要刪除這筆紀錄嗎？', function(){
+            var delItem = expenseItems.filter(function(x){ return String(x.id) === delId; })[0];
+            if(delItem && delItem.receiptPath){
+              window.fb.storage.remove(delItem.receiptPath);
+              window.recordStorageDelta(-(delItem.receiptSize || 0));
+            }
+            fns.deleteDoc(fns.doc(col, delId));
+          });
         }
       });
     });
@@ -3091,8 +3488,10 @@
             var rowEl = document.querySelector('.chk-row[data-row-id="' + eid + '"]');
             if(editItem && rowEl){ enterEdit(rowEl, eid, editItem); }
           } else {
-            if(!confirm('確定要刪除嗎？')) return;
-            fns.deleteDoc(fns.doc(col, delEl.getAttribute('data-del')));
+            var delId2 = delEl.getAttribute('data-del');
+            confirmDelete('確定要刪除嗎？', function(){
+              fns.deleteDoc(fns.doc(col, delId2));
+            });
           }
         });
 
@@ -3194,7 +3593,7 @@
           return '<div class="inline-edit-form">' +
             '<input type="text" class="ce-text" value="' + escapeHtml(it.text || '') + '">' +
             '<div class="inline-edit-grid">' +
-              '<select class="ce-category">' + selectOptions(catOptions, it.category) + '</select>' +
+              '<div class="inline-edit-field"><label>類別</label><div class="btn-group ce-category">' + btnGroupOptions(catOptions, it.category) + '</div></div>' +
               (opts.editExtraFields ? opts.editExtraFields(it) : '') +
             '</div>' +
             '<div class="itin-edit-actions"><button type="button" class="ie-save">儲存</button><button type="button" class="ie-cancel">取消</button></div>' +
@@ -3202,10 +3601,11 @@
         }
         function enterEdit(rowEl, id, it){
           rowEl.innerHTML = editFormHtml(it);
+          rowEl.querySelectorAll('.inline-edit-grid .btn-group').forEach(wireButtonGroup);
           rowEl.querySelector('.ie-save').addEventListener('click', function(){
             var text = rowEl.querySelector('.ce-text').value.trim();
             if(!text) return;
-            var updated = { text: text, category: rowEl.querySelector('.ce-category').value };
+            var updated = { text: text, category: groupValue(rowEl.querySelector('.ce-category')) };
             if(opts.editExtraRead){ var extra = opts.editExtraRead(rowEl); for(var k in extra){ updated[k] = extra[k]; } }
             fns.updateDoc(fns.doc(col, id), updated);
           });
@@ -3239,13 +3639,13 @@
           function(b){ return b.dataset.value; }
         );
         if(boxOptions.indexOf(it.box) === -1 && it.box){ boxOptions.push(it.box); }
-        return '<input type="number" class="ce-qty" min="1" style="width:5rem;" value="' + (it.qty || 1) + '">' +
-          '<select class="ce-box">' + selectOptions(boxOptions, it.box) + '</select>';
+        return '<div class="inline-edit-field"><label>數量</label><input type="number" class="ce-qty" min="1" style="width:5rem;" value="' + (it.qty || 1) + '"></div>' +
+          '<div class="inline-edit-field"><label>箱子</label><div class="btn-group ce-box">' + btnGroupOptions(boxOptions, it.box) + '</div></div>';
       },
       editExtraRead: function(rowEl){
         return {
           qty: parseInt(rowEl.querySelector('.ce-qty').value, 10) || 1,
-          box: rowEl.querySelector('.ce-box').value
+          box: groupValue(rowEl.querySelector('.ce-box'))
         };
       }
     });
@@ -3370,7 +3770,12 @@
           if(it && rowEl){ enterEdit(rowEl, id, it); }
           return;
         }
-        if(delBtn){ fns.deleteDoc(fns.doc(col, delBtn.getAttribute('data-del'))); }
+        if(delBtn){
+          var delId = delBtn.getAttribute('data-del');
+          confirmDelete('確定要刪除這個連結嗎？', function(){
+            fns.deleteDoc(fns.doc(col, delId));
+          });
+        }
       });
 
       function enterEdit(rowEl, id, it){
