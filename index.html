@@ -295,8 +295,12 @@
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
   .day-detail-head .dh-sub{font-size:0.8rem;color:var(--ink-soft);}
-  .dh-refresh-btn{align-self:flex-start;margin-top:0.5rem;font-size:0.78rem;}
+  .dh-sub-row{display:flex;align-items:center;gap:0.4rem;}
+  .dh-refresh-icon{background:none;border:none;color:var(--ink-faint);font-size:0.8rem;line-height:1;cursor:pointer;padding:0.15rem 0.3rem;border-radius:6px;opacity:0.55;}
+  .dh-refresh-icon:hover{opacity:1;background:var(--surface-2);}
+  .dh-refresh-icon:disabled{opacity:0.3;cursor:default;}
   .dh-refresh-status{margin-top:0.4rem;max-width:32rem;}
+  .dh-refresh-status:empty{display:none;}
 
   .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
@@ -961,8 +965,10 @@
 
       <div class="day-detail-head">
         <div class="dh-theme" id="dhTheme"></div>
-        <div class="dh-sub tnum" id="dhSub"></div>
-        <button type="button" class="ia-btn dh-refresh-btn" id="dhRefreshBtn">🔄 重新查詢這天所有地點的營業/開車時間</button>
+        <div class="dh-sub-row">
+          <div class="dh-sub tnum" id="dhSub"></div>
+          <button type="button" class="dh-refresh-icon" id="dhRefreshBtn" title="重新查詢這天所有地點的營業/開車時間——平常不用按，自動就會查；只有查詢失敗過（例如 API 設定問題）想強制重試時才需要">🔄</button>
+        </div>
         <p class="hint dh-refresh-status" id="dhRefreshStatus"></p>
       </div>
 
@@ -2135,7 +2141,7 @@
       return '<div class="itin-edit-form">' +
         '<div><label>地點名稱</label><input type="text" class="ie-name" value="' + escapeHtml(stop.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
         '<div class="geo-suggest-list ie-suggest"></div>' +
-        '<div><label>時間／停留</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="例如：約 30 分・開車 20 分"></div>' +
+        '<div><label>停留時間</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="例如：約 30 分（開車時間會自動抓 Google 路線，不用自己填）"></div>' +
         '<div><label>備註</label><textarea class="ie-note" placeholder="說明、提醒…">' + escapeHtml(stop.note || '') + '</textarea></div>' +
         '<div><label>照片（可以多張，兩人都能上傳）</label>' +
           '<input type="file" accept="image/*" class="ie-photo-input">' +
@@ -2560,11 +2566,11 @@
       if(!dayId) return;
       var btn = document.getElementById('dhRefreshBtn');
       btn.disabled = true;
-      btn.textContent = '查詢中…';
+      btn.textContent = '⏳';
       document.getElementById('dhRefreshStatus').textContent = '';
       refreshDayInfo(dayId, true).then(function(result){
         btn.disabled = false;
-        btn.textContent = '🔄 重新查詢這天所有地點的營業/開車時間';
+        btn.textContent = '🔄';
         showRefreshStatus(result);
       });
     });
