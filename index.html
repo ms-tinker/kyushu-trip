@@ -135,6 +135,10 @@
 
   /* ---- map ---- */
   .map-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.4rem;box-shadow:var(--shadow);}
+  .link-embed-card{margin-bottom:1.2rem;}
+  .link-embed-title{font-size:0.9rem;font-weight:700;color:var(--ink-soft);margin-bottom:0.8rem;}
+  .link-embed-frame{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);}
+  .link-embed-frame iframe{display:block;width:100%;height:420px;border:0;}
   #tripMap{height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);}
   .map-caption{font-size:0.76rem;color:var(--ink-faint);margin-top:0.6rem;}
   .map-legend{display:flex;flex-wrap:wrap;gap:0.5rem 1.1rem;margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--line);}
@@ -1221,20 +1225,39 @@
         <p class="sub">開車、查地點會用到的外部工具，可以自己新增／編輯／刪除。</p>
       </div>
 
-      <div class="form-card" style="margin-bottom:1.2rem;">
-        <div class="field">
-          <label>名稱</label>
-          <input type="text" id="linkName" placeholder="例如：Japan Mapcode">
+      <div class="map-card link-embed-card">
+        <h3 class="link-embed-title">My Maps 地圖（即時嵌入，跟你在 My Maps 上的最新版一致）</h3>
+        <div class="link-embed-frame">
+          <iframe src="https://www.google.com/maps/d/embed?mid=1he0ITQ5spTWU5vvjy09DP507p2IV6d0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
-        <div class="field">
-          <label>網址</label>
-          <input type="text" id="linkUrl" placeholder="https://…">
-        </div>
-        <button class="btn-primary" id="linkAddBtn" type="button">新增連結</button>
       </div>
+
+      <button class="btn-primary" id="linkAddOpenBtn" type="button">＋ 新增連結</button>
       <div class="stay-list" id="linksList"></div>
 
       <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此新增的連結。</p>
+    </div>
+
+    <div class="modal-overlay" id="linkAddModal" hidden>
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h3>新增連結</h3>
+          <button type="button" class="modal-close" id="linkAddCloseBtn" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-card">
+            <div class="field">
+              <label>名稱</label>
+              <input type="text" id="linkName" placeholder="例如：Japan Mapcode">
+            </div>
+            <div class="field">
+              <label>網址</label>
+              <input type="text" id="linkUrl" placeholder="https://…">
+            </div>
+            <button class="btn-primary" id="linkAddBtn" type="button">新增連結</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2762,13 +2785,12 @@
         for(var i = 0; i < BUCKET_PRESETS.length; i++){ if(BUCKET_PRESETS[i].key === key){ return BUCKET_PRESETS[i]; } }
         return BUCKET_PRESETS[BUCKET_PRESETS.length - 1];
       }
-      /* 從你的 My Maps KML 匯入的真實資料，依圖層（Folder）分組。分類是我從
-         KML 裡每個點的圖示顏色反推的（購物=黃、觀光=藍、餐廳=紫、交通/住宿=橘，
-         同一個橘色底下又依圖示編號拆成交通／住宿兩類）。城市/地區地標（黑色圖示：
-         福岡市、太宰府市、由布院、別府市、北濱 Kitahama）跟一筆重複的「PARCO福岡
-         新館」沒有匯入——這次重新匯入是整批比照最新 KML（見『口袋清單資料怎麼
-         更新』），上一版舊資料（例如 African Safari、瀬之本、牧之戶峠等）如果這次
-         KML 裡沒有就不在這份清單了。 */
+      /* 這份寫死的資料現在只當「保底用的最後備援」——正常情況下口袋清單是
+         直接跟 My Maps 即時同步的（見下面 syncBucketFromMyMaps），只有在
+         「Firestore 裡從來沒有同步成功存過任何一次」的情況下才會用到這份
+         （例如全新裝置、還沒連過線）。分類邏輯（顏色→類別）保留在這裡當
+         參考註解：購物=黃、觀光=藍、餐廳=紫、交通/住宿=橘（同一橘色再依
+         圖示編號拆成交通／住宿），城市/地區地標（黑色圖示）不算進來。 */
       var BUCKET_SEED_BY_LAYER = {
         '阿蘇市': [
           { name:'阿蘇中岳火山口', note:'', lat:32.884907, lon:131.0849344, preset:'sightseeing' },
@@ -2885,16 +2907,164 @@
         ]
       };
       var bucketItems = [];
-      var nextBucketId = 0;
-      Object.keys(BUCKET_SEED_BY_LAYER).forEach(function(layer){
-        BUCKET_SEED_BY_LAYER[layer].forEach(function(seed, i){
-          var it = {};
-          for(var k in seed){ it[k] = seed[k]; }
-          it.id = 'demo-' + (nextBucketId++);
-          it.layer = layer;
-          it.order = i * 1000;
-          bucketItems.push(it);
+      function newBucketItemId(){ return 'demo-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+      function seedBucketItemsFromDefault(){
+        var out = [];
+        Object.keys(BUCKET_SEED_BY_LAYER).forEach(function(layer){
+          BUCKET_SEED_BY_LAYER[layer].forEach(function(seed, i){
+            var it = {};
+            for(var k in seed){ it[k] = seed[k]; }
+            it.id = 'kml-' + layer + '-' + i;
+            it.layer = layer;
+            it.order = i * 1000;
+            out.push(it);
+          });
         });
+        return out;
+      }
+
+      /* ============================================================
+         口袋清單即時同步 My Maps（見「連結」分頁上面嵌入的地圖）：
+         1. 每次開網站，背景直接用瀏覽器 fetch 抓一次 My Maps 匯出的 KML——
+            Google 這個匯出端點本身就允許跨網域讀取（有 access-control-
+            allow-origin: *），不需要另外架設中繼伺服器
+         2. 抓成功、解析出地點的話，整批寫進 Firestore 的 settings/
+            bucketKmlCache 這份文件——順便讓口袋清單變成真的雲端同步，
+            兩支手機都看得到彼此的異動（之前這是本機記憶體限定的）
+         3. 畫面顯示的 bucketItems 是訂閱這份 Firestore 文件（onSnapshot）
+            算出來的，不是直接顯示剛 fetch 到的東西——這樣「這次抓不到最
+            新版」的時候（例如之後把 My Maps 轉回私人、或單純網路不穩），
+            畫面還是會停在「上一次同步成功」的樣子，不會空白或報錯
+         4. 只有 Firestore 那份文件從來沒有資料過（全新環境、第一次連線）
+            才會退回用 BUCKET_SEED_BY_LAYER 這份寫死在程式碼裡的資料當保底
+
+         ⚠️ 這是「整批比照最新 KML」的全量同步：My Maps 上刪掉的點，口袋
+         清單也會跟著消失；在這裡手動加/改/刪的口袋清單項目，下次同步
+         成功時會被最新的 KML 蓋掉——想長期保留的地點，用「加入行程」變成
+         真正的行程資料，或者直接在 My Maps 上維護才會一直都在。 */
+      var MYMAPS_MID = '1he0ITQ5spTWU5vvjy09DP507p2IV6d0';
+      var MYMAPS_KML_URL = 'https://www.google.com/maps/d/kml?mid=' + MYMAPS_MID + '&forcekml=1';
+
+      function parseMyMapsKml(xmlText){
+        var xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+        if(xml.getElementsByTagName('parsererror').length){ throw new Error('KML parse error'); }
+        var styleColor = {};
+        Array.prototype.forEach.call(xml.getElementsByTagName('Style'), function(styleEl){
+          var id = styleEl.getAttribute('id');
+          var colorEl = styleEl.getElementsByTagName('color')[0];
+          if(!id || !colorEl) return;
+          var kmlColor = (colorEl.textContent || '').trim();
+          if(kmlColor.length !== 8) return;
+          var bb = kmlColor.slice(2, 4), gg = kmlColor.slice(4, 6), rr = kmlColor.slice(6, 8);
+          styleColor[id] = ('#' + rr + gg + bb).toUpperCase();
+        });
+        var styleMapNormal = {};
+        Array.prototype.forEach.call(xml.getElementsByTagName('StyleMap'), function(smEl){
+          var id = smEl.getAttribute('id');
+          if(!id) return;
+          var pairs = smEl.getElementsByTagName('Pair');
+          for(var i = 0; i < pairs.length; i++){
+            var keyEl = pairs[i].getElementsByTagName('key')[0];
+            var urlEl = pairs[i].getElementsByTagName('styleUrl')[0];
+            if(keyEl && keyEl.textContent === 'normal' && urlEl){
+              styleMapNormal[id] = urlEl.textContent.replace('#', '');
+            }
+          }
+        });
+        function resolveColorAndNum(styleUrlRaw){
+          var sid = (styleUrlRaw || '').replace('#', '');
+          var normalId = styleMapNormal[sid] || sid;
+          var color = styleColor[normalId] || styleColor[sid + '-normal'] || styleColor[sid];
+          var m = /^icon-(\d+)-/.exec(sid);
+          return { color: color, num: m ? m[1] : null };
+        }
+        var PRESET_MAP = {
+          '#0288D1|1899': 'sightseeing',
+          '#9C27B0|1577': 'restaurant',
+          '#FBC02D|1684': 'shopping',
+          '#F9A825|1684': 'shopping',
+          '#E65100|1716': 'transport',
+          '#E65100|1504': 'transport',
+          '#E65100|1538': 'transport',
+          '#E65100|1603': 'stay'
+        };
+        var EXCLUDE_KEY = '#000000|1899';
+
+        var byLayer = {};
+        var seen = {};
+        Array.prototype.forEach.call(xml.getElementsByTagName('Folder'), function(folderEl){
+          var nameEl = folderEl.getElementsByTagName('name')[0];
+          var layer = nameEl ? nameEl.textContent.trim() : '未分層';
+          Array.prototype.forEach.call(folderEl.getElementsByTagName('Placemark'), function(pm){
+            var nameNode = pm.getElementsByTagName('name')[0];
+            var name = nameNode ? nameNode.textContent.trim() : '';
+            var descNode = pm.getElementsByTagName('description')[0];
+            var note = descNode ? descNode.textContent.trim() : '';
+            var styleUrlNode = pm.getElementsByTagName('styleUrl')[0];
+            var styleUrl = styleUrlNode ? styleUrlNode.textContent.trim() : '';
+            var coordNode = pm.getElementsByTagName('coordinates')[0];
+            if(!coordNode) return;
+            var coordParts = coordNode.textContent.trim().split(',');
+            var lon = parseFloat(coordParts[0]), lat = parseFloat(coordParts[1]);
+            if(isNaN(lat) || isNaN(lon)) return;
+            var resolved = resolveColorAndNum(styleUrl);
+            var key = (resolved.color || '') + '|' + (resolved.num || '');
+            if(key === EXCLUDE_KEY) return;
+            var dedupeKey = layer + '|' + name + '|' + lat.toFixed(6) + '|' + lon.toFixed(6);
+            if(seen[dedupeKey]) return;
+            seen[dedupeKey] = true;
+            (byLayer[layer] = byLayer[layer] || []).push({
+              name: name, note: note, lat: lat, lon: lon, preset: PRESET_MAP[key] || 'other'
+            });
+          });
+        });
+
+        var items = [];
+        Object.keys(byLayer).forEach(function(layer){
+          byLayer[layer].forEach(function(seed, i){
+            items.push({
+              id: 'kml-' + layer + '-' + i, name: seed.name, note: seed.note,
+              lat: seed.lat, lon: seed.lon, preset: seed.preset, layer: layer, order: i * 1000
+            });
+          });
+        });
+        return items;
+      }
+
+      function bucketKmlCacheRef(){ return window.fb.fns.doc(window.fb.col('settings'), 'bucketKmlCache'); }
+      function persistBucketItems(){
+        window.fbReady.then(function(){
+          window.fb.fns.setDoc(bucketKmlCacheRef(), { items: bucketItems, syncedAt: window.fb.fns.serverTimestamp() });
+        });
+      }
+      function syncBucketFromMyMaps(){
+        fetch(MYMAPS_KML_URL, {cache:'no-store'}).then(function(r){
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        }).then(function(text){
+          var parsed = parseMyMapsKml(text);
+          if(!parsed.length) throw new Error('KML 解析後沒有任何地點');
+          return window.fbReady.then(function(){
+            return window.fb.fns.setDoc(bucketKmlCacheRef(), { items: parsed, syncedAt: window.fb.fns.serverTimestamp() });
+          });
+        }).catch(function(err){
+          /* 抓不到就維持畫面現狀（上一次同步成功的版本），不動 Firestore、
+             不清空畫面——常見原因是 My Maps 分享設定被改回私人、或網路問題。 */
+          console.error('My Maps 即時同步失敗，畫面維持上次同步成功的版本', err);
+        });
+      }
+      window.fbReady.then(function(){
+        var fns = window.fb.fns;
+        fns.onSnapshot(bucketKmlCacheRef(), function(snap){
+          var data = snap.exists() ? snap.data() : null;
+          if(data && data.items && data.items.length){
+            bucketItems = data.items;
+          } else if(!bucketItems.length){
+            bucketItems = seedBucketItemsFromDefault();
+          }
+          renderBucketList();
+        }, function(err){ console.error('bucket KML cache sync error', err); });
+        syncBucketFromMyMaps();
       });
 
       /* 判斷這個口袋地點是不是已經被「加入行程」過——「加入行程」寫進行程時
@@ -3088,12 +3258,14 @@
           it.note = body.querySelector('.bk-note').value.trim();
           it.preset = body.querySelector('.bk-preset').value;
           if(nameInput.dataset.lat){ it.lat = parseFloat(nameInput.dataset.lat); it.lon = parseFloat(nameInput.dataset.lon); }
+          persistBucketItems();
           renderBucketList();
         });
         body.querySelector('.ie-cancel').addEventListener('click', function(){ renderBucketList(); });
         body.querySelector('.ie-del').addEventListener('click', function(){
           confirmDelete('確定要刪除這個口袋地點嗎？', function(){
             bucketItems = bucketItems.filter(function(x){ return x.id !== it.id; });
+            persistBucketItems();
             renderBucketList();
           });
         });
@@ -3111,6 +3283,7 @@
             delBtn.addEventListener('click', function(){
               confirmDelete('確定要刪除這個口袋地點嗎？', function(){
                 bucketItems = bucketItems.filter(function(x){ return x.id !== id; });
+                persistBucketItems();
                 renderBucketList();
               });
             });
@@ -3172,13 +3345,14 @@
 
       document.getElementById('bucketAddOpenBtn').addEventListener('click', function(){
         var defaultLayer = bucketItems.length ? bucketItems[bucketItems.length - 1].layer : Object.keys(BUCKET_SEED_BY_LAYER)[0];
-        var it = { id:'demo-' + (nextBucketId++), name:'', note:'', preset:'other', layer:defaultLayer, order:Date.now() };
+        var it = { id:newBucketItemId(), name:'', note:'', preset:'other', layer:defaultLayer, order:Date.now() };
         bucketItems.push(it);
         /* 一定要先切到新地點所在的圖層／分類分頁，不然新卡片會加在使用者
            目前完全沒在看的分頁裡，畫面上什麼都看不到——之前這裡沒切分頁，
            就是「按了新增沒反應」那個 bug 的真正原因。 */
         bucketTabLayer = defaultLayer;
         bucketTabCat = 'other';
+        persistBucketItems();
         renderBucketList();
         setTimeout(function(){
           var cardEl = document.querySelector('.bucket-item[data-bucket-id="' + it.id + '"]');
@@ -3253,6 +3427,7 @@
           var it = bucketItems.filter(function(x){ return x.id === id; })[0];
           if(it){ it.order = idx * 1000; }
         });
+        persistBucketItems();
       }
       document.addEventListener('pointerup', function(ev){
         if(!bucketDragState || ev.pointerId !== bucketDragState.pointerId) return;
@@ -3980,6 +4155,17 @@
     };
   })();
 
+  /* ---- 新增連結 modal 開關 ---- */
+  (function(){
+    var modal = document.getElementById('linkAddModal');
+    var openBtn = document.getElementById('linkAddOpenBtn');
+    var closeBtn = document.getElementById('linkAddCloseBtn');
+    if(!modal || !openBtn || !closeBtn) return;
+    openBtn.addEventListener('click', function(){ modal.hidden = false; });
+    closeBtn.addEventListener('click', function(){ modal.hidden = true; });
+    modal.addEventListener('click', function(ev){ if(ev.target === modal){ modal.hidden = true; } });
+  })();
+
   /* ---- useful links ---- */
   (function(){
     var items = [];
@@ -4031,6 +4217,7 @@
         fns.addDoc(col, { name:name, url:normalizeUrl(url), createdAt:fns.serverTimestamp() });
         document.getElementById('linkName').value = '';
         document.getElementById('linkUrl').value = '';
+        document.getElementById('linkAddModal').hidden = true;
       });
 
       document.getElementById('linksList').addEventListener('click', function(ev){
