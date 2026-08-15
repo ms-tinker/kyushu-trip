@@ -1939,8 +1939,12 @@
           fields: ['opening_hours'],
           locationBias: new google.maps.Circle({center:{lat:lat, lng:lon}, radius:300})
         }, function(results, status){
-          if(status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length || !results[0].opening_hours){
-            callback(null, status);
+          if(status !== google.maps.places.PlacesServiceStatus.OK){
+            callback(null, status); /* 真正查詢失敗（例如 API 沒啟用、額度問題） */
+            return;
+          }
+          if(!results || !results.length || !results[0].opening_hours){
+            callback(null, null); /* 地點有查到，只是 Google 沒有這個地點的營業時間資料——很正常，不算錯誤 */
             return;
           }
           callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []), status);
