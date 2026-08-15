@@ -296,6 +296,7 @@
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
   .day-detail-head .dh-sub{font-size:0.8rem;color:var(--ink-soft);}
   .dh-refresh-btn{align-self:flex-start;margin-top:0.5rem;font-size:0.78rem;}
+  .dh-refresh-status{margin-top:0.4rem;max-width:32rem;}
 
   .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
@@ -962,6 +963,7 @@
         <div class="dh-theme" id="dhTheme"></div>
         <div class="dh-sub tnum" id="dhSub"></div>
         <button type="button" class="ia-btn dh-refresh-btn" id="dhRefreshBtn">🔄 重新查詢這天所有地點的營業/開車時間</button>
+        <p class="hint dh-refresh-status" id="dhRefreshStatus"></p>
       </div>
 
       <div id="dayNoteHost"></div>
@@ -1901,9 +1903,15 @@
     if(h > 0) return h + ' 小時';
     return m + ' 分';
   }
+  /* callback 第二個參數帶 Google 回傳的 status 字串，讓呼叫端（refreshDayInfo）
+     可以直接在頁面上顯示查詢失敗的原因，不用使用者自己開 DevTools 主控台看
+     console.error（手機上要看主控台太麻煩了）。status 常見的 REQUEST_DENIED
+     通常代表這個 Google Cloud 專案的金鑰還沒啟用「Directions API」——跟 Maps
+     JavaScript API／Places API 是各自獨立要開的，不會因為其他兩個能用就自動
+     可用，要去 Cloud Console → APIs & Services → Library 搜尋並啟用。 */
   function computeDriveMinutes(origin, dest, callback){
     window.__gmapsReady.then(function(){
-      if(!window.google || !google.maps || !google.maps.DirectionsService){ console.error('computeDriveMinutes: DirectionsService 不存在'); callback(null); return; }
+      if(!window.google || !google.maps || !google.maps.DirectionsService){ callback(null, 'NO_DIRECTIONS_SERVICE'); return; }
       try{
         var svc = new google.maps.DirectionsService();
         svc.route({
@@ -1911,19 +1919,11 @@
           destination: {lat:dest.lat, lng:dest.lon},
           travelMode: google.maps.TravelMode.DRIVING
         }, function(result, status){
-          if(status !== 'OK' || !result.routes || !result.routes.length){
-            /* status 常見是 REQUEST_DENIED：通常代表這個 Google Cloud 專案的
-               API 金鑰還沒啟用「Directions API」——跟 Maps JavaScript API／
-               Places API 是各自獨立要開的，不會因為其他兩個能用就自動可用。
-               去 Cloud Console → APIs & Services → Library 搜尋並啟用即可。 */
-            console.error('computeDriveMinutes 失敗，status=' + status, result);
-            callback(null);
-            return;
-          }
+          if(status !== 'OK' || !result.routes || !result.routes.length){ callback(null, status); return; }
           var durS = result.routes[0].legs.reduce(function(sum, leg){ return sum + leg.duration.value; }, 0);
-          callback(Math.round(durS / 60));
+          callback(Math.round(durS / 60), status);
         });
-      }catch(e){ console.error('computeDriveMinutes exception', e); callback(null); }
+      }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
     });
   }
   /* 找地點名字對應的 Google 地點、抓它的營業時間——用在「原本就有座標、但
@@ -1931,7 +1931,7 @@
      搜尋一次也能補上營業時間。 */
   function lookupPlaceHours(name, lat, lon, callback){
     window.__gmapsReady.then(function(){
-      if(!window.google || !google.maps || !google.maps.places || !name){ callback(null); return; }
+      if(!window.google || !google.maps || !google.maps.places || !name){ callback(null, 'NO_PLACES_SERVICE'); return; }
       try{
         var svc = new google.maps.places.PlacesService(document.createElement('div'));
         svc.findPlaceFromQuery({
@@ -1940,12 +1940,12 @@
           locationBias: new google.maps.Circle({center:{lat:lat, lng:lon}, radius:300})
         }, function(results, status){
           if(status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length || !results[0].opening_hours){
-            if(status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS){ console.error('lookupPlaceHours 失敗，status=' + status, name); }
-            callback(null); return;
+            callback(null, status);
+            return;
           }
-          callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []));
+          callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []), status);
         });
-      }catch(e){ console.error('lookupPlaceHours exception', e); callback(null); }
+      }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
     });
   }
 
@@ -2294,21 +2294,27 @@
        driveMinChecked，不會每次打開頁面都重查一次；forceAll=true（按「重新
        查詢」按鈕）才會連上次查失敗的也重試——例如剛把 Google Cloud 專案的
        Directions API 打開，之前失敗的這裡才有機會補上。 */
+    /* 回傳的物件裡帶查詢失敗的 status，讓按鈕可以直接在頁面上顯示失敗原因
+       （手機上開 DevTools 主控台太麻煩，直接顯示在畫面上比較實際）。
+       ZERO_RESULTS（單純沒查到營業時間/路線，不算異常）不會算進失敗清單。 */
     function refreshDayInfo(dayId, forceAll){
       var d = DAYS[dayId];
-      if(!d) return;
+      if(!d) return Promise.resolve({changed:false, hoursErrors:[], driveErrors:[], attempted:0});
       var prev = null;
       var tasks = [];
       var changed = false;
+      var hoursErrors = [];
+      var driveErrors = [];
       SLOT_ORDER.forEach(function(slotKey){
         var stops = d.slots[slotKey] || [];
         stops.forEach(function(stop){
           if(stop.lat == null || stop.lon == null) return;
           if(!stop.hours && (forceAll || !stop.hoursChecked)){
             tasks.push(new Promise(function(resolve){
-              lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours){
+              lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours, status){
                 stop.hoursChecked = true;
                 if(hours){ stop.hours = hours; changed = true; }
+                else if(status && status !== 'ZERO_RESULTS'){ hoursErrors.push(status); }
                 resolve();
               });
             }));
@@ -2316,9 +2322,10 @@
           if(stop.driveMin == null && prev && (forceAll || !stop.driveMinChecked)){
             var prevRef = prev;
             tasks.push(new Promise(function(resolve){
-              computeDriveMinutes({lat:prevRef.lat, lon:prevRef.lon}, {lat:stop.lat, lon:stop.lon}, function(min){
+              computeDriveMinutes({lat:prevRef.lat, lon:prevRef.lon}, {lat:stop.lat, lon:stop.lon}, function(min, status){
                 stop.driveMinChecked = true;
                 if(min != null){ stop.driveMin = min; changed = true; }
+                else if(status && status !== 'ZERO_RESULTS'){ driveErrors.push(status); }
                 resolve();
               });
             }));
@@ -2326,11 +2333,11 @@
           prev = stop;
         });
       });
-      if(!tasks.length) return Promise.resolve(false);
+      if(!tasks.length) return Promise.resolve({changed:false, hoursErrors:[], driveErrors:[], attempted:0});
       return Promise.all(tasks).then(function(){
         persistDay(dayId); /* 就算全部查不到，也要把 checked 記下來，不然每次開頁面都會重查一次 */
         if(changed && String(window.__currentDay) === dayId){ renderDay(dayId); }
-        return changed;
+        return {changed:changed, hoursErrors:hoursErrors, driveErrors:driveErrors, attempted:tasks.length};
       });
     }
     function loadStopPhotos(host){
@@ -2428,7 +2435,9 @@
       loadStopPhotos(host);
       renderDayMiniMap(d);
       renderDayWeatherStrip(d, dayId);
-      refreshDayInfo(dayId, false);
+      refreshDayInfo(dayId, false).then(function(result){
+        if(String(window.__currentDay) === dayId){ showRefreshStatus(result); }
+      });
     }
 
     var WX_LOC_LABEL = {fukuoka:'福岡', yufuin:'由布院', aso:'阿蘇'};
@@ -2520,15 +2529,39 @@
     });
     document.getElementById('dsPrev').addEventListener('click', function(){ selectDay((window.__currentDay || 1) - 1); });
     document.getElementById('dsNext').addEventListener('click', function(){ selectDay((window.__currentDay || 1) + 1); });
+    /* 直接把查詢結果（尤其是失敗原因）顯示在按鈕下面，不用開 DevTools 主控台——
+       手機上要看主控台太麻煩，這樣至少能看到「REQUEST_DENIED」這種關鍵字，
+       知道要去 Google Cloud Console 檢查哪個 API 還沒啟用。 */
+    function showRefreshStatus(result){
+      var statusEl = document.getElementById('dhRefreshStatus');
+      if(!statusEl || !result) return;
+      if(!result.attempted){ statusEl.textContent = ''; return; }
+      var msgs = [];
+      if(result.driveErrors.length){
+        var uniqDrive = result.driveErrors.filter(function(v, i){ return result.driveErrors.indexOf(v) === i; });
+        msgs.push('開車時間查詢失敗 ' + result.driveErrors.length + ' 次（' + uniqDrive.join('、') + '）');
+      }
+      if(result.hoursErrors.length){
+        var uniqHours = result.hoursErrors.filter(function(v, i){ return result.hoursErrors.indexOf(v) === i; });
+        msgs.push('營業時間查詢失敗 ' + result.hoursErrors.length + ' 次（' + uniqHours.join('、') + '）');
+      }
+      if(!msgs.length){
+        statusEl.textContent = result.changed ? '✅ 已補上新資料。' : '這天的地點資料都已經是最新的了。';
+        return;
+      }
+      statusEl.textContent = '⚠️ ' + msgs.join('；') + '。REQUEST_DENIED 通常代表 Google Cloud 專案還沒啟用對應的 API（Directions API／Places API），需要去 Cloud Console 開啟。';
+    }
     document.getElementById('dhRefreshBtn').addEventListener('click', function(){
       var dayId = window.__currentDay && window.__currentDay !== 'bucket' ? String(window.__currentDay) : null;
       if(!dayId) return;
       var btn = document.getElementById('dhRefreshBtn');
       btn.disabled = true;
       btn.textContent = '查詢中…';
-      refreshDayInfo(dayId, true).then(function(){
+      document.getElementById('dhRefreshStatus').textContent = '';
+      refreshDayInfo(dayId, true).then(function(result){
         btn.disabled = false;
         btn.textContent = '🔄 重新查詢這天所有地點的營業/開車時間';
+        showRefreshStatus(result);
       });
     });
     document.querySelectorAll('#ovList [data-goday]').forEach(function(b){
