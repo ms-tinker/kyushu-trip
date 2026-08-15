@@ -167,7 +167,7 @@
   .wx-daycard .wxc-wd{font-size:0.64rem;color:var(--ink-faint);}
   .wx-daycard.wx-trip .wxc-wd{color:var(--indigo);}
   .wx-daycard .wxc-icon svg{width:26px;height:26px;display:block;}
-  .wx-mode-tabs{margin:0 0 0.9rem;}
+  .wx-mode-tabs{margin:1.1rem 0 0.9rem;}
   .wx-hour-daypick{display:flex;gap:0.4rem;overflow-x:auto;padding-bottom:0.5rem;}
   .wx-hour-daypick button{flex:none;font-size:0.76rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;white-space:nowrap;}
   .wx-hour-daypick button.active{background:var(--indigo);border-color:var(--indigo);color:var(--surface);font-weight:600;}
@@ -196,7 +196,8 @@
   .fl-time{font-family:var(--font-display);font-size:1.3rem;font-weight:700;}
   .fl-air{font-size:0.86rem;color:var(--ink-soft);}
   .fl-arrow{font-size:0.7rem;color:var(--ink-faint);text-align:center;white-space:nowrap;line-height:1.3;}
-  .fl-sub{font-size:0.92rem;font-weight:600;color:var(--ink);margin-top:0.5rem;}
+  .fl-sub{font-size:0.92rem;font-weight:600;color:var(--ink);margin-bottom:0.6rem;}
+  .fl-route-air{margin-top:0.15rem;}
   .flight-meta-row{display:flex;flex-wrap:wrap;gap:0.5rem 1.4rem;font-size:0.78rem;color:var(--ink-soft);padding-top:1.1rem;margin-top:1.2rem;border-top:1px solid var(--line);}
   .flight-meta-row b{color:var(--ink);font-weight:600;}
 
@@ -822,21 +823,31 @@
           <div class="flight-legs">
             <div class="flight-leg">
               <span class="fl-badge c-indigo">去程</span>
+              <p class="fl-sub tnum">2026/08/26（三）・IT 720</p>
               <div class="fl-route">
-                <div class="fl-point"><span class="fl-time tnum">14:15</span><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
+                <div class="fl-point"><span class="fl-time tnum">14:15</span></div>
                 <div class="fl-arrow">✈<br>2 小時 35 分</div>
-                <div class="fl-point end"><span class="fl-time tnum">17:50</span><span class="fl-air">福岡 FUK</span></div>
+                <div class="fl-point end"><span class="fl-time tnum">17:50</span></div>
               </div>
-              <p class="fl-sub tnum">IT 720・2026/08/26（三）</p>
+              <div class="fl-route fl-route-air">
+                <div class="fl-point"><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
+                <div class="fl-arrow"></div>
+                <div class="fl-point end"><span class="fl-air">福岡 FUK</span></div>
+              </div>
             </div>
             <div class="flight-leg">
               <span class="fl-badge c-neutral">回程</span>
+              <p class="fl-sub tnum">2026/09/01（二）・IT 241</p>
               <div class="fl-route">
-                <div class="fl-point"><span class="fl-time tnum">10:55</span><span class="fl-air">福岡 FUK</span></div>
+                <div class="fl-point"><span class="fl-time tnum">10:55</span></div>
                 <div class="fl-arrow">✈<br>2 小時 30 分</div>
-                <div class="fl-point end"><span class="fl-time tnum">12:25</span><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
+                <div class="fl-point end"><span class="fl-time tnum">12:25</span></div>
               </div>
-              <p class="fl-sub tnum">IT 241・2026/09/01（二）</p>
+              <div class="fl-route fl-route-air">
+                <div class="fl-point"><span class="fl-air">福岡 FUK</span></div>
+                <div class="fl-arrow"></div>
+                <div class="fl-point end"><span class="fl-air">台北（桃園）TPE・第1航廈</span></div>
+              </div>
             </div>
           </div>
           <div class="flight-meta-row">
@@ -1878,6 +1889,55 @@
   }
   function fmtHHMM(t){ return t.slice(0, 2) + ':' + t.slice(2, 4); }
 
+  /* ---- 開車時間／營業時間的「補資料」共用工具 ----
+     兩個都只在明確動作（存檔/加入行程/按補齊按鈕）時才打一次 API，不會自動
+     背景一直打；都是 Google Maps Platform 有算錢的 API（Directions、Places
+     Find Place），但用量是「每次新增/編輯一個地點才一次」，不是持續性的。 */
+  function fmtDriveMin(min){
+    var h = Math.floor(min / 60), m = min % 60;
+    if(h > 0 && m > 0) return h + ' 小時 ' + m + ' 分';
+    if(h > 0) return h + ' 小時';
+    return m + ' 分';
+  }
+  function computeDriveMinutes(origin, dest, callback){
+    window.__gmapsReady.then(function(){
+      if(!window.google || !google.maps || !google.maps.DirectionsService){ callback(null); return; }
+      try{
+        var svc = new google.maps.DirectionsService();
+        svc.route({
+          origin: {lat:origin.lat, lng:origin.lon},
+          destination: {lat:dest.lat, lng:dest.lon},
+          travelMode: google.maps.TravelMode.DRIVING
+        }, function(result, status){
+          if(status !== 'OK' || !result.routes || !result.routes.length){ callback(null); return; }
+          var durS = result.routes[0].legs.reduce(function(sum, leg){ return sum + leg.duration.value; }, 0);
+          callback(Math.round(durS / 60));
+        });
+      }catch(e){ callback(null); }
+    });
+  }
+  /* 找地點名字對應的 Google 地點、抓它的營業時間——用在「原本就有座標、但
+     沒有透過搜尋選過」的舊地點或口袋清單搬過去的地點，不用使用者手動重新
+     搜尋一次也能補上營業時間。 */
+  function lookupPlaceHours(name, lat, lon, callback){
+    window.__gmapsReady.then(function(){
+      if(!window.google || !google.maps || !google.maps.places || !name){ callback(null); return; }
+      try{
+        var svc = new google.maps.places.PlacesService(document.createElement('div'));
+        svc.findPlaceFromQuery({
+          query: name,
+          fields: ['opening_hours'],
+          locationBias: new google.maps.Circle({center:{lat:lat, lng:lon}, radius:300})
+        }, function(results, status){
+          if(status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length || !results[0].opening_hours){
+            callback(null); return;
+          }
+          callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []));
+        });
+      }catch(e){ callback(null); }
+    });
+  }
+
   /* ---- generic sub-tab bars (each scoped to its own panel, so switching one
          section's sub-tabs never touches another section's panels) ---- */
   document.querySelectorAll('.subtab-bar').forEach(function(bar){
@@ -1911,49 +1971,49 @@
       { id:'2', date:'8/27', weekday:'（四）', wd3:'THU', monthLabel:'08月', theme:'福岡 → 門司港 → 福岡', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
         slots:{
           start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
-          morning:[{name:'門司港', time:'約 3～3.5 小時・開車 1 小時 20 分', note:'慢慢逛門司港車站、懷舊街區、海邊、展望室。', lat:33.9495, lon:130.9628, wikiTitle:'門司港レトロ'}],
-          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'下午～晚上・開車 1 小時 20 分', note:'回飯店休息。', lat:33.5874, lon:130.40703}]
+          morning:[{name:'門司港', time:'開車 1 小時 20 分，停留約 3～3.5 小時', note:'慢慢逛門司港車站、懷舊街區、海邊、展望室。', lat:33.9495, lon:130.9628, wikiTitle:'門司港レトロ'}],
+          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'開車 1 小時 20 分，下午～晚上', note:'回飯店休息。', lat:33.5874, lon:130.40703}]
         } },
       { id:'3', date:'8/28', weekday:'（五）', wd3:'FRI', monthLabel:'08月', theme:'福岡 → African Safari → 由布院', color:'moss', wxLoc:'yufuin', note:'', warn:false,
         slots:{
           start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
-          morning:[{name:'African Safari', time:'約 2.5～3 小時・開車 2 小時 15 分', note:'以自駕 Safari 為主，這天不需要趕。', lat:33.352022, lon:131.413506, wikiTitle:'九州自然動物公園アフリカンサファリ'}],
-          end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 2 小時 15 分', note:'Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。', lat:33.2645, lon:131.3550}]
+          morning:[{name:'African Safari', time:'開車 2 小時 15 分，停留約 2.5～3 小時', note:'以自駕 Safari 為主，這天不需要趕。', lat:33.352022, lon:131.413506, wikiTitle:'九州自然動物公園アフリカンサファリ'}],
+          end:[{name:'Yufuin Covaco', time:'開車 2 小時 15 分，晚上・住宿', note:'Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。', lat:33.2645, lon:131.3550}]
         } },
       { id:'4', date:'8/29', weekday:'（六）', wd3:'SAT', monthLabel:'08月', theme:'由布院 → 阿蘇景觀自駕 → 由布院', color:'persimmon', wxLoc:'aso',
         note:'全程最密集的一天，當成「景觀自駕日」，每個點都不要停太久。', warn:false,
         slots:{
           start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
           morning:[
-            {name:'長者原', time:'約 20～30 分・開車 1 小時 10 分', note:'寶寶喝奶、換尿布、看草原與山景。', lat:33.0894, lon:131.2591},
-            {name:'牧之戶峠', time:'約 20～30 分・開車 20 分', note:'Yamanami Highway 景觀路段。', lat:33.0847, lon:131.2437},
-            {name:'瀨之本', time:'約 20～30 分・開車 25 分', note:'看高原景觀、拍照。', lat:33.0397, lon:131.1974},
-            {name:'Milk Road', time:'約 30～45 分・開車 20 分', note:'這段本身就是景點，不要把它當交通時間。', lat:32.98, lon:131.15}
+            {name:'長者原', time:'開車 1 小時 10 分，停留約 20～30 分', note:'寶寶喝奶、換尿布、看草原與山景。', lat:33.0894, lon:131.2591},
+            {name:'牧之戶峠', time:'開車 20 分，停留約 20～30 分', note:'Yamanami Highway 景觀路段。', lat:33.0847, lon:131.2437},
+            {name:'瀨之本', time:'開車 25 分，停留約 20～30 分', note:'看高原景觀、拍照。', lat:33.0397, lon:131.1974},
+            {name:'Milk Road', time:'開車 20 分，停留約 30～45 分', note:'這段本身就是景點，不要把它當交通時間。', lat:32.98, lon:131.15}
           ],
           afternoon:[
-            {name:'大觀峰', time:'約 1 小時・開車 20 分', note:'看阿蘇五岳、阿蘇谷、草原。', lat:32.9884, lon:131.1064},
-            {name:'阿蘇火山口', time:'約 45～60 分・開車 30 分', note:'若當天開放，建議去；不用走太久。', lat:32.8843, lon:131.1044, wikiTitle:'中岳 (熊本県)'},
-            {name:'草千里', time:'約 45～60 分・開車 15 分', note:'看草原與火山景觀。', lat:32.8797, lon:131.0783, wikiTitle:'草千里ヶ浜'}
+            {name:'大觀峰', time:'開車 20 分，停留約 1 小時', note:'看阿蘇五岳、阿蘇谷、草原。', lat:32.9884, lon:131.1064},
+            {name:'阿蘇火山口', time:'開車 30 分，停留約 45～60 分', note:'若當天開放，建議去；不用走太久。', lat:32.8843, lon:131.1044, wikiTitle:'中岳 (熊本県)'},
+            {name:'草千里', time:'開車 15 分，停留約 45～60 分', note:'看草原與火山景觀。', lat:32.8797, lon:131.0783, wikiTitle:'草千里ヶ浜'}
           ],
-          end:[{name:'Yufuin Covaco', time:'晚上・住宿・開車 1 小時 20 分', note:'回到由布院吃飯、泡湯、休息。', lat:33.2645, lon:131.3550}]
+          end:[{name:'Yufuin Covaco', time:'開車 1 小時 20 分，晚上・住宿', note:'回到由布院吃飯、泡湯、休息。', lat:33.2645, lon:131.3550}]
         } },
       { id:'5', date:'8/30', weekday:'（日）', wd3:'SUN', monthLabel:'08月', theme:'由布院 → 福岡', color:'indigo', wxLoc:'yufuin', note:'', warn:false,
         slots:{
           start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
           morning:[{name:'由布院自由活動', time:'約 2～3 小時', note:'若前一天太累就慢慢退房；若寶寶精神好，可去湯之坪街道或金鱗湖。Yufuin Covaco 退房時間 06:00～10:00。', lat:33.2645, lon:131.3550}],
-          end:[{name:'HOTEL Sui HARUYOSHI', time:'晚上・住宿・開車 2 小時 20 分', note:'回到福岡，休息。入住 15:00～22:00。', lat:33.58675, lon:130.4068}]
+          end:[{name:'HOTEL Sui HARUYOSHI', time:'開車 2 小時 20 分，晚上・住宿', note:'回到福岡，休息。入住 15:00～22:00。', lat:33.58675, lon:130.4068}]
         } },
       { id:'6', date:'8/31', weekday:'（一）', wd3:'MON', monthLabel:'08月', theme:'福岡自由日', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
         slots:{
           start:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}],
-          morning:[{name:'博多站／天神商圈', time:'整天・開車 10～20 分', note:'購物、嬰兒用品、伴手禮、晚餐。', lat:33.5902, lon:130.4017, wikiTitle:'天神 (福岡市)'}],
+          morning:[{name:'博多站／天神商圈', time:'開車 10～20 分，整天', note:'購物、嬰兒用品、伴手禮、晚餐。', lat:33.5902, lon:130.4017, wikiTitle:'天神 (福岡市)'}],
           end:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}]
         } },
       { id:'7', date:'9/1', weekday:'（二）', wd3:'TUE', monthLabel:'09月', theme:'福岡 → 台灣', color:'neutral', wxLoc:'fukuoka',
         note:'HOTEL Sui HARUYOSHI 退房 10:00 前，IT241 10:55 起飛——時間非常緊，建議前一晚打包好行李、退房後直接上車。', warn:true,
         slots:{
           start:[{name:'HOTEL Sui HARUYOSHI', time:'退房 10:00 前', note:'', lat:33.58675, lon:130.4068}],
-          end:[{name:'福岡機場', time:'IT241・10:55 起飛・開車 30～40 分', note:'這天不安排景點，退房後直接前往機場。', lat:33.5859, lon:130.4515}]
+          end:[{name:'福岡機場', time:'開車 30～40 分，IT241・10:55 起飛', note:'這天不安排景點，退房後直接前往機場。', lat:33.5859, lon:130.4515}]
         } }
     ];
 
@@ -1991,16 +2051,42 @@
         return p.close ? (fmtHHMM(p.open) + '–' + fmtHHMM(p.close)) : '24 小時營業';
       }).join('、');
     }
+    /* 開車時間放在名稱旁邊那個色塊（跟停留時間同一個 .stop-stay），固定
+       「開車 X，停留 Y」的順序；driveMin 是存檔/加入行程時算好的分鐘數，
+       跟舊資料手動寫的 time 自由文字（例如「約 3～3.5 小時」）接在一起。 */
+    function stayBadgeText(stop){
+      var timeText = stop.time || '';
+      if(stop.driveMin == null) return timeText;
+      return '開車 ' + fmtDriveMin(stop.driveMin) + (timeText ? '，' + timeText : '');
+    }
+    function findPrevGeoStop(dayId, slotKeyTarget, idxTarget){
+      var d = DAYS[dayId];
+      if(!d) return null;
+      var prev = null;
+      for(var s = 0; s < SLOT_ORDER.length; s++){
+        var slotKey = SLOT_ORDER[s];
+        var stops = d.slots[slotKey] || [];
+        for(var i = 0; i < stops.length; i++){
+          if(slotKey === slotKeyTarget && i === idxTarget){ return prev; }
+          if(stops[i].lat != null && stops[i].lon != null){ prev = stops[i]; }
+        }
+      }
+      return null;
+    }
     function stopCardHtml(stop, idx, slotKey, dayId, color, prevStop, mapNumber){
       var hasGeo = stop.lat != null && stop.lon != null;
       var hasPrevGeo = prevStop && prevStop.lat != null && prevStop.lon != null;
       var coordsText = hasGeo ? (Number(stop.lat).toFixed(5) + ', ' + Number(stop.lon).toFixed(5)) : '';
       var hoursText = hasGeo ? openingHoursText(stop, dayId) : '';
+      var badgeText = stayBadgeText(stop);
       var navLabel = hasPrevGeo ? ('導航（從' + escapeHtml(prevStop.name || '上一站') + '）') : '導航';
       var userPhoto = (stop.photos && stop.photos.length) ? stop.photos[stop.photos.length - 1].url : null;
       var photoHtml = userPhoto
         ? '<div class="itin-stop-photo"><img src="' + escapeHtml(userPhoto) + '" alt=""></div>'
         : '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>';
+      /* 沒有營業時間、或有上一站但還沒算過開車時間，給一個手動補齊的按鈕——
+         不用自動一直背景打 API，讓使用者自己決定要不要補這筆。 */
+      var needsBackfill = hasGeo && (!stop.hours || (stop.driveMin == null && hasPrevGeo));
       return '<div class="itin-stop border-' + color + '" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
         '<button type="button" class="ia-drag" aria-label="拖曳排序" title="按住拖曳，可以搬到其他時段">' +
           '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
@@ -2014,12 +2100,13 @@
           '<div class="itin-stop-head">' +
             (mapNumber ? '<span class="stop-map-num c-' + color + '">' + mapNumber + '</span>' : '') +
             '<span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
-            (stop.time ? '<span class="stop-stay c-' + color + '">' + escapeHtml(stop.time) + '</span>' : '') + '</div>' +
+            (badgeText ? '<span class="stop-stay c-' + color + '">' + escapeHtml(badgeText) + '</span>' : '') + '</div>' +
           (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
           (hoursText ? '<p class="stop-hours">🕒 ' + escapeHtml(hoursText) + '</p>' : '') +
           '<div class="itin-stop-actions">' +
             (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon, hasPrevGeo ? prevStop.lat : null, hasPrevGeo ? prevStop.lon : null) + '" target="_blank" rel="noopener">' + navLabel + '</a>' : '') +
             (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
+            (needsBackfill ? '<button class="ia-btn ia-backfill" type="button">🔄 補齊營業/開車時間</button>' : '') +
             '<button class="ia-btn ia-edit" type="button">編輯</button>' +
             '<button class="ia-btn ia-del" type="button">刪除</button>' +
           '</div>' +
@@ -2140,6 +2227,7 @@
       });
 
       body.querySelector('.ie-save').addEventListener('click', function(){
+        var locationChanged = !!nameInput.dataset.lat;
         var updated = {
           name: nameInput.value.trim(),
           time: body.querySelector('.ie-time').value.trim(),
@@ -2150,8 +2238,25 @@
         else if(stop.lat != null){ updated.lat = stop.lat; updated.lon = stop.lon; }
         if(nameInput.dataset.hours !== undefined){ updated.hours = nameInput.dataset.hours ? JSON.parse(nameInput.dataset.hours) : null; }
         else if(stop.hours){ updated.hours = stop.hours; }
+        /* 地點換了，舊的開車時間就不準了，先清掉、存檔之後在背景重新算一次；
+           地點沒換就沿用原本算過的分鐘數，不用每次存檔都重打一次 API。 */
+        if(locationChanged){ updated.driveMin = null; }
+        else if(stop.driveMin != null){ updated.driveMin = stop.driveMin; }
         if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
         saveStop(dayId, slotKey, idx, updated);
+        if(updated.lat != null && (locationChanged || stop.driveMin == null)){
+          var prevGeoStop = findPrevGeoStop(dayId, slotKey, idx);
+          if(prevGeoStop){
+            computeDriveMinutes({lat:prevGeoStop.lat, lon:prevGeoStop.lon}, {lat:updated.lat, lon:updated.lon}, function(min){
+              if(min == null) return;
+              var s = DAYS[dayId] && DAYS[dayId].slots[slotKey] && DAYS[dayId].slots[slotKey][idx];
+              if(!s || s.lat !== updated.lat || s.lon !== updated.lon) return;
+              s.driveMin = min;
+              persistDay(dayId);
+              if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+            });
+          }
+        }
       });
       body.querySelector('.ie-move-btn').addEventListener('click', function(){
         var toDayId = groupValue(body.querySelector('.ie-move-day'));
@@ -2171,9 +2276,46 @@
         var slotKey = cardEl.dataset.slot, idx = Number(cardEl.dataset.idx);
         cardEl.querySelector('.ia-edit').addEventListener('click', function(){ enterEdit(cardEl, dayId, slotKey, idx); });
         cardEl.querySelector('.ia-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
+        var backfillBtn = cardEl.querySelector('.ia-backfill');
+        if(backfillBtn){
+          backfillBtn.addEventListener('click', function(){
+            backfillBtn.disabled = true;
+            backfillBtn.textContent = '補齊中…';
+            backfillStopInfo(dayId, slotKey, idx);
+          });
+        }
       });
       host.querySelectorAll('.slot-add').forEach(function(btn){
         btn.addEventListener('click', function(){ addStop(dayId, btn.dataset.slot); });
+      });
+    }
+    /* 「補齊營業/開車時間」按鈕：舊地點、或從口袋清單搬過去的地點，原本就有
+       座標但沒有透過搜尋選過，所以沒有營業時間；上一站存在但還沒算過開車
+       時間的話也一併補。兩個都補完才存檔+重畫一次，不會各自觸發一次存檔。 */
+    function backfillStopInfo(dayId, slotKey, idx){
+      var stop = DAYS[dayId] && DAYS[dayId].slots[slotKey] && DAYS[dayId].slots[slotKey][idx];
+      if(!stop || stop.lat == null) return;
+      var tasks = [];
+      if(!stop.hours){
+        tasks.push(new Promise(function(resolve){
+          lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours){
+            if(hours){ stop.hours = hours; }
+            resolve();
+          });
+        }));
+      }
+      var prevStop = findPrevGeoStop(dayId, slotKey, idx);
+      if(stop.driveMin == null && prevStop){
+        tasks.push(new Promise(function(resolve){
+          computeDriveMinutes({lat:prevStop.lat, lon:prevStop.lon}, {lat:stop.lat, lon:stop.lon}, function(min){
+            if(min != null){ stop.driveMin = min; }
+            resolve();
+          });
+        }));
+      }
+      Promise.all(tasks).then(function(){
+        persistDay(dayId);
+        if(String(window.__currentDay) === dayId){ renderDay(dayId); }
       });
     }
     function loadStopPhotos(host){
@@ -2284,15 +2426,21 @@
       var wrap = document.getElementById('dayWxStrip');
       var labelEl = document.getElementById('dayWxStripLabel');
       var hourEl = document.getElementById('dayWxHourStrip');
-      if(!wrap || !d.wxLoc || !window.__wxCacheReady || !window.__wxCacheReady[d.wxLoc]){
+      /* wxLoc 是這次才加進 DAYS_SEED 的欄位；已經動過編輯、Firestore 裡已經有
+         文件的那幾天，onSnapshot 抓回來的是舊資料（沒有 wxLoc），會把這裡的
+         d.wxLoc 蓋成 undefined，逐時天氣就整個不會顯示。這欄本來就不是使用者
+         會編輯的資料，固定跟著 DAYS_SEED 的靜態設定走，不要用可能過時的 d.wxLoc。 */
+      var seedMeta = DAYS_SEED.filter(function(s){ return s.id === dayId; })[0];
+      var wxLoc = seedMeta && seedMeta.wxLoc;
+      if(!wrap || !wxLoc || !window.__wxCacheReady || !window.__wxCacheReady[wxLoc]){
         if(wrap){ wrap.style.display = 'none'; }
         return;
       }
       wrap.style.display = '';
-      labelEl.textContent = d.date + d.weekday + '・' + (WX_LOC_LABEL[d.wxLoc] || d.wxLoc) + ' 逐時天氣';
+      labelEl.textContent = d.date + d.weekday + '・' + (WX_LOC_LABEL[wxLoc] || wxLoc) + ' 逐時天氣';
       hourEl.innerHTML = '<p class="wx-empty">讀取中…</p>';
       var isoDate = isoDateFromShort(d.date);
-      window.__wxCacheReady[d.wxLoc].then(function(data){
+      window.__wxCacheReady[wxLoc].then(function(data){
         if(String(window.__currentDay) !== dayId) return; /* 天氣抓好的時候使用者可能已經切到別天了 */
         if(!data || !data.hourly){
           hourEl.innerHTML = '<p class="wx-empty">目前抓不到逐時預報。</p>';
@@ -2367,6 +2515,44 @@
 
     selectDay(1);
 
+    /* 這次把「開車 X」搬到「停留 Y」前面（見 stopCardHtml 的 stayBadgeText），
+       改的是 DAYS_SEED 這幾個地點的 time 文字。但只要某一天在 Firestore 已經
+       有存過的文件（這整個 session 一直在編輯測試，7 天應該都已經有了），
+       onSnapshot 抓回來的是「雲端那份舊文字」，會蓋掉這裡新改的 DAYS_SEED，
+       畫面完全看不出差異。這裡用「精準比對舊文字」做一次性、安全的搬字：
+       只有完全等於當初那串舊文字才會改寫，使用者自己手動改過的內容不會被
+       動到；改完直接寫回 Firestore，之後這個分支就再也比對不到了。 */
+    var LEGACY_TIME_FIXES = [
+      {dayId:'2', name:'門司港', oldTime:'約 3～3.5 小時・開車 1 小時 20 分', newTime:'開車 1 小時 20 分，停留約 3～3.5 小時'},
+      {dayId:'2', name:'SPAZIO 3 Life More Haruyoshi Annex', oldTime:'下午～晚上・開車 1 小時 20 分', newTime:'開車 1 小時 20 分，下午～晚上'},
+      {dayId:'3', name:'African Safari', oldTime:'約 2.5～3 小時・開車 2 小時 15 分', newTime:'開車 2 小時 15 分，停留約 2.5～3 小時'},
+      {dayId:'3', name:'Yufuin Covaco', oldTime:'晚上・住宿・開車 2 小時 15 分', newTime:'開車 2 小時 15 分，晚上・住宿'},
+      {dayId:'4', name:'長者原', oldTime:'約 20～30 分・開車 1 小時 10 分', newTime:'開車 1 小時 10 分，停留約 20～30 分'},
+      {dayId:'4', name:'牧之戶峠', oldTime:'約 20～30 分・開車 20 分', newTime:'開車 20 分，停留約 20～30 分'},
+      {dayId:'4', name:'瀨之本', oldTime:'約 20～30 分・開車 25 分', newTime:'開車 25 分，停留約 20～30 分'},
+      {dayId:'4', name:'Milk Road', oldTime:'約 30～45 分・開車 20 分', newTime:'開車 20 分，停留約 30～45 分'},
+      {dayId:'4', name:'大觀峰', oldTime:'約 1 小時・開車 20 分', newTime:'開車 20 分，停留約 1 小時'},
+      {dayId:'4', name:'阿蘇火山口', oldTime:'約 45～60 分・開車 30 分', newTime:'開車 30 分，停留約 45～60 分'},
+      {dayId:'4', name:'草千里', oldTime:'約 45～60 分・開車 15 分', newTime:'開車 15 分，停留約 45～60 分'},
+      {dayId:'4', name:'Yufuin Covaco', oldTime:'晚上・住宿・開車 1 小時 20 分', newTime:'開車 1 小時 20 分，晚上・住宿'},
+      {dayId:'5', name:'HOTEL Sui HARUYOSHI', oldTime:'晚上・住宿・開車 2 小時 20 分', newTime:'開車 2 小時 20 分，晚上・住宿'},
+      {dayId:'6', name:'博多站／天神商圈', oldTime:'整天・開車 10～20 分', newTime:'開車 10～20 分，整天'},
+      {dayId:'7', name:'福岡機場', oldTime:'IT241・10:55 起飛・開車 30～40 分', newTime:'開車 30～40 分，IT241・10:55 起飛'}
+    ];
+    function migrateLegacyTimeText(dayId, dayData){
+      var changed = false;
+      LEGACY_TIME_FIXES.filter(function(fix){ return fix.dayId === dayId; }).forEach(function(fix){
+        SLOT_ORDER.forEach(function(slotKey){
+          var stops = dayData.slots && dayData.slots[slotKey];
+          if(!stops) return;
+          stops.forEach(function(s){
+            if(s.name === fix.name && s.time === fix.oldTime){ s.time = fix.newTime; changed = true; }
+          });
+        });
+      });
+      return changed;
+    }
+
     window.fbReady.then(function(){
       var fns = window.fb.fns;
       DAYS_SEED.forEach(function(seed){
@@ -2374,6 +2560,9 @@
         fns.onSnapshot(ref, function(snap){
           if(snap.exists()){
             DAYS[seed.id] = snap.data();
+            if(migrateLegacyTimeText(seed.id, DAYS[seed.id])){
+              fns.setDoc(ref, DAYS[seed.id]);
+            }
           } else {
             DAYS[seed.id] = JSON.parse(JSON.stringify(seed));
             fns.setDoc(ref, DAYS[seed.id]);
@@ -2890,11 +3079,25 @@
         var dayId = groupValue(bkAddDayGroup);
         var slotKey = groupValue(bkAddSlotGroup);
         if(!DAYS[dayId].slots[slotKey]){ DAYS[dayId].slots[slotKey] = []; }
-        DAYS[dayId].slots[slotKey].push({ name: it.name, time:'', note: it.note || '', lat: it.lat, lon: it.lon });
+        var newStop = { name: it.name, time:'', note: it.note || '', lat: it.lat, lon: it.lon };
+        var newIdx = DAYS[dayId].slots[slotKey].length;
+        DAYS[dayId].slots[slotKey].push(newStop);
         persistDay(dayId);
         redrawOverviewMap();
         closeBkAddModal();
         renderBucketList();
+        /* 從口袋清單加進行程的地點原本就有座標，但沒透過搜尋選過，所以沒有
+           營業時間；順便查一下開車時間（上一站存在的話），兩個都是背景查，
+           查到了才補存檔+重畫，不會擋住剛剛的「加入」動作。 */
+        lookupPlaceHours(newStop.name, newStop.lat, newStop.lon, function(hours){
+          if(hours){ newStop.hours = hours; persistDay(dayId); if(String(window.__currentDay) === dayId){ renderDay(dayId); } }
+        });
+        var prevGeoStop = findPrevGeoStop(dayId, slotKey, newIdx);
+        if(prevGeoStop){
+          computeDriveMinutes({lat:prevGeoStop.lat, lon:prevGeoStop.lon}, {lat:newStop.lat, lon:newStop.lon}, function(min){
+            if(min != null){ newStop.driveMin = min; persistDay(dayId); if(String(window.__currentDay) === dayId){ renderDay(dayId); } }
+          });
+        }
       });
 
       document.getElementById('bucketAddOpenBtn').addEventListener('click', function(){
