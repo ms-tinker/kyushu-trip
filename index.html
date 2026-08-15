@@ -322,6 +322,10 @@
   .dh-refresh-icon:disabled{opacity:0.3;cursor:default;}
   .dh-refresh-status{margin-top:0.4rem;max-width:32rem;}
   .dh-refresh-status:empty{display:none;}
+  .bk-hours-refresh-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:wrap;}
+  .bk-hours-refresh-row .dh-refresh-icon{font-size:0.78rem;border:1px solid var(--line);}
+  .bk-hours-refresh-status{margin:0;}
+  .bk-hours-refresh-status:empty{display:none;}
 
   .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
@@ -2015,7 +2019,12 @@
   }
   /* 找地點名字對應的 Google 地點、抓它的營業時間——用在「原本就有座標、但
      沒有透過搜尋選過」的舊地點或口袋清單搬過去的地點，不用使用者手動重新
-     搜尋一次也能補上營業時間。 */
+     搜尋一次也能補上營業時間。
+     ⚠️ 這裡要分兩步查，不能只靠 findPlaceFromQuery 一次拿完：Find Place
+     的 opening_hours 欄位只會給「現在開不開」（open_now），不包含完整一週
+     每天幾點到幾點的 periods 資料——要 periods 一定要另外拿 place_id 打
+     getDetails。之前這裡沒分兩步，periods 永遠是空的，每個地點不管實際
+     有沒有營業，都會被判斷成「今日公休」，是這個 bug 真正的原因。 */
   function lookupPlaceHours(name, lat, lon, callback){
     window.__gmapsReady.then(function(){
       if(!window.google || !google.maps || !google.maps.places || !name){ callback(null, 'NO_PLACES_SERVICE'); return; }
@@ -2023,18 +2032,28 @@
         var svc = new google.maps.places.PlacesService(document.createElement('div'));
         svc.findPlaceFromQuery({
           query: name,
-          fields: ['opening_hours'],
+          fields: ['place_id'],
           locationBias: new google.maps.Circle({center:{lat:lat, lng:lon}, radius:300})
         }, function(results, status){
           if(status !== google.maps.places.PlacesServiceStatus.OK){
             callback(null, status); /* 真正查詢失敗（例如 API 沒啟用、額度問題） */
             return;
           }
-          if(!results || !results.length || !results[0].opening_hours){
-            callback(null, null); /* 地點有查到，只是 Google 沒有這個地點的營業時間資料——很正常，不算錯誤 */
+          if(!results || !results.length || !results[0].place_id){
+            callback(null, null); /* 地點有查到，只是沒有 place_id 可以進一步查——很少見 */
             return;
           }
-          callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []), status);
+          svc.getDetails({ placeId: results[0].place_id, fields: ['opening_hours'] }, function(place, detailStatus){
+            if(detailStatus !== google.maps.places.PlacesServiceStatus.OK){
+              callback(null, detailStatus);
+              return;
+            }
+            if(!place || !place.opening_hours){
+              callback(null, null); /* 地點有查到，只是 Google 沒有這個地點的營業時間資料——很正常，不算錯誤 */
+              return;
+            }
+            callback(simplifyOpeningPeriods(place.opening_hours.periods || []), detailStatus);
+          });
         });
       }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
     });
@@ -3145,11 +3164,17 @@
          觸發時（例如剛同步完 My Maps 又馬上再存一次）對同一個地點重複發出
          查詢，這個記號本身不會被 persistBucketItems() 存進 Firestore。 */
       var bucketHoursInFlight = {};
-      function refreshBucketHours(){
+      /* forceAll：手動按「重新查營業時間」時忽略 hoursChecked，強制重查
+         （例如第一次自動查到的那天剛好公休，想換一天再查一次確認）；
+         layerOnly：只重查指定圖層，不會一次把所有圖層全部重打一輪 API。
+         回傳 Promise<實際查了幾個地點>，給按鈕顯示查詢結果用。 */
+      function refreshBucketHours(forceAll, layerOnly){
         var tasks = [];
         bucketItems.forEach(function(it){
           if(it.lat == null || it.lon == null) return;
-          if(it.hours || it.hoursChecked || bucketHoursInFlight[it.id]) return;
+          if(layerOnly && it.layer !== layerOnly) return;
+          if(bucketHoursInFlight[it.id]) return;
+          if(!forceAll && (it.hours || it.hoursChecked)) return;
           bucketHoursInFlight[it.id] = true;
           tasks.push(new Promise(function(resolve){
             lookupPlaceHours(it.name, it.lat, it.lon, function(hours){
@@ -3160,10 +3185,11 @@
             });
           }));
         });
-        if(!tasks.length) return;
-        Promise.all(tasks).then(function(){
+        if(!tasks.length) return Promise.resolve(0);
+        return Promise.all(tasks).then(function(){
           persistBucketItems();
           renderBucketList();
+          return tasks.length;
         });
       }
 
@@ -3281,7 +3307,10 @@
         var mapEl = document.getElementById('bucketMap-tabs');
         if(mapEl){ mapEl.scrollIntoView({behavior:'smooth', block:'center'}); }
       }
-      function renderBucketLayerMap(mapElId, items){
+      /* items 是「目前要在地圖上顯示」的地點（會跟著篩選一起變動），numByItem
+         另外傳整個圖層的編號對照表，讓地圖上的號碼牌跟下面卡片編號永遠一致
+         ——不會因為篩選只剩幾個點，地圖編號就從 1 重新排。 */
+      function renderBucketLayerMap(mapElId, items, numByItem){
         var mapEl = document.getElementById(mapElId);
         bucketMarkerEntries = {};
         if(!mapEl || !window.google || !window.google.maps){ if(mapEl){ mapEl.style.display = 'none'; } return; }
@@ -3292,12 +3321,13 @@
           var map = new google.maps.Map(mapEl, {zoom:11, scrollwheel:false, streetViewControl:false, mapTypeControl:false});
           var bounds = new google.maps.LatLngBounds();
           pts.forEach(function(it, i){
+            var num = (numByItem && numByItem[it.id] != null) ? (numByItem[it.id] + 1) : (i + 1);
             var preset = bucketPreset(it.preset);
             var color = getComputedStyle(document.documentElement).getPropertyValue('--' + preset.color).trim();
             var marker = new google.maps.Marker({
-              position:{lat:it.lat, lng:it.lon}, map:map, title:(i + 1) + '. ' + (it.name || ''),
+              position:{lat:it.lat, lng:it.lon}, map:map, title:num + '. ' + (it.name || ''),
               icon:{path:google.maps.SymbolPath.CIRCLE, scale:11, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2},
-              label:{text:String(i + 1), color:'#fff', fontSize:'11px', fontWeight:'700'}
+              label:{text:String(num), color:'#fff', fontSize:'11px', fontWeight:'700'}
             });
             marker.addListener('click', function(){
               showBucketMarkerInfo(it, marker, map);
@@ -3380,8 +3410,9 @@
           if(bucketTabStars > 0 && (it.stars || 0) < bucketTabStars) return false;
           return true;
         }
-        var listHtml;
+        var listHtml, mapItems;
         if(!anyFilterActive){
+          mapItems = layerItems;
           listHtml = presetsPresent.map(function(preset){
             var catItems = byPreset[preset.key];
             return '<details class="bucket-cat" open>' +
@@ -3398,6 +3429,7 @@
         } else {
           var baseSet = bucketTabCat === 'all' ? layerItems : byPreset[bucketTabCat];
           var filtered = baseSet.filter(passesExtraFilters);
+          mapItems = filtered;
           listHtml = '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
             (filtered.length ? filtered.map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('')
               : '<p class="wx-empty">符合條件的地點目前是 0 個。</p>') +
@@ -3406,13 +3438,27 @@
 
         host.innerHTML =
           '<div class="btn-group bk-layer-tabs" id="bkTabLayer">' + layerTabsHtml + '</div>' +
+          '<div class="bk-hours-refresh-row">' +
+            '<button type="button" class="dh-refresh-icon" id="bkHoursRefreshBtn" title="重新查詢' + escapeHtml(bucketTabLayer) + '這個圖層目前顯示的地點的營業時間——平常不用按，沒查過的會自動查；已經查過但想再確認一次（例如上次查到公休，隔幾天想再看一次）才需要手動按">🔄 重新查營業時間</button>' +
+            '<span class="hint bk-hours-refresh-status" id="bkHoursRefreshStatus"></span>' +
+          '</div>' +
           '<div class="btn-group bk-cat-tabs" id="bkTabCat">' + catTabsHtml + '</div>' +
           (tagTabsHtml ? '<div class="btn-group bk-tag-tabs" id="bkTabTag">' + tagTabsHtml + '</div>' : '') +
           '<div class="btn-group bk-stars-tabs" id="bkTabStars">' + starsTabsHtml + '</div>' +
           '<div class="bucket-layer-map" id="bucketMap-tabs"></div>' +
           listHtml;
 
-        renderBucketLayerMap('bucketMap-tabs', layerItems);
+        renderBucketLayerMap('bucketMap-tabs', mapItems, numByItem);
+        host.querySelector('#bkHoursRefreshBtn').addEventListener('click', function(){
+          var btn = host.querySelector('#bkHoursRefreshBtn');
+          var statusEl = host.querySelector('#bkHoursRefreshStatus');
+          btn.disabled = true;
+          statusEl.textContent = '查詢中…';
+          refreshBucketHours(true, bucketTabLayer).then(function(count){
+            statusEl.textContent = '已更新 ' + count + ' 個地點的營業時間。';
+            btn.disabled = false;
+          });
+        });
         host.querySelector('#bkTabLayer').addEventListener('click', function(ev){
           var btn = ev.target.closest('button');
           if(!btn) return;
