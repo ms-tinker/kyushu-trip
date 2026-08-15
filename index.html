@@ -343,6 +343,8 @@
   .itin-stop-head{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;}
   .itin-stop .stop-name{font-weight:700;font-size:0.96rem;}
   .stop-map-num{display:inline-flex;align-items:center;justify-content:center;width:1.3rem;height:1.3rem;border-radius:50%;font-size:0.7rem;font-weight:700;flex:none;font-family:var(--font-body);}
+  .bucket-item .stop-map-num{cursor:pointer;}
+  .bucket-item.bk-map-highlight{outline:3px solid var(--indigo);outline-offset:2px;transition:outline-color 0.3s;}
   .stop-map-num.c-indigo{background:var(--indigo);color:var(--surface);}
   .stop-map-num.c-persimmon{background:var(--persimmon);color:var(--surface);}
   .stop-map-num.c-moss{background:var(--moss);color:var(--surface);}
@@ -3111,6 +3113,11 @@
           var prev = existingByKey[bucketMatchKey(it)];
           it.tags = (prev && prev.tags) ? prev.tags : [];
           it.stars = (prev && prev.stars) ? prev.stars : 0;
+          /* 營業時間也是查過才有的額外資料，跟 tags/stars 一樣要照配對key
+             帶過去，不然每次 My Maps 同步都會把 hoursChecked 洗掉，變成
+             重新打一次 Places API（花錢又沒必要）。 */
+          if(prev && prev.hours){ it.hours = prev.hours; }
+          if(prev && prev.hoursChecked){ it.hoursChecked = true; }
           return it;
         });
       }
@@ -3131,6 +3138,35 @@
           console.error('My Maps 即時同步失敗，畫面維持上次同步成功的版本', err);
         });
       }
+      /* 營業時間跟行程頁一樣「查過一次就永久快取」，用 hoursChecked 這個旗標
+         擋掉已經查過（不管有沒有查到資料）的地點，不會每次畫面重新整理都
+         重打一次 Places API。bucketHoursInFlight 是另外存在外面的「正在查詢
+         中」記號（不寫進 it 本身），純粹是為了擋掉 onSnapshot 短時間內連續
+         觸發時（例如剛同步完 My Maps 又馬上再存一次）對同一個地點重複發出
+         查詢，這個記號本身不會被 persistBucketItems() 存進 Firestore。 */
+      var bucketHoursInFlight = {};
+      function refreshBucketHours(){
+        var tasks = [];
+        bucketItems.forEach(function(it){
+          if(it.lat == null || it.lon == null) return;
+          if(it.hours || it.hoursChecked || bucketHoursInFlight[it.id]) return;
+          bucketHoursInFlight[it.id] = true;
+          tasks.push(new Promise(function(resolve){
+            lookupPlaceHours(it.name, it.lat, it.lon, function(hours){
+              it.hoursChecked = true;
+              delete bucketHoursInFlight[it.id];
+              if(hours){ it.hours = hours; }
+              resolve();
+            });
+          }));
+        });
+        if(!tasks.length) return;
+        Promise.all(tasks).then(function(){
+          persistBucketItems();
+          renderBucketList();
+        });
+      }
+
       window.fbReady.then(function(){
         var fns = window.fb.fns;
         var startedSync = false;
@@ -3151,6 +3187,7 @@
             startedSync = true;
             syncBucketFromMyMaps();
           }
+          refreshBucketHours();
         }, function(err){ console.error('bucket KML cache sync error', err); });
       });
 
@@ -3194,6 +3231,7 @@
               (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
             '</div>' +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
+            (bucketHoursText(it) ? '<p class="stop-hours">🕒 ' + escapeHtml(bucketHoursText(it)) + '</p>' : '') +
             bucketTagsHtml(it) +
             bucketStarsEditHtml(it.stars) +
             '<div class="itin-stop-actions">' +
@@ -3207,8 +3245,45 @@
         '</div>';
       }
 
+      /* 地圖上的點跟下面清單卡片互動用的共用狀態：bucketMarkerEntries 存
+         「這個地點 id → {marker, map}」，卡片點了要能反查對應的 marker 來
+         pan/彈出資訊視窗；bucketMapInfoWindow 整個網站共用同一個資訊視窗
+         實例，不用每次點都 new 一個。地圖每次 renderBucketLayerMap 都是
+         重新整個畫過（跟其他分頁的做法一致），所以這個對照表也是每次重畫
+         就整個重建，不用擔心點掉的舊地點還留著殘影。 */
+      var bucketMarkerEntries = {};
+      var bucketMapInfoWindow = null;
+      function showBucketMarkerInfo(it, marker, map){
+        if(!bucketMapInfoWindow){ bucketMapInfoWindow = new google.maps.InfoWindow(); }
+        var stars = it.stars ? '<div>' + '★'.repeat(it.stars) + '</div>' : '';
+        bucketMapInfoWindow.setContent('<div style="font-weight:700;">' + escapeHtml(it.name || '') + '</div>' + stars);
+        bucketMapInfoWindow.open(map, marker);
+      }
+      function highlightBucketCard(id){
+        document.querySelectorAll('.bucket-item.bk-map-highlight').forEach(function(el){ el.classList.remove('bk-map-highlight'); });
+        var card = document.querySelector('.bucket-item[data-bucket-id="' + id + '"]');
+        if(!card) return;
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        card.classList.add('bk-map-highlight');
+        setTimeout(function(){ card.classList.remove('bk-map-highlight'); }, 2000);
+      }
+      /* 點清單卡片的編號圓圈 → 對應到地圖上那個點：pan 過去、跳出資訊視窗、
+         用彈跳動畫短暫強調一下，方便在密集的點位裡找到剛剛點的是哪一個。 */
+      function panToBucketItem(id){
+        var entry = bucketMarkerEntries[id];
+        if(!entry) return;
+        var it = bucketItems.filter(function(x){ return x.id === id; })[0];
+        entry.map.panTo(entry.marker.getPosition());
+        if(entry.map.getZoom() < 15){ entry.map.setZoom(15); }
+        showBucketMarkerInfo(it || {}, entry.marker, entry.map);
+        entry.marker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(function(){ entry.marker.setAnimation(null); }, 1400);
+        var mapEl = document.getElementById('bucketMap-tabs');
+        if(mapEl){ mapEl.scrollIntoView({behavior:'smooth', block:'center'}); }
+      }
       function renderBucketLayerMap(mapElId, items){
         var mapEl = document.getElementById(mapElId);
+        bucketMarkerEntries = {};
         if(!mapEl || !window.google || !window.google.maps){ if(mapEl){ mapEl.style.display = 'none'; } return; }
         var pts = items.filter(function(it){ return it.lat != null && it.lon != null; });
         if(!pts.length){ mapEl.style.display = 'none'; return; }
@@ -3219,11 +3294,16 @@
           pts.forEach(function(it, i){
             var preset = bucketPreset(it.preset);
             var color = getComputedStyle(document.documentElement).getPropertyValue('--' + preset.color).trim();
-            new google.maps.Marker({
+            var marker = new google.maps.Marker({
               position:{lat:it.lat, lng:it.lon}, map:map, title:(i + 1) + '. ' + (it.name || ''),
               icon:{path:google.maps.SymbolPath.CIRCLE, scale:11, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2},
               label:{text:String(i + 1), color:'#fff', fontSize:'11px', fontWeight:'700'}
             });
+            marker.addListener('click', function(){
+              showBucketMarkerInfo(it, marker, map);
+              highlightBucketCard(it.id);
+            });
+            bucketMarkerEntries[it.id] = { marker: marker, map: map };
             bounds.extend({lat:it.lat, lng:it.lon});
           });
           map.fitBounds(bounds, 24);
@@ -3402,6 +3482,20 @@
         if(!it.tags || !it.tags.length) return '';
         return '<div class="bk-tag-list">' + it.tags.map(function(t){ return '<span class="bk-tag-chip">' + escapeHtml(t) + '</span>'; }).join('') + '</div>';
       }
+      /* 口袋清單的地點沒有掛在特定行程日期上（還沒排進行程），所以「今天」
+         用瀏覽當下的真實日期去算星期幾，跟行程頁 openingHoursText() 用「那個
+         stop 排在行程哪一天」算是不同邏輯——這裡純粹給瀏覽時一個參考「現在
+         去大概開不開」，之後真的按「加入行程」時，行程那邊會照排定的那天
+         重新查一次（見 bkAddConfirmBtn），不會沿用這裡算出來的星期文字。 */
+      function bucketHoursText(it){
+        if(!it.hours) return '';
+        if(it.hours.always) return '24 小時營業';
+        var todays = it.hours[new Date().getDay()];
+        if(!todays || !todays.length) return '今日公休';
+        return '今日營業 ' + todays.map(function(p){
+          return p.close ? (fmtHHMM(p.open) + '–' + fmtHHMM(p.close)) : '24 小時營業';
+        }).join('、');
+      }
       /* 標籤挑選器：不是打字輸入，是把「目前所有卡片用過的標籤」都列成可以
          點選的按鈕（多選，跟星等/類型那種單選的 btn-group 不一樣），另外留一個
          輸入框可以新增這裡還沒有的標籤。這樣同一個標籤字（例如「寶寶友善」）
@@ -3477,7 +3571,7 @@
         var body = cardEl.querySelector('.itin-stop-body');
         body.innerHTML = bucketEditFormHtml(it);
         var nameInput = body.querySelector('.bk-name');
-        setupLocationSearch(nameInput, body.querySelector('.bk-suggest'));
+        setupLocationSearch(nameInput, body.querySelector('.bk-suggest'), {hours: true});
         if(it.lat != null){ nameInput.dataset.lat = it.lat; nameInput.dataset.lon = it.lon; }
         var layerGroup = body.querySelector('.bk-layer-group');
         var presetGroup = body.querySelector('.bk-preset-group');
@@ -3500,6 +3594,13 @@
           it.preset = groupValue(presetGroup) || it.preset;
           it.layer = groupValue(layerGroup) || it.layer;
           if(nameInput.dataset.lat){ it.lat = parseFloat(nameInput.dataset.lat); it.lon = parseFloat(nameInput.dataset.lon); }
+          /* 重新搜尋地點時 setupLocationSearch({hours:true}) 已經順便查過營業
+             時間了，直接用這次查到的，不用再背景多打一次 API；地點沒換就
+             維持原本查過的資料。 */
+          if(nameInput.dataset.hours !== undefined){
+            it.hours = nameInput.dataset.hours ? JSON.parse(nameInput.dataset.hours) : null;
+            it.hoursChecked = true;
+          }
           persistBucketItems();
           renderBucketList();
         });
@@ -3518,6 +3619,8 @@
           var id = cardEl.getAttribute('data-bucket-id');
           var it = bucketItems.filter(function(x){ return x.id === id; })[0];
           if(!it) return;
+          var mapNumEl = cardEl.querySelector('.stop-map-num');
+          if(mapNumEl){ mapNumEl.addEventListener('click', function(){ panToBucketItem(id); }); }
           var editBtn = cardEl.querySelector('.ia-edit');
           if(editBtn){ editBtn.addEventListener('click', function(){ enterBucketEdit(cardEl, it); }); }
           var delBtn = cardEl.querySelector('.ia-del');
@@ -3542,8 +3645,8 @@
         });
       }
 
-      /* 「加入行程」共用一個彈出視窗（不然 69 個地點每張卡片都放一整排日期／
-         時段按鈕，清單會長到不像話），選好日期時段按加入才會真的寫進行程。 */
+      /* 「加入行程」共用一個彈出視窗（不然每張卡片都放一整排日期／時段按鈕，
+         清單會長到不像話），選好日期時段按加入才會真的寫進行程。 */
       var bkAddModal = document.getElementById('bkAddModal');
       var bkAddTarget = document.getElementById('bkAddTarget');
       var bkAddDayGroup = document.getElementById('bkAddDay');
@@ -3603,6 +3706,7 @@
         bucketNewNameInput.value = '';
         delete bucketNewNameInput.dataset.lat;
         delete bucketNewNameInput.dataset.lon;
+        delete bucketNewNameInput.dataset.hours;
         document.getElementById('bkNewNote').value = '';
         bucketNewMeta.stars = 0;
         bucketNewMeta.tags = [];
@@ -3628,7 +3732,7 @@
       document.getElementById('bucketAddOpenBtn').addEventListener('click', openBucketNewModal);
       document.getElementById('bucketNewCloseBtn').addEventListener('click', closeBucketNewModal);
       bucketNewModal.addEventListener('click', function(ev){ if(ev.target === bucketNewModal){ closeBucketNewModal(); } });
-      setupLocationSearch(bucketNewNameInput, document.getElementById('bkNewSuggest'));
+      setupLocationSearch(bucketNewNameInput, document.getElementById('bkNewSuggest'), {hours: true});
       document.getElementById('bkNewConfirmBtn').addEventListener('click', function(){
         var name = bucketNewNameInput.value.trim();
         if(!name){ alert('請輸入地點名稱。'); return; }
@@ -3645,6 +3749,10 @@
         if(bucketNewNameInput.dataset.lat){
           it.lat = parseFloat(bucketNewNameInput.dataset.lat);
           it.lon = parseFloat(bucketNewNameInput.dataset.lon);
+        }
+        if(bucketNewNameInput.dataset.hours !== undefined){
+          it.hours = bucketNewNameInput.dataset.hours ? JSON.parse(bucketNewNameInput.dataset.hours) : null;
+          it.hoursChecked = true;
         }
         bucketItems.push(it);
         bucketTabLayer = layer;
