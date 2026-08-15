@@ -292,9 +292,19 @@
   .bucket-item-added .stop-name{text-decoration:line-through;}
   .bk-in-trip-tag{font-size:0.7rem;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0.1rem 0.5rem;white-space:nowrap;}
   .bk-tab-count{font-size:0.72rem;opacity:0.75;}
-  .bk-layer-tabs, .bk-cat-tabs{margin-bottom:0.8rem;}
+  .bk-layer-tabs, .bk-cat-tabs, .bk-tag-tabs{margin-bottom:0.8rem;}
   .bk-cat-tabs{padding-bottom:0.8rem;border-bottom:1px dashed var(--line);}
-  .bk-preset-row{display:flex;flex-wrap:wrap;gap:0.5rem;}
+  .bk-tag-tabs{padding-bottom:0.8rem;border-bottom:1px dashed var(--line);}
+  .bk-stars-tabs{margin-bottom:0.8rem;}
+
+  /* 標籤（自訂文字）跟星等（想去的程度），卡片顯示跟編輯表單/篩選列共用同一套樣式 */
+  .bk-tag-list{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;}
+  .bk-tag-chip{font-size:0.72rem;font-weight:600;color:var(--plum);background:var(--plum-soft);border:1px solid var(--plum);border-radius:999px;padding:0.1rem 0.55rem;white-space:nowrap;}
+  .bk-stars{display:flex;gap:0.25rem;margin-top:0.5rem;}
+  .bk-star{font-size:1.05rem;line-height:1;background:none;border:none;padding:0;cursor:pointer;color:var(--line-strong);}
+  .bk-star.lit{color:var(--sand);}
+  .itin-edit-form .bk-stars{margin-top:0.3rem;}
+  .itin-edit-form .bk-star{font-size:1.3rem;}
 
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
@@ -1022,6 +1032,45 @@
               <div class="btn-group" id="bkAddSlot"></div>
             </div>
             <button class="btn-primary" id="bkAddConfirmBtn" type="button">加入</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="bucketNewModal" hidden>
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h3>新增口袋地點</h3>
+          <button type="button" class="modal-close" id="bucketNewCloseBtn" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-card">
+            <div class="field has-suggest">
+              <label>地點名稱</label>
+              <input type="text" id="bkNewName" placeholder="搜尋或輸入地點名稱" autocomplete="off">
+              <div class="geo-suggest-list" id="bkNewSuggest"></div>
+            </div>
+            <div class="field">
+              <label>圖層（對應 My Maps 上的哪一個資料夾）</label>
+              <div class="btn-group" id="bkNewLayer"></div>
+            </div>
+            <div class="field">
+              <label>類型</label>
+              <div class="btn-group" id="bkNewPreset"></div>
+            </div>
+            <div class="field">
+              <label>標籤（用逗號分隔，選填）</label>
+              <input type="text" id="bkNewTags" placeholder="例如：寶寶友善, 室內, 雨天備案">
+            </div>
+            <div class="field">
+              <label>想去的程度</label>
+              <div id="bkNewStars"></div>
+            </div>
+            <div class="field">
+              <label>備註</label>
+              <textarea id="bkNewNote" placeholder="說明、提醒…"></textarea>
+            </div>
+            <button class="btn-primary" id="bkNewConfirmBtn" type="button">新增</button>
           </div>
         </div>
       </div>
@@ -2917,6 +2966,8 @@
             it.id = 'kml-' + layer + '-' + i;
             it.layer = layer;
             it.order = i * 1000;
+            it.tags = [];
+            it.stars = 0;
             out.push(it);
           });
         });
@@ -3037,6 +3088,25 @@
           window.fb.fns.setDoc(bucketKmlCacheRef(), { items: bucketItems, syncedAt: window.fb.fns.serverTimestamp() });
         });
       }
+      function bucketMatchKey(it){ return it.layer + '|' + it.name + '|' + it.lat.toFixed(6) + '|' + it.lon.toFixed(6); }
+      /* My Maps 本身沒有「標籤」「想去的程度」這兩個欄位，是只存在這個網站的
+         額外資料——KML 同步一定會整批覆蓋 bucketItems，所以每次同步都要把
+         「這次抓到的新資料」跟「目前畫面上舊的 tags/stars」用（圖層+名字+
+         經緯度）配對合併回去，不然每次同步都會被洗掉。
+         ⚠️ 這個配對沒有真正的唯一 ID 可以用（KML 匯出本來就沒有），所以如果
+         你之後在 My Maps 上「改名字」或「明顯移動一個點的位置」，配對會對不
+         起來，那個點的標籤/星等就會重置——這是 KML 這個資料來源本身的限制，
+         沒辦法完全避免。 */
+      function mergeSyncedItems(existingItems, freshItems){
+        var existingByKey = {};
+        existingItems.forEach(function(it){ existingByKey[bucketMatchKey(it)] = it; });
+        return freshItems.map(function(it){
+          var prev = existingByKey[bucketMatchKey(it)];
+          it.tags = (prev && prev.tags) ? prev.tags : [];
+          it.stars = (prev && prev.stars) ? prev.stars : 0;
+          return it;
+        });
+      }
       function syncBucketFromMyMaps(){
         fetch(MYMAPS_KML_URL, {cache:'no-store'}).then(function(r){
           if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -3044,8 +3114,9 @@
         }).then(function(text){
           var parsed = parseMyMapsKml(text);
           if(!parsed.length) throw new Error('KML 解析後沒有任何地點');
+          var merged = mergeSyncedItems(bucketItems, parsed);
           return window.fbReady.then(function(){
-            return window.fb.fns.setDoc(bucketKmlCacheRef(), { items: parsed, syncedAt: window.fb.fns.serverTimestamp() });
+            return window.fb.fns.setDoc(bucketKmlCacheRef(), { items: merged, syncedAt: window.fb.fns.serverTimestamp() });
           });
         }).catch(function(err){
           /* 抓不到就維持畫面現狀（上一次同步成功的版本），不動 Firestore、
@@ -3107,6 +3178,8 @@
               (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
             '</div>' +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
+            bucketTagsHtml(it) +
+            bucketStarsEditHtml(it.stars) +
             '<div class="itin-stop-actions">' +
               (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(it.lat, it.lon, null, null) + '" target="_blank" rel="noopener">導航</a>' : '') +
               (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
@@ -3143,6 +3216,8 @@
 
       var bucketTabLayer = null;
       var bucketTabCat = 'all';
+      var bucketTabTag = 'all';
+      var bucketTabStars = 0;
 
       function bucketGroupByLayer(){
         var byLayer = {};
@@ -3174,6 +3249,13 @@
         var presetsPresent = BUCKET_PRESETS.filter(function(p){ return byPreset[p.key] && byPreset[p.key].length; });
         if(bucketTabCat !== 'all' && !byPreset[bucketTabCat]){ bucketTabCat = 'all'; }
 
+        /* 標籤是自訂的，沒有固定清單，這裡列出「這個圖層目前有人用過」的標籤，
+           一個都沒有的話整排標籤篩選就不顯示，不用佔畫面空間。 */
+        var tagCounts = {};
+        layerItems.forEach(function(it){ (it.tags || []).forEach(function(t){ tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+        var tagKeys = Object.keys(tagCounts).sort();
+        if(bucketTabTag !== 'all' && tagCounts[bucketTabTag] == null){ bucketTabTag = 'all'; }
+
         var layerTabsHtml = layers.map(function(layer){
           return '<button type="button" class="' + (layer === bucketTabLayer ? 'active' : '') + '" data-value="' + escapeHtml(layer) + '">' +
             escapeHtml(layer) + ' <span class="bk-tab-count">' + byLayer[layer].length + '</span></button>';
@@ -3183,12 +3265,27 @@
             return '<button type="button" class="' + (p.key === bucketTabCat ? 'active' : '') + '" data-value="' + p.key + '">' +
               p.label + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
           }).join('');
+        var tagTabsHtml = tagKeys.length ? ('<button type="button" class="' + (bucketTabTag === 'all' ? 'active' : '') + '" data-value="all">全部標籤</button>' +
+          tagKeys.map(function(t){
+            return '<button type="button" class="' + (t === bucketTabTag ? 'active' : '') + '" data-value="' + escapeHtml(t) + '">' +
+              escapeHtml(t) + ' <span class="bk-tab-count">' + tagCounts[t] + '</span></button>';
+          }).join('')) : '';
+        var starsTabsHtml = '<button type="button" class="' + (bucketTabStars === 0 ? 'active' : '') + '" data-value="0">全部</button>' +
+          [5, 4, 3, 2, 1].map(function(n){
+            return '<button type="button" class="' + (bucketTabStars === n ? 'active' : '') + '" data-value="' + n + '">' +
+              '★'.repeat(n) + '以上</button>';
+          }).join('');
 
-        /* 選「全部」的時候還是要依分類分組、可收合，不能把全部類別混在一起
-           排序（不然找起來反而更亂）；選了特定分類才顯示那個分類自己的扁平
-           清單（本來就已經篩到只剩一類，不需要再分組）。 */
+        /* 選了任何篩選條件（分類/標籤/星等，只要不是全部）就改成扁平清單，
+           不分組；什麼都沒篩、單純瀏覽整個圖層時才依分類分組、可收合。 */
+        var anyFilterActive = bucketTabCat !== 'all' || bucketTabTag !== 'all' || bucketTabStars > 0;
+        function passesExtraFilters(it){
+          if(bucketTabTag !== 'all' && (it.tags || []).indexOf(bucketTabTag) === -1) return false;
+          if(bucketTabStars > 0 && (it.stars || 0) < bucketTabStars) return false;
+          return true;
+        }
         var listHtml;
-        if(bucketTabCat === 'all'){
+        if(!anyFilterActive){
           listHtml = presetsPresent.map(function(preset){
             var catItems = byPreset[preset.key];
             return '<details class="bucket-cat" open>' +
@@ -3203,14 +3300,19 @@
             '</details>';
           }).join('');
         } else {
+          var baseSet = bucketTabCat === 'all' ? layerItems : byPreset[bucketTabCat];
+          var filtered = baseSet.filter(passesExtraFilters);
           listHtml = '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
-            byPreset[bucketTabCat].map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('') +
+            (filtered.length ? filtered.map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('')
+              : '<p class="wx-empty">符合條件的地點目前是 0 個。</p>') +
           '</div>';
         }
 
         host.innerHTML =
           '<div class="btn-group bk-layer-tabs" id="bkTabLayer">' + layerTabsHtml + '</div>' +
           '<div class="btn-group bk-cat-tabs" id="bkTabCat">' + catTabsHtml + '</div>' +
+          (tagTabsHtml ? '<div class="btn-group bk-tag-tabs" id="bkTabTag">' + tagTabsHtml + '</div>' : '') +
+          '<div class="btn-group bk-stars-tabs" id="bkTabStars">' + starsTabsHtml + '</div>' +
           '<div class="bucket-layer-map" id="bucketMap-tabs"></div>' +
           listHtml;
 
@@ -3220,6 +3322,7 @@
           if(!btn) return;
           bucketTabLayer = btn.dataset.value;
           bucketTabCat = 'all';
+          bucketTabTag = 'all';
           renderBucketList();
         });
         host.querySelector('#bkTabCat').addEventListener('click', function(ev){
@@ -3228,18 +3331,71 @@
           bucketTabCat = btn.dataset.value;
           renderBucketList();
         });
+        var tagTabsEl = host.querySelector('#bkTabTag');
+        if(tagTabsEl){
+          tagTabsEl.addEventListener('click', function(ev){
+            var btn = ev.target.closest('button');
+            if(!btn) return;
+            bucketTabTag = btn.dataset.value;
+            renderBucketList();
+          });
+        }
+        host.querySelector('#bkTabStars').addEventListener('click', function(ev){
+          var btn = ev.target.closest('button');
+          if(!btn) return;
+          bucketTabStars = Number(btn.dataset.value);
+          renderBucketList();
+        });
         wireBucketActions();
       }
 
-      function bucketEditFormHtml(it){
-        var presetOptions = BUCKET_PRESETS.map(function(p){
-          return '<option value="' + p.key + '"' + (p.key === it.preset ? ' selected' : '') + '>' + p.label + '</option>';
+      /* 類型／圖層／星等這幾個共用元件，編輯表單跟「新增口袋地點」彈窗都用得到。 */
+      function bucketPresetButtonsHtml(selected){
+        return BUCKET_PRESETS.map(function(p){
+          return '<button type="button" class="' + (p.key === selected ? 'active' : '') + '" data-value="' + p.key + '">' +
+            '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + p.icon + '"></use></svg>' + p.label.replace(/^\S+\s*/, '') + '</button>';
         }).join('');
+      }
+      function bucketKnownLayers(){
+        var layers = Object.keys(bucketGroupByLayer());
+        return layers.length ? layers : Object.keys(BUCKET_SEED_BY_LAYER);
+      }
+      function bucketLayerButtonsHtml(selected){
+        return bucketKnownLayers().map(function(l){
+          return '<button type="button" class="' + (l === selected ? 'active' : '') + '" data-value="' + escapeHtml(l) + '">' + escapeHtml(l) + '</button>';
+        }).join('');
+      }
+      function bucketStarsEditHtml(n, cls){
+        var out = '<div class="bk-stars' + (cls ? ' ' + cls : '') + '">';
+        for(var i = 1; i <= 5; i++){
+          out += '<button type="button" class="bk-star' + ((n || 0) >= i ? ' lit' : '') + '" data-star="' + i + '" aria-label="' + i + ' 星">★</button>';
+        }
+        out += '</div>';
+        return out;
+      }
+      function wireBucketStars(wrapEl, it, onChange){
+        wrapEl.querySelectorAll('.bk-star').forEach(function(starBtn){
+          starBtn.addEventListener('click', function(){
+            var n = Number(starBtn.dataset.star);
+            it.stars = (it.stars === n) ? n - 1 : n;
+            onChange();
+          });
+        });
+      }
+      function bucketTagsHtml(it){
+        if(!it.tags || !it.tags.length) return '';
+        return '<div class="bk-tag-list">' + it.tags.map(function(t){ return '<span class="bk-tag-chip">' + escapeHtml(t) + '</span>'; }).join('') + '</div>';
+      }
+
+      function bucketEditFormHtml(it){
         return '<div class="itin-edit-form">' +
           '<div><label>名稱</label><input type="text" class="bk-name" value="' + escapeHtml(it.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
           '<div class="geo-suggest-list bk-suggest"></div>' +
+          '<div><label>圖層</label><div class="btn-group bk-layer-group">' + bucketLayerButtonsHtml(it.layer) + '</div></div>' +
+          '<div><label>類型（決定顏色和 icon）</label><div class="btn-group bk-preset-group">' + bucketPresetButtonsHtml(it.preset) + '</div></div>' +
+          '<div><label>標籤（用逗號分隔，選填）</label><input type="text" class="bk-tags-input" value="' + escapeHtml((it.tags || []).join(', ')) + '" placeholder="例如：寶寶友善, 室內, 雨天備案"></div>' +
+          '<div><label>想去的程度</label>' + bucketStarsEditHtml(it.stars) + '</div>' +
           '<div><label>備註</label><textarea class="bk-note" placeholder="說明、提醒…">' + escapeHtml(it.note || '') + '</textarea></div>' +
-          '<div><label>類型（決定顏色和 icon）</label><select class="bk-preset">' + presetOptions + '</select></div>' +
           '<div class="itin-edit-actions">' +
             '<button type="button" class="ie-save">儲存</button>' +
             '<button type="button" class="ie-cancel">取消</button>' +
@@ -3253,10 +3409,24 @@
         var nameInput = body.querySelector('.bk-name');
         setupLocationSearch(nameInput, body.querySelector('.bk-suggest'));
         if(it.lat != null){ nameInput.dataset.lat = it.lat; nameInput.dataset.lon = it.lon; }
+        var layerGroup = body.querySelector('.bk-layer-group');
+        var presetGroup = body.querySelector('.bk-preset-group');
+        wireButtonGroup(layerGroup);
+        wireButtonGroup(presetGroup);
+        function rewireBucketFormStars(){
+          var starsWrap = body.querySelector('.bk-stars');
+          wireBucketStars(starsWrap, it, function(){
+            starsWrap.outerHTML = bucketStarsEditHtml(it.stars);
+            rewireBucketFormStars();
+          });
+        }
+        rewireBucketFormStars();
         body.querySelector('.ie-save').addEventListener('click', function(){
           it.name = nameInput.value.trim();
           it.note = body.querySelector('.bk-note').value.trim();
-          it.preset = body.querySelector('.bk-preset').value;
+          it.preset = groupValue(presetGroup) || it.preset;
+          it.layer = groupValue(layerGroup) || it.layer;
+          it.tags = body.querySelector('.bk-tags-input').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
           if(nameInput.dataset.lat){ it.lat = parseFloat(nameInput.dataset.lat); it.lon = parseFloat(nameInput.dataset.lon); }
           persistBucketItems();
           renderBucketList();
@@ -3290,6 +3460,13 @@
           }
           var addOpenBtn = cardEl.querySelector('.bk-add-open');
           if(addOpenBtn){ addOpenBtn.addEventListener('click', function(){ openBkAddModal(it); }); }
+          var starsWrap = cardEl.querySelector('.itin-stop-view > .bk-stars');
+          if(starsWrap){
+            wireBucketStars(starsWrap, it, function(){
+              persistBucketItems();
+              renderBucketList();
+            });
+          }
         });
       }
 
@@ -3343,22 +3520,66 @@
         }
       });
 
-      document.getElementById('bucketAddOpenBtn').addEventListener('click', function(){
-        var defaultLayer = bucketItems.length ? bucketItems[bucketItems.length - 1].layer : Object.keys(BUCKET_SEED_BY_LAYER)[0];
-        var it = { id:newBucketItemId(), name:'', note:'', preset:'other', layer:defaultLayer, order:Date.now() };
+      /* 「新增口袋地點」改成彈出視窗：填好名稱/圖層/類型/標籤/星等/備註，按
+         「新增」才會真的加進清單，不再是「先加一張空卡片、再進編輯模式」。
+         圖層一定要選，不然新地點的圖層歸屬會很不明確——這就是之前編輯表單
+         沒有圖層欄位時會讓人搞不清楚「這個點算哪個 My Maps 資料夾」的問題。 */
+      var bucketNewModal = document.getElementById('bucketNewModal');
+      var bucketNewNameInput = document.getElementById('bkNewName');
+      var bucketNewStarsState = { stars: 0 };
+      function openBucketNewModal(){
+        bucketNewNameInput.value = '';
+        delete bucketNewNameInput.dataset.lat;
+        delete bucketNewNameInput.dataset.lon;
+        document.getElementById('bkNewTags').value = '';
+        document.getElementById('bkNewNote').value = '';
+        bucketNewStarsState.stars = 0;
+        var starsHost = document.getElementById('bkNewStars');
+        function rewireNewStars(){
+          starsHost.innerHTML = bucketStarsEditHtml(bucketNewStarsState.stars);
+          wireBucketStars(starsHost.querySelector('.bk-stars'), bucketNewStarsState, rewireNewStars);
+        }
+        rewireNewStars();
+        var layerGroup = document.getElementById('bkNewLayer');
+        var defaultLayer = bucketKnownLayers()[0] || '';
+        layerGroup.innerHTML = bucketLayerButtonsHtml(defaultLayer);
+        wireButtonGroup(layerGroup);
+        var presetGroup = document.getElementById('bkNewPreset');
+        presetGroup.innerHTML = bucketPresetButtonsHtml('other');
+        wireButtonGroup(presetGroup);
+        bucketNewModal.hidden = false;
+      }
+      function closeBucketNewModal(){ bucketNewModal.hidden = true; }
+      document.getElementById('bucketAddOpenBtn').addEventListener('click', openBucketNewModal);
+      document.getElementById('bucketNewCloseBtn').addEventListener('click', closeBucketNewModal);
+      bucketNewModal.addEventListener('click', function(ev){ if(ev.target === bucketNewModal){ closeBucketNewModal(); } });
+      setupLocationSearch(bucketNewNameInput, document.getElementById('bkNewSuggest'));
+      document.getElementById('bkNewConfirmBtn').addEventListener('click', function(){
+        var name = bucketNewNameInput.value.trim();
+        if(!name){ alert('請輸入地點名稱。'); return; }
+        var layer = groupValue(document.getElementById('bkNewLayer'));
+        if(!layer){ alert('請選擇圖層。'); return; }
+        var it = {
+          id: newBucketItemId(), name: name,
+          note: document.getElementById('bkNewNote').value.trim(),
+          preset: groupValue(document.getElementById('bkNewPreset')) || 'other',
+          layer: layer, order: Date.now(),
+          tags: document.getElementById('bkNewTags').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+          stars: bucketNewStarsState.stars
+        };
+        if(bucketNewNameInput.dataset.lat){
+          it.lat = parseFloat(bucketNewNameInput.dataset.lat);
+          it.lon = parseFloat(bucketNewNameInput.dataset.lon);
+        }
         bucketItems.push(it);
-        /* 一定要先切到新地點所在的圖層／分類分頁，不然新卡片會加在使用者
-           目前完全沒在看的分頁裡，畫面上什麼都看不到——之前這裡沒切分頁，
-           就是「按了新增沒反應」那個 bug 的真正原因。 */
-        bucketTabLayer = defaultLayer;
-        bucketTabCat = 'other';
+        bucketTabLayer = layer;
+        bucketTabCat = it.preset;
         persistBucketItems();
         renderBucketList();
+        closeBucketNewModal();
         setTimeout(function(){
           var cardEl = document.querySelector('.bucket-item[data-bucket-id="' + it.id + '"]');
           if(cardEl){ cardEl.scrollIntoView({behavior:'smooth', block:'center'}); }
-          var editBtn = cardEl && cardEl.querySelector('.ia-edit');
-          if(editBtn){ editBtn.click(); }
         }, 0);
       });
 
