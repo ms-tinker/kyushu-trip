@@ -295,6 +295,7 @@
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
   .day-detail-head .dh-sub{font-size:0.8rem;color:var(--ink-soft);}
+  .dh-refresh-btn{align-self:flex-start;margin-top:0.5rem;font-size:0.78rem;}
 
   .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
@@ -960,6 +961,7 @@
       <div class="day-detail-head">
         <div class="dh-theme" id="dhTheme"></div>
         <div class="dh-sub tnum" id="dhSub"></div>
+        <button type="button" class="ia-btn dh-refresh-btn" id="dhRefreshBtn">🔄 重新查詢這天所有地點的營業/開車時間</button>
       </div>
 
       <div id="dayNoteHost"></div>
@@ -1901,7 +1903,7 @@
   }
   function computeDriveMinutes(origin, dest, callback){
     window.__gmapsReady.then(function(){
-      if(!window.google || !google.maps || !google.maps.DirectionsService){ callback(null); return; }
+      if(!window.google || !google.maps || !google.maps.DirectionsService){ console.error('computeDriveMinutes: DirectionsService 不存在'); callback(null); return; }
       try{
         var svc = new google.maps.DirectionsService();
         svc.route({
@@ -1909,11 +1911,19 @@
           destination: {lat:dest.lat, lng:dest.lon},
           travelMode: google.maps.TravelMode.DRIVING
         }, function(result, status){
-          if(status !== 'OK' || !result.routes || !result.routes.length){ callback(null); return; }
+          if(status !== 'OK' || !result.routes || !result.routes.length){
+            /* status 常見是 REQUEST_DENIED：通常代表這個 Google Cloud 專案的
+               API 金鑰還沒啟用「Directions API」——跟 Maps JavaScript API／
+               Places API 是各自獨立要開的，不會因為其他兩個能用就自動可用。
+               去 Cloud Console → APIs & Services → Library 搜尋並啟用即可。 */
+            console.error('computeDriveMinutes 失敗，status=' + status, result);
+            callback(null);
+            return;
+          }
           var durS = result.routes[0].legs.reduce(function(sum, leg){ return sum + leg.duration.value; }, 0);
           callback(Math.round(durS / 60));
         });
-      }catch(e){ callback(null); }
+      }catch(e){ console.error('computeDriveMinutes exception', e); callback(null); }
     });
   }
   /* 找地點名字對應的 Google 地點、抓它的營業時間——用在「原本就有座標、但
@@ -1930,11 +1940,12 @@
           locationBias: new google.maps.Circle({center:{lat:lat, lng:lon}, radius:300})
         }, function(results, status){
           if(status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length || !results[0].opening_hours){
+            if(status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS){ console.error('lookupPlaceHours 失敗，status=' + status, name); }
             callback(null); return;
           }
           callback(simplifyOpeningPeriods(results[0].opening_hours.periods || []));
         });
-      }catch(e){ callback(null); }
+      }catch(e){ console.error('lookupPlaceHours exception', e); callback(null); }
     });
   }
 
@@ -2084,9 +2095,6 @@
       var photoHtml = userPhoto
         ? '<div class="itin-stop-photo"><img src="' + escapeHtml(userPhoto) + '" alt=""></div>'
         : '<div class="itin-stop-photo" data-wikiname="' + escapeHtml(stop.wikiTitle || stop.name || '') + '" style="display:none;"><img alt=""></div>';
-      /* 沒有營業時間、或有上一站但還沒算過開車時間，給一個手動補齊的按鈕——
-         不用自動一直背景打 API，讓使用者自己決定要不要補這筆。 */
-      var needsBackfill = hasGeo && (!stop.hours || (stop.driveMin == null && hasPrevGeo));
       return '<div class="itin-stop border-' + color + '" data-day="' + dayId + '" data-slot="' + slotKey + '" data-idx="' + idx + '">' +
         '<button type="button" class="ia-drag" aria-label="拖曳排序" title="按住拖曳，可以搬到其他時段">' +
           '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
@@ -2106,7 +2114,6 @@
           '<div class="itin-stop-actions">' +
             (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(stop.lat, stop.lon, hasPrevGeo ? prevStop.lat : null, hasPrevGeo ? prevStop.lon : null) + '" target="_blank" rel="noopener">' + navLabel + '</a>' : '') +
             (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
-            (needsBackfill ? '<button class="ia-btn ia-backfill" type="button">🔄 補齊營業/開車時間</button>' : '') +
             '<button class="ia-btn ia-edit" type="button">編輯</button>' +
             '<button class="ia-btn ia-del" type="button">刪除</button>' +
           '</div>' +
@@ -2276,46 +2283,54 @@
         var slotKey = cardEl.dataset.slot, idx = Number(cardEl.dataset.idx);
         cardEl.querySelector('.ia-edit').addEventListener('click', function(){ enterEdit(cardEl, dayId, slotKey, idx); });
         cardEl.querySelector('.ia-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
-        var backfillBtn = cardEl.querySelector('.ia-backfill');
-        if(backfillBtn){
-          backfillBtn.addEventListener('click', function(){
-            backfillBtn.disabled = true;
-            backfillBtn.textContent = '補齊中…';
-            backfillStopInfo(dayId, slotKey, idx);
-          });
-        }
       });
       host.querySelectorAll('.slot-add').forEach(function(btn){
         btn.addEventListener('click', function(){ addStop(dayId, btn.dataset.slot); });
       });
     }
-    /* 「補齊營業/開車時間」按鈕：舊地點、或從口袋清單搬過去的地點，原本就有
-       座標但沒有透過搜尋選過，所以沒有營業時間；上一站存在但還沒算過開車
-       時間的話也一併補。兩個都補完才存檔+重畫一次，不會各自觸發一次存檔。 */
-    function backfillStopInfo(dayId, slotKey, idx){
-      var stop = DAYS[dayId] && DAYS[dayId].slots[slotKey] && DAYS[dayId].slots[slotKey][idx];
-      if(!stop || stop.lat == null) return;
+    /* 補齊「營業時間／開車時間」，一次處理這一天所有有座標的地點，不用每張
+       卡片自己按。forceAll=false（每次 renderDay 都會自動跑一次）只補「從
+       沒查過」的地點，查過一次（不管有沒有查到）就會記在 hoursChecked／
+       driveMinChecked，不會每次打開頁面都重查一次；forceAll=true（按「重新
+       查詢」按鈕）才會連上次查失敗的也重試——例如剛把 Google Cloud 專案的
+       Directions API 打開，之前失敗的這裡才有機會補上。 */
+    function refreshDayInfo(dayId, forceAll){
+      var d = DAYS[dayId];
+      if(!d) return;
+      var prev = null;
       var tasks = [];
-      if(!stop.hours){
-        tasks.push(new Promise(function(resolve){
-          lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours){
-            if(hours){ stop.hours = hours; }
-            resolve();
-          });
-        }));
-      }
-      var prevStop = findPrevGeoStop(dayId, slotKey, idx);
-      if(stop.driveMin == null && prevStop){
-        tasks.push(new Promise(function(resolve){
-          computeDriveMinutes({lat:prevStop.lat, lon:prevStop.lon}, {lat:stop.lat, lon:stop.lon}, function(min){
-            if(min != null){ stop.driveMin = min; }
-            resolve();
-          });
-        }));
-      }
-      Promise.all(tasks).then(function(){
-        persistDay(dayId);
-        if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+      var changed = false;
+      SLOT_ORDER.forEach(function(slotKey){
+        var stops = d.slots[slotKey] || [];
+        stops.forEach(function(stop){
+          if(stop.lat == null || stop.lon == null) return;
+          if(!stop.hours && (forceAll || !stop.hoursChecked)){
+            tasks.push(new Promise(function(resolve){
+              lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours){
+                stop.hoursChecked = true;
+                if(hours){ stop.hours = hours; changed = true; }
+                resolve();
+              });
+            }));
+          }
+          if(stop.driveMin == null && prev && (forceAll || !stop.driveMinChecked)){
+            var prevRef = prev;
+            tasks.push(new Promise(function(resolve){
+              computeDriveMinutes({lat:prevRef.lat, lon:prevRef.lon}, {lat:stop.lat, lon:stop.lon}, function(min){
+                stop.driveMinChecked = true;
+                if(min != null){ stop.driveMin = min; changed = true; }
+                resolve();
+              });
+            }));
+          }
+          prev = stop;
+        });
+      });
+      if(!tasks.length) return Promise.resolve(false);
+      return Promise.all(tasks).then(function(){
+        persistDay(dayId); /* 就算全部查不到，也要把 checked 記下來，不然每次開頁面都會重查一次 */
+        if(changed && String(window.__currentDay) === dayId){ renderDay(dayId); }
+        return changed;
       });
     }
     function loadStopPhotos(host){
@@ -2413,6 +2428,7 @@
       loadStopPhotos(host);
       renderDayMiniMap(d);
       renderDayWeatherStrip(d, dayId);
+      refreshDayInfo(dayId, false);
     }
 
     var WX_LOC_LABEL = {fukuoka:'福岡', yufuin:'由布院', aso:'阿蘇'};
@@ -2504,6 +2520,17 @@
     });
     document.getElementById('dsPrev').addEventListener('click', function(){ selectDay((window.__currentDay || 1) - 1); });
     document.getElementById('dsNext').addEventListener('click', function(){ selectDay((window.__currentDay || 1) + 1); });
+    document.getElementById('dhRefreshBtn').addEventListener('click', function(){
+      var dayId = window.__currentDay && window.__currentDay !== 'bucket' ? String(window.__currentDay) : null;
+      if(!dayId) return;
+      var btn = document.getElementById('dhRefreshBtn');
+      btn.disabled = true;
+      btn.textContent = '查詢中…';
+      refreshDayInfo(dayId, true).then(function(){
+        btn.disabled = false;
+        btn.textContent = '🔄 重新查詢這天所有地點的營業/開車時間';
+      });
+    });
     document.querySelectorAll('#ovList [data-goday]').forEach(function(b){
       b.addEventListener('click', function(){
         var n = Number(b.dataset.goday);
