@@ -300,6 +300,13 @@
   /* 標籤（自訂文字）跟星等（想去的程度），卡片顯示跟編輯表單/篩選列共用同一套樣式 */
   .bk-tag-list{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;}
   .bk-tag-chip{font-size:0.72rem;font-weight:600;color:var(--plum);background:var(--plum-soft);border:1px solid var(--plum);border-radius:999px;padding:0.1rem 0.55rem;white-space:nowrap;}
+  .bk-tag-picker{display:flex;flex-wrap:wrap;gap:0.4rem;}
+  .bk-tag-chip-btn{font-size:0.78rem;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0.3rem 0.7rem;cursor:pointer;}
+  .bk-tag-chip-btn.active{color:var(--plum);background:var(--plum-soft);border-color:var(--plum);}
+  .bk-tag-empty-hint{font-size:0.78rem;color:var(--ink-faint);}
+  .bk-tag-add-row{display:flex;gap:0.5rem;margin-top:0.5rem;}
+  .bk-tag-add-row .bk-tag-add-input{flex:1;font:inherit;font-size:0.84rem;padding:0.45rem 0.6rem;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);}
+  .bk-tag-add-row .bk-tag-add-btn{flex:none;}
   .bk-stars{display:flex;gap:0.25rem;margin-top:0.5rem;}
   .bk-star{font-size:1.05rem;line-height:1;background:none;border:none;padding:0;cursor:pointer;color:var(--line-strong);}
   .bk-star.lit{color:var(--sand);}
@@ -1059,8 +1066,8 @@
               <div class="btn-group" id="bkNewPreset"></div>
             </div>
             <div class="field">
-              <label>標籤（用逗號分隔，選填）</label>
-              <input type="text" id="bkNewTags" placeholder="例如：寶寶友善, 室內, 雨天備案">
+              <label>標籤（點選已有的，或新增一個）</label>
+              <div id="bkNewTags"></div>
             </div>
             <div class="field">
               <label>想去的程度</label>
@@ -3126,6 +3133,7 @@
       }
       window.fbReady.then(function(){
         var fns = window.fb.fns;
+        var startedSync = false;
         fns.onSnapshot(bucketKmlCacheRef(), function(snap){
           var data = snap.exists() ? snap.data() : null;
           if(data && data.items && data.items.length){
@@ -3134,8 +3142,16 @@
             bucketItems = seedBucketItemsFromDefault();
           }
           renderBucketList();
+          /* 一定要等第一次 onSnapshot 真的把雲端現有資料（含標籤/星等）填進
+             bucketItems 之後，才能開始跟 My Maps 同步——之前這裡是「訂閱」跟
+             「開始同步」同時觸發，KML 抓取＋解析常常比 Firestore 第一次回應
+             還快，變成拿一個空陣列去跟新資料「合併」，標籤/星等當然全部消失。
+             這個旗標確保同步永遠是在合併對的資料。 */
+          if(!startedSync){
+            startedSync = true;
+            syncBucketFromMyMaps();
+          }
         }, function(err){ console.error('bucket KML cache sync error', err); });
-        syncBucketFromMyMaps();
       });
 
       /* 判斷這個口袋地點是不是已經被「加入行程」過——「加入行程」寫進行程時
@@ -3386,6 +3402,59 @@
         if(!it.tags || !it.tags.length) return '';
         return '<div class="bk-tag-list">' + it.tags.map(function(t){ return '<span class="bk-tag-chip">' + escapeHtml(t) + '</span>'; }).join('') + '</div>';
       }
+      /* 標籤挑選器：不是打字輸入，是把「目前所有卡片用過的標籤」都列成可以
+         點選的按鈕（多選，跟星等/類型那種單選的 btn-group 不一樣），另外留一個
+         輸入框可以新增這裡還沒有的標籤。這樣同一個標籤字（例如「寶寶友善」）
+         之後在別的卡片編輯時可以直接點，不用每次重打、也不會打錯字變成兩個
+         看起來很像但其實不同的標籤。 */
+      function bucketAllKnownTags(){
+        var set = {};
+        bucketItems.forEach(function(it){ (it.tags || []).forEach(function(t){ set[t] = true; }); });
+        return Object.keys(set).sort();
+      }
+      function bucketTagPickerHtml(selectedTags){
+        var known = bucketAllKnownTags();
+        (selectedTags || []).forEach(function(t){ if(known.indexOf(t) === -1){ known.push(t); } });
+        known.sort();
+        var chips = known.map(function(t){
+          return '<button type="button" class="bk-tag-chip-btn' + ((selectedTags || []).indexOf(t) !== -1 ? ' active' : '') + '" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</button>';
+        }).join('');
+        return '<div class="bk-tag-picker">' + (chips || '<span class="bk-tag-empty-hint">還沒有任何標籤，用下面新增第一個</span>') + '</div>' +
+          '<div class="bk-tag-add-row"><input type="text" class="bk-tag-add-input" placeholder="輸入新標籤"><button type="button" class="ia-btn bk-tag-add-btn">＋新增標籤</button></div>';
+      }
+      /* tagsHolder 是任何有 .tags 陣列欄位的物件（真正的口袋地點，或新增彈窗
+         用的暫存物件都可以），pickerWrapEl 是外層容器（裡面要同時有
+         .bk-tag-picker 跟 .bk-tag-add-row），點了標籤/新增之後會重畫整個
+         picker、重新綁定，維持跟星等挑選器一樣的「即時更新、按儲存才真的
+         持久化」模式。 */
+      function wireBucketTagPicker(pickerWrapEl, tagsHolder){
+        function rerender(){
+          pickerWrapEl.innerHTML = bucketTagPickerHtml(tagsHolder.tags);
+          wire();
+        }
+        function wire(){
+          pickerWrapEl.querySelectorAll('.bk-tag-chip-btn').forEach(function(btn){
+            btn.addEventListener('click', function(){
+              var tag = btn.dataset.tag;
+              var idx = tagsHolder.tags.indexOf(tag);
+              if(idx === -1){ tagsHolder.tags.push(tag); } else { tagsHolder.tags.splice(idx, 1); }
+              rerender();
+            });
+          });
+          var addInput = pickerWrapEl.querySelector('.bk-tag-add-input');
+          var addBtn = pickerWrapEl.querySelector('.bk-tag-add-btn');
+          addBtn.addEventListener('click', function(){
+            var val = addInput.value.trim();
+            if(!val) return;
+            if(tagsHolder.tags.indexOf(val) === -1){ tagsHolder.tags.push(val); }
+            rerender();
+          });
+          addInput.addEventListener('keydown', function(ev){
+            if(ev.key === 'Enter'){ ev.preventDefault(); addBtn.click(); }
+          });
+        }
+        wire();
+      }
 
       function bucketEditFormHtml(it){
         return '<div class="itin-edit-form">' +
@@ -3393,7 +3462,7 @@
           '<div class="geo-suggest-list bk-suggest"></div>' +
           '<div><label>圖層</label><div class="btn-group bk-layer-group">' + bucketLayerButtonsHtml(it.layer) + '</div></div>' +
           '<div><label>類型（決定顏色和 icon）</label><div class="btn-group bk-preset-group">' + bucketPresetButtonsHtml(it.preset) + '</div></div>' +
-          '<div><label>標籤（用逗號分隔，選填）</label><input type="text" class="bk-tags-input" value="' + escapeHtml((it.tags || []).join(', ')) + '" placeholder="例如：寶寶友善, 室內, 雨天備案"></div>' +
+          '<div><label>標籤（點選已有的，或新增一個）</label><div class="bk-tag-picker-wrap"></div></div>' +
           '<div><label>想去的程度</label>' + bucketStarsEditHtml(it.stars) + '</div>' +
           '<div><label>備註</label><textarea class="bk-note" placeholder="說明、提醒…">' + escapeHtml(it.note || '') + '</textarea></div>' +
           '<div class="itin-edit-actions">' +
@@ -3404,6 +3473,7 @@
         '</div>';
       }
       function enterBucketEdit(cardEl, it){
+        it.tags = it.tags || [];
         var body = cardEl.querySelector('.itin-stop-body');
         body.innerHTML = bucketEditFormHtml(it);
         var nameInput = body.querySelector('.bk-name');
@@ -3413,6 +3483,9 @@
         var presetGroup = body.querySelector('.bk-preset-group');
         wireButtonGroup(layerGroup);
         wireButtonGroup(presetGroup);
+        var tagPickerWrap = body.querySelector('.bk-tag-picker-wrap');
+        tagPickerWrap.innerHTML = bucketTagPickerHtml(it.tags);
+        wireBucketTagPicker(tagPickerWrap, it);
         function rewireBucketFormStars(){
           var starsWrap = body.querySelector('.bk-stars');
           wireBucketStars(starsWrap, it, function(){
@@ -3426,7 +3499,6 @@
           it.note = body.querySelector('.bk-note').value.trim();
           it.preset = groupValue(presetGroup) || it.preset;
           it.layer = groupValue(layerGroup) || it.layer;
-          it.tags = body.querySelector('.bk-tags-input').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
           if(nameInput.dataset.lat){ it.lat = parseFloat(nameInput.dataset.lat); it.lon = parseFloat(nameInput.dataset.lon); }
           persistBucketItems();
           renderBucketList();
@@ -3526,20 +3598,23 @@
          沒有圖層欄位時會讓人搞不清楚「這個點算哪個 My Maps 資料夾」的問題。 */
       var bucketNewModal = document.getElementById('bucketNewModal');
       var bucketNewNameInput = document.getElementById('bkNewName');
-      var bucketNewStarsState = { stars: 0 };
+      var bucketNewMeta = { stars: 0, tags: [] };
       function openBucketNewModal(){
         bucketNewNameInput.value = '';
         delete bucketNewNameInput.dataset.lat;
         delete bucketNewNameInput.dataset.lon;
-        document.getElementById('bkNewTags').value = '';
         document.getElementById('bkNewNote').value = '';
-        bucketNewStarsState.stars = 0;
+        bucketNewMeta.stars = 0;
+        bucketNewMeta.tags = [];
         var starsHost = document.getElementById('bkNewStars');
         function rewireNewStars(){
-          starsHost.innerHTML = bucketStarsEditHtml(bucketNewStarsState.stars);
-          wireBucketStars(starsHost.querySelector('.bk-stars'), bucketNewStarsState, rewireNewStars);
+          starsHost.innerHTML = bucketStarsEditHtml(bucketNewMeta.stars);
+          wireBucketStars(starsHost.querySelector('.bk-stars'), bucketNewMeta, rewireNewStars);
         }
         rewireNewStars();
+        var tagsHost = document.getElementById('bkNewTags');
+        tagsHost.innerHTML = bucketTagPickerHtml(bucketNewMeta.tags);
+        wireBucketTagPicker(tagsHost, bucketNewMeta);
         var layerGroup = document.getElementById('bkNewLayer');
         var defaultLayer = bucketKnownLayers()[0] || '';
         layerGroup.innerHTML = bucketLayerButtonsHtml(defaultLayer);
@@ -3564,8 +3639,8 @@
           note: document.getElementById('bkNewNote').value.trim(),
           preset: groupValue(document.getElementById('bkNewPreset')) || 'other',
           layer: layer, order: Date.now(),
-          tags: document.getElementById('bkNewTags').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
-          stars: bucketNewStarsState.stars
+          tags: bucketNewMeta.tags.slice(),
+          stars: bucketNewMeta.stars
         };
         if(bucketNewNameInput.dataset.lat){
           it.lat = parseFloat(bucketNewNameInput.dataset.lat);
