@@ -3279,7 +3279,7 @@
         var catTabsHtml = '<button type="button" class="' + (bucketTabCat === 'all' ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + layerItems.length + '</span></button>' +
           presetsPresent.map(function(p){
             return '<button type="button" class="' + (p.key === bucketTabCat ? 'active' : '') + '" data-value="' + p.key + '">' +
-              p.label + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
+              '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + p.icon + '"></use></svg>' + p.label.replace(/^\S+\s*/, '') + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
           }).join('');
         var tagTabsHtml = tagKeys.length ? ('<button type="button" class="' + (bucketTabTag === 'all' ? 'active' : '') + '" data-value="all">全部標籤</button>' +
           tagKeys.map(function(t){
