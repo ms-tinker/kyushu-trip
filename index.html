@@ -211,6 +211,8 @@
   .stay-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
   .stay-badge{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;margin-bottom:0.5rem;}
   .stay-name{font-weight:700;font-size:1rem;}
+  a.stay-name.link-name{color:inherit;text-decoration:none;display:inline-block;}
+  a.stay-name.link-name:hover{text-decoration:underline;}
   .stay-link{font-size:0.76rem;color:var(--indigo);text-decoration:none;font-weight:600;white-space:nowrap;}
   .stay-link:hover{text-decoration:underline;}
   .stay-info{font-size:0.83rem;color:var(--ink-soft);display:flex;flex-direction:column;gap:0.2rem;margin-top:0.6rem;}
@@ -995,7 +997,7 @@
         <button class="ds-arrow" id="dsNext" aria-label="後一天"><svg viewBox="0 0 20 20"><path d="M8 4l6 6-6 6"/></svg></button>
       </div>
 
-      <div class="day-detail-head">
+      <div class="day-detail-head" id="dayDetailHead">
         <div class="dh-theme" id="dhTheme"></div>
         <div class="dh-sub-row">
           <div class="dh-sub tnum" id="dhSub"></div>
@@ -2004,7 +2006,14 @@
      console.error（手機上要看主控台太麻煩了）。status 常見的 REQUEST_DENIED
      通常代表這個 Google Cloud 專案的金鑰還沒啟用「Directions API」——跟 Maps
      JavaScript API／Places API 是各自獨立要開的，不會因為其他兩個能用就自動
-     可用，要去 Cloud Console → APIs & Services → Library 搜尋並啟用。 */
+     可用，要去 Cloud Console → APIs & Services → Library 搜尋並啟用。
+     ⚠️ 有帶 drivingOptions（departureTime=現在）才會回傳考慮「現在」路況的
+     duration_in_traffic，不然預設回傳的是沒有路況、理論上最快的時間——之前
+     沒帶這個，導致算出來的開車時間常常比按「導航」看到的（Google App 預設
+     用「立即出發」、會考慮當下路況、甚至因為路況改走不同的路線）快很多，
+     兩邊看起來對不上。這裡改成一律帶路況，儘量貼近你按導航會看到的數字；
+     不影響 Directions API 的計費等級（這是 Directions 一直都有的標準參數，
+     不是要另外開通、另外收費的功能）。 */
   function computeDriveMinutes(origin, dest, callback){
     window.__gmapsReady.then(function(){
       if(!window.google || !google.maps || !google.maps.DirectionsService){ callback(null, 'NO_DIRECTIONS_SERVICE'); return; }
@@ -2013,10 +2022,13 @@
         svc.route({
           origin: {lat:origin.lat, lng:origin.lon},
           destination: {lat:dest.lat, lng:dest.lon},
-          travelMode: google.maps.TravelMode.DRIVING
+          travelMode: google.maps.TravelMode.DRIVING,
+          drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS }
         }, function(result, status){
           if(status !== 'OK' || !result.routes || !result.routes.length){ callback(null, status); return; }
-          var durS = result.routes[0].legs.reduce(function(sum, leg){ return sum + leg.duration.value; }, 0);
+          var durS = result.routes[0].legs.reduce(function(sum, leg){
+            return sum + (leg.duration_in_traffic ? leg.duration_in_traffic.value : leg.duration.value);
+          }, 0);
           callback(Math.round(durS / 60), status);
         });
       }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
@@ -2190,12 +2202,23 @@
       return url;
     }
     /* 點名稱直接跳去 Google Map 看這個地點（不是導航），用的是「通用網址」
-       搜尋格式：把名字＋座標一起當查詢字串，Google 通常能準確解析回同一個
-       地點的完整資訊頁（照片/評論）。沒有存 place_id（KML 匯入、口袋清單
-       手動加的地點都沒有），沒辦法用更精確的 query_place_id 參數，這是
-       目前不用另外存 place_id 也能做到的最佳做法。 */
+       搜尋格式。沒有存 place_id（KML 匯入、口袋清單手動加的地點都沒有），
+       沒辦法用最精確的 query_place_id 參數鎖定同一個地點，這是目前不用
+       另外存 place_id 也能做到的最佳做法，但沒辦法保證每個地點都 100%
+       準確跳轉。
+       ⚠️ 試過把座標一起塞進查詢字串（例如「地點名 33.96,130.96」）想幫
+       Google 定位到正確分店，實測反而不穩定：有些地點會因此從「直接跳到
+       正確頁面」變成「列出好幾個部分相符的結果」要你自己再點一次——這個
+       網址格式的 query 參數本來就只支援單純文字，沒有正式支援「文字＋座標
+       定位偏好」這種混合寫法，會不會準是看 Google 自己怎麼解析這串文字，
+       猜錯的時候反而更糟。改成只用名稱查，行為比較一致。
+       ⚠️ 純文字的地點名稱（例如口袋清單裡的暱稱「香蕉人」，不是 Google
+       地圖上真的登記的店名）本來就查不到，不管有沒有加座標都一樣，這是
+       沒有 place_id 時無法避免的限制——想解決的話，只能靠使用者自己重新
+       搜尋一次地點、選到正確結果，把真正的 place_id 存下來，但這需要
+       額外開發，目前還沒做。 */
     function buildPlaceUrl(name, lat, lon){
-      var q = name ? (name + (lat != null ? (' ' + lat + ',' + lon) : '')) : (lat + ',' + lon);
+      var q = name || (lat + ',' + lon);
       return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
     }
 
@@ -2699,12 +2722,18 @@
       var activeCard = document.querySelector('.ds-card[data-day="' + n + '"]');
       if(activeCard && activeCard.scrollIntoView){ activeCard.scrollIntoView({inline:'center', block:'nearest'}); }
       document.getElementById('bucketView').style.display = 'none';
+      document.getElementById('dayDetailHead').style.display = '';
       document.getElementById('dayMap').style.display = '';
       document.getElementById('dayRender').style.display = '';
       renderDay(String(n));
     }
     window.__selectDay = selectDay;
 
+    /* 切到口袋清單分頁時，「這天」專屬的東西（日期標題、重新查詢按鈕、逐時
+       天氣）都要整個藏起來，不能只清空文字——之前只清了 dhTheme/dhSub 的
+       文字，但天氣卡片、重新查詢按鈕所在的整個 .day-detail-head 沒有跟著
+       隱藏，變成切到口袋清單還留著上一次看的那天的天氣/按鈕殘影，容易讓人
+       誤會口袋清單也有天氣、也有「刷新這天」這個功能。 */
     function selectBucket(){
       window.__currentDay = 'bucket';
       document.querySelectorAll('.ds-card').forEach(function(c){ c.classList.toggle('active', c.dataset.bucket === '1'); });
@@ -2714,6 +2743,8 @@
       if(activeCard && activeCard.scrollIntoView){ activeCard.scrollIntoView({inline:'center', block:'nearest'}); }
       document.getElementById('dhTheme').textContent = '';
       document.getElementById('dhSub').textContent = '';
+      document.getElementById('dayDetailHead').style.display = 'none';
+      document.getElementById('dayWxStrip').style.display = 'none';
       document.getElementById('dayNoteHost').innerHTML = '';
       document.getElementById('dayMap').style.display = 'none';
       document.getElementById('dayRender').style.display = 'none';
@@ -4725,9 +4756,7 @@
         row.setAttribute('data-row-id', it.id);
         row.innerHTML =
           '<div class="stay-top">' +
-            '<div><div class="stay-name">' + escapeHtml(it.name || '（未命名）') + '</div>' +
-              '<div class="stay-info"><span>' + escapeHtml(it.url || '') + '</span></div></div>' +
-            '<a class="stay-link" href="' + escapeHtml(it.url || '#') + '" target="_blank" rel="noopener">開啟 →</a>' +
+            '<a class="stay-name link-name" href="' + escapeHtml(it.url || '#') + '" target="_blank" rel="noopener">' + escapeHtml(it.name || '（未命名）') + '</a>' +
           '</div>' +
           '<div class="itin-stop-actions" style="margin-top:0.6rem;">' +
             '<button class="ia-btn" data-edit="' + it.id + '" type="button">編輯</button>' +
