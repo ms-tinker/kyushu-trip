@@ -1659,6 +1659,37 @@
     }
     return null;
   }
+  /* 拖曳排序共用：決定 placeholder 該插在容器裡的哪個位置。
+     ⚠️ 這裡故意不看「滑鼠現在正上方那個元素的框」（之前所有拖曳排序都是
+     這樣寫的）——那個框可能已經被上一次 pointermove 插入 placeholder
+     擠動過了（尤其是要把某張卡片拖成「第一個」的時候：placeholder 一
+     插到最上面那張卡片前面，那張卡片會整個往下移，滑鼠還沒動、可是
+     「正上方元素」瞬間換了，換算出來的「插前面／插後面」就跟著跳來
+     跳去，卡片就會在原地不停抖動、放開也套用不到第一個位置）。
+     改成：每次都重新量一遍容器裡「所有候選項目」（排除正在拖曳的卡片
+     跟 placeholder 本身）目前的中點 Y 座標，找第一個中點在滑鼠下方的，
+     插在它前面；全部都在滑鼠上方就插到最後。而且只有「算出來的位置」
+     真的跟 placeholder 現在的位置不一樣時才動 DOM，位置沒變就不重插，
+     這樣 placeholder 穩定之後就不會再被自己的插入動作影響、觸發下一輪
+     跳動。 */
+  function placeDragPlaceholder(container, placeholder, pointerY, itemSelector){
+    if(!container) return;
+    var items = Array.prototype.filter.call(container.children, function(c){
+      return c !== placeholder && c.matches && c.matches(itemSelector);
+    });
+    var insertBeforeEl = null;
+    for(var i = 0; i < items.length; i++){
+      var r = items[i].getBoundingClientRect();
+      if(pointerY < r.top + r.height / 2){ insertBeforeEl = items[i]; break; }
+    }
+    if(insertBeforeEl){
+      if(placeholder.parentNode !== container || placeholder.nextSibling !== insertBeforeEl){
+        container.insertBefore(placeholder, insertBeforeEl);
+      }
+    } else if(placeholder.parentNode !== container || placeholder.nextSibling !== null){
+      container.appendChild(placeholder);
+    }
+  }
   var delIcon = '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5l-10 10"/></svg>';
   var editIcon = '<svg viewBox="0 0 20 20"><path d="M4 16l1-4 9-9 3 3-9 9-4 1z"/><path d="M12 5l3 3"/></svg>';
   /* edit 表單裡改用跟新增表單一樣的 button-group，取代下拉選單（手機比較好選） */
@@ -3002,14 +3033,7 @@
         var block = el.closest('.slot-block');
         if(!block || !host.contains(block)) return;
         var container = block.querySelector('.slot-stops');
-        var overStop = el.closest('.itin-stop');
-        if(overStop && container.contains(overStop) && overStop !== cardEl){
-          var r = overStop.getBoundingClientRect();
-          var before = (ev.clientY - r.top) < r.height / 2;
-          container.insertBefore(dragState.placeholder, before ? overStop : overStop.nextSibling);
-        } else if(!overStop){
-          container.appendChild(dragState.placeholder);
-        }
+        placeDragPlaceholder(container, dragState.placeholder, ev.clientY, '.itin-stop');
       });
 
       document.addEventListener('pointerup', function(ev){
@@ -4202,14 +4226,7 @@
         var cardEl = bucketDragState.cardEl;
         cardEl.style.left = (ev.clientX - bucketDragState.offsetX) + 'px';
         cardEl.style.top = (ev.clientY - bucketDragState.offsetY) + 'px';
-        var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
-        if(!el) return;
-        var overCard = el.closest('.bucket-item');
-        if(overCard && overCard !== cardEl && overCard.parentElement === bucketDragState.container){
-          var r = overCard.getBoundingClientRect();
-          var before = (ev.clientY - r.top) < r.height / 2;
-          bucketDragState.container.insertBefore(bucketDragState.placeholder, before ? overCard : overCard.nextSibling);
-        }
+        placeDragPlaceholder(bucketDragState.container, bucketDragState.placeholder, ev.clientY, '.bucket-item');
       });
       function endBucketDrag(commit){
         if(!bucketDragState) return;
@@ -4793,14 +4810,7 @@
             var cardEl = dragState.cardEl;
             cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
             cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
-            var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
-            if(!el) return;
-            var overRow = el.closest('.chk-row');
-            if(overRow && overRow !== cardEl && overRow.parentElement === dragState.container){
-              var r = overRow.getBoundingClientRect();
-              var before = (ev.clientY - r.top) < r.height / 2;
-              dragState.container.insertBefore(dragState.placeholder, before ? overRow : overRow.nextSibling);
-            }
+            placeDragPlaceholder(dragState.container, dragState.placeholder, ev.clientY, '.chk-row');
           });
           function resetCardStyle(cardEl){
             cardEl.classList.remove('itin-dragging');
@@ -5118,14 +5128,7 @@
           var cardEl = dragState.cardEl;
           cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
           cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
-          var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
-          if(!el) return;
-          var overRow = el.closest('.link-row');
-          if(overRow && overRow !== cardEl && overRow.parentElement === dragState.container){
-            var r = overRow.getBoundingClientRect();
-            var before = (ev.clientY - r.top) < r.height / 2;
-            dragState.container.insertBefore(dragState.placeholder, before ? overRow : overRow.nextSibling);
-          }
+          placeDragPlaceholder(dragState.container, dragState.placeholder, ev.clientY, '.link-row');
         });
         function resetCardStyle(cardEl){
           cardEl.classList.remove('itin-dragging');
