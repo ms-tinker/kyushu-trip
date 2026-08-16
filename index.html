@@ -2418,7 +2418,14 @@
           updated.driveFromLon = stop.driveFromLon;
         }
         if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
+        /* bucketSourceId 標記這個地點是不是從口袋清單「加入行程」來的、目前
+           還連結著哪一筆——saveStop 是整個物件覆蓋，這個欄位不會自動帶過去，
+           要自己接著複製一次，不然存一次編輯連結就斷了。 */
+        if(stop.bucketSourceId){ updated.bucketSourceId = stop.bucketSourceId; }
         saveStop(dayId, slotKey, idx, updated);
+        if(stop.bucketSourceId && window.__syncStopEditToBucket){
+          window.__syncStopEditToBucket(stop.bucketSourceId, updated.name, updated.note);
+        }
         if(updated.lat != null && (locationChanged || stop.driveMin == null)){
           var prevGeoStop = findPrevGeoStop(dayId, slotKey, idx);
           if(prevGeoStop){
@@ -3160,7 +3167,7 @@
           BUCKET_SEED_BY_LAYER[layer].forEach(function(seed, i){
             var it = {};
             for(var k in seed){ it[k] = seed[k]; }
-            it.id = 'kml-' + layer + '-' + i;
+            it.id = 'kml-' + layer + '-' + seed.lat.toFixed(6) + '-' + seed.lon.toFixed(6);
             it.layer = layer;
             it.order = i * 1000;
             it.tags = [];
@@ -3271,7 +3278,13 @@
         Object.keys(byLayer).forEach(function(layer){
           byLayer[layer].forEach(function(seed, i){
             items.push({
-              id: 'kml-' + layer + '-' + i, name: seed.name, note: seed.note,
+              /* id 改成用「圖層+經緯度」組出來，不要用陣列位置 i——位置在
+                 My Maps 上加/刪/拖動別的點就可能整層跟著位移，導致同一個
+                 實際地點每次同步 id 都不一樣，任何存了這個 id 的東西（例如
+                 行程卡片的 bucketSourceId 連結、或使用者不小心存下來的
+                 網址）都會跟著失效。座標不變，id 就穩定。 */
+              id: 'kml-' + layer + '-' + seed.lat.toFixed(6) + '-' + seed.lon.toFixed(6),
+              name: seed.name, note: seed.note,
               lat: seed.lat, lon: seed.lon, preset: seed.preset, layer: layer, order: i * 1000
             });
           });
@@ -3438,10 +3451,30 @@
         }
         return false;
       }
+      /* 找這個口袋地點目前連結著的那張行程卡片（如果有的話）——見
+         bkAddConfirmBtn 旁邊 unlinkBucketSourceStops 的說明，只有「最新一次」
+         加入的那張卡片會保持連結，同一個地點加過好幾次的話，比較舊的那幾次
+         不會出現在這裡。 */
+      function findBucketLinkedStop(bucketId){
+        for(var dayId in DAYS){
+          var slots = DAYS[dayId].slots || {};
+          for(var slotKey in slots){
+            var arr = slots[slotKey] || [];
+            for(var i = 0; i < arr.length; i++){
+              if(arr[i].bucketSourceId === bucketId){
+                var seedMeta = DAYS_SEED.filter(function(s){ return s.id === dayId; })[0];
+                return { dayId: dayId, dateLabel: seedMeta ? seedMeta.date : dayId };
+              }
+            }
+          }
+        }
+        return null;
+      }
       function bucketItemHtml(it, idx, showLayer){
         var preset = bucketPreset(it.preset);
         var hasGeo = it.lat != null && it.lon != null;
         var inTrip = bucketItemAlreadyInItinerary(it);
+        var linked = inTrip ? findBucketLinkedStop(it.id) : null;
         var nameHtml = hasGeo
           ? '<a class="stop-name" href="' + escapeHtml(buildPlaceUrl(it.name, it.lat, it.lon)) + '" target="_blank" rel="noopener">' + escapeHtml(it.name || '（未命名）') + '</a>'
           : '<span class="stop-name">' + escapeHtml(it.name || '（未命名）') + '</span>';
@@ -3460,7 +3493,8 @@
               nameHtml +
               bucketStarsEditHtml(it.stars) +
               (bucketHoursText(it) ? '<span class="stop-hours stop-hours-inline">🕒 ' + escapeHtml(bucketHoursText(it)) + '</span>' : '') +
-              (inTrip ? '<span class="bk-in-trip-tag">已加入過</span>' : '') +
+              (linked ? '<span class="bk-in-trip-tag" title="編輯名稱/備註會同步到這張行程卡片">🔗 ' + escapeHtml(linked.dateLabel) + '</span>'
+                : (inTrip ? '<span class="bk-in-trip-tag">已加入過</span>' : '')) +
             '</div>' +
             (showLayer ? '<p class="bk-layer-tag">📍 ' + escapeHtml(it.layer || '') + '</p>' : '') +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
@@ -3893,6 +3927,7 @@
             it.hours = nameInput.dataset.hours ? JSON.parse(nameInput.dataset.hours) : null;
             it.hoursChecked = true;
           }
+          syncBucketEditToLinkedStop(it);
           persistBucketItems();
           renderBucketList();
         });
@@ -3960,13 +3995,59 @@
       function closeBkAddModal(){ bkAddModal.hidden = true; pendingBucketItem = null; }
       document.getElementById('bkAddCloseBtn').addEventListener('click', closeBkAddModal);
       bkAddModal.addEventListener('click', function(ev){ if(ev.target === bkAddModal){ closeBkAddModal(); } });
+      /* 名稱/備註同步用的連結：只跟「最新一次」加入行程的那張卡片保持同步，
+         不是每一次加入都同步（同一個地點，例如機場，常常會被加到好幾天，
+         各自的備註本來就可能想寫不一樣的內容，全部都同步反而是幫倒忙）。
+         做法：加入時把這個口袋地點的 id 記在新 stop 的 bucketSourceId 上，
+         同時把「這個口袋地點之前連結過的其他 stop」的 bucketSourceId 清掉
+         ——沒有另外存一份「連結到哪個 stop」的指標，用搜尋的方式找，這樣
+         就不怕搬移／拖曳排序把 idx 弄舊。 */
+      function unlinkBucketSourceStops(bucketId){
+        for(var dayId in DAYS){
+          var slots = DAYS[dayId].slots || {};
+          var changed = false;
+          for(var slotKey in slots){
+            (slots[slotKey] || []).forEach(function(stop){
+              if(stop.bucketSourceId === bucketId){ delete stop.bucketSourceId; changed = true; }
+            });
+          }
+          if(changed){
+            persistDay(dayId);
+            if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+          }
+        }
+      }
+      /* 口袋清單編輯存檔時，把名稱／備註同步給「目前還連結著的」那張行程
+         卡片（如果有的話）——找法一樣是搜尋 bucketSourceId，不用另外存
+         指標。行程那邊自己有的欄位（時間、開車時間…）不動，只同步這兩個
+         雙邊都有、意義相同的欄位。 */
+      function syncBucketEditToLinkedStop(it){
+        for(var dayId in DAYS){
+          var slots = DAYS[dayId].slots || {};
+          var found = false;
+          for(var slotKey in slots){
+            (slots[slotKey] || []).forEach(function(stop){
+              if(stop.bucketSourceId === it.id){
+                stop.name = it.name;
+                stop.note = it.note;
+                found = true;
+              }
+            });
+          }
+          if(found){
+            persistDay(dayId);
+            if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+          }
+        }
+      }
       document.getElementById('bkAddConfirmBtn').addEventListener('click', function(){
         if(!pendingBucketItem) return;
         var it = pendingBucketItem;
         var dayId = groupValue(bkAddDayGroup);
         var slotKey = groupValue(bkAddSlotGroup);
         if(!DAYS[dayId].slots[slotKey]){ DAYS[dayId].slots[slotKey] = []; }
-        var newStop = { name: it.name, time:'', note: it.note || '', lat: it.lat, lon: it.lon };
+        unlinkBucketSourceStops(it.id);
+        var newStop = { name: it.name, time:'', note: it.note || '', lat: it.lat, lon: it.lon, bucketSourceId: it.id };
         var newIdx = DAYS[dayId].slots[slotKey].length;
         DAYS[dayId].slots[slotKey].push(newStop);
         persistDay(dayId);
@@ -4147,6 +4228,18 @@
         endBucketDrag(false);
       });
 
+      /* 讓行程頁那邊（外層 IIFE 的 enterEdit）編輯地點存檔時，如果這個 stop
+         是從口袋清單「加入行程」來、而且還連結著，可以把改過的名稱/備註
+         同步回對應的口袋清單項目——兩邊是各自獨立的 IIFE，用 window 掛一個
+         橋接函式讓外層叫得到。 */
+      window.__syncStopEditToBucket = function(bucketId, name, note){
+        var it = bucketItems.filter(function(x){ return x.id === bucketId; })[0];
+        if(!it) return;
+        it.name = name;
+        it.note = note;
+        persistBucketItems();
+        renderBucketList();
+      };
       window.__renderBucketList = renderBucketList;
     })();
   })();
