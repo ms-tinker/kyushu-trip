@@ -2976,6 +2976,9 @@
        就是雲端同步的，會直接看到效果。
        ============================================================ */
     (function(){
+      /* 2026-08-16：「想去的程度」從 5 顆星改成 3 顆星，星等相關的地方都用
+         這個常數，不要寫死數字，之後要再調整星數只改這裡就好。 */
+      var BUCKET_STARS_MAX = 3;
       var BUCKET_PRESETS = [
         { key:'sightseeing', label:'📷 觀光', color:'indigo', icon:'ic-sightseeing' },
         { key:'shopping', label:'🛍️ 購物', color:'sand', icon:'ic-shopping' },
@@ -3330,6 +3333,16 @@
           } else if(!bucketItems.length){
             bucketItems = seedBucketItemsFromDefault();
           }
+          /* 2026-08-16：星等從 5 顆改成 3 顆，把舊資料裡超過上限的星等壓到
+             上限（原本 4/5 星都是「很想去」，壓成新的滿分 3 星依然是「很
+             想去」，排序意義不變）。這裡不用一次性旗標擋——本來就是「壓到
+             上限」這個操作，壓過一次之後數值已經 ≤ 上限，再跑一次也不會
+             再變，天生就是安全、可以每次都檢查的邏輯。有壓到才需要存檔。 */
+          var starsClamped = false;
+          bucketItems.forEach(function(it){
+            if(it.stars > BUCKET_STARS_MAX){ it.stars = BUCKET_STARS_MAX; starsClamped = true; }
+          });
+          if(starsClamped){ persistBucketItems(); }
           renderBucketList();
           /* 一定要等第一次 onSnapshot 真的把雲端現有資料（含標籤/星等）填進
              bucketItems 之後，才能開始跟 My Maps 同步——之前這裡是「訂閱」跟
@@ -3529,8 +3542,9 @@
         var tagKeys = Object.keys(tagCounts).sort();
         bucketTabTags = bucketTabTags.filter(function(t){ return tagCounts[t]; });
 
-        var starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
-        selectedItems.forEach(function(it){ if(it.stars >= 1 && it.stars <= 5){ starCounts[it.stars]++; } });
+        var starCounts = {};
+        for(var si = 1; si <= BUCKET_STARS_MAX; si++){ starCounts[si] = 0; }
+        selectedItems.forEach(function(it){ if(it.stars >= 1 && it.stars <= BUCKET_STARS_MAX){ starCounts[it.stars]++; } });
 
         var layerTabsHtml = '<button type="button" class="' + (bucketTabLayers.length === 0 ? 'active' : '') + '" data-value="all">全部地區 <span class="bk-tab-count">' + bucketItems.length + '</span></button>' +
           allLayers.map(function(layer){
@@ -3547,8 +3561,10 @@
             return '<button type="button" class="' + (bucketTabTags.indexOf(t) !== -1 ? 'active' : '') + '" data-value="' + escapeHtml(t) + '">' +
               escapeHtml(t) + ' <span class="bk-tab-count">' + tagCounts[t] + '</span></button>';
           }).join('')) : '';
+        var starOptions = [];
+        for(var sj = BUCKET_STARS_MAX; sj >= 1; sj--){ starOptions.push(sj); }
         var starsTabsHtml = '<button type="button" class="' + (bucketTabStars.length === 0 ? 'active' : '') + '" data-value="all">全部</button>' +
-          [5, 4, 3, 2, 1].map(function(n){
+          starOptions.map(function(n){
             return '<button type="button" class="' + (bucketTabStars.indexOf(n) !== -1 ? 'active' : '') + '" data-value="' + n + '">' +
               '★'.repeat(n) + ' <span class="bk-tab-count">' + starCounts[n] + '</span></button>';
           }).join('');
@@ -3661,7 +3677,7 @@
       }
       function bucketStarsEditHtml(n, cls){
         var out = '<div class="bk-stars' + (cls ? ' ' + cls : '') + '">';
-        for(var i = 1; i <= 5; i++){
+        for(var i = 1; i <= BUCKET_STARS_MAX; i++){
           out += '<button type="button" class="bk-star' + ((n || 0) >= i ? ' lit' : '') + '" data-star="' + i + '" aria-label="' + i + ' 星">★</button>';
         }
         out += '</div>';
