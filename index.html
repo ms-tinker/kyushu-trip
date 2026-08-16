@@ -352,8 +352,8 @@
   a.stop-name{color:inherit;text-decoration:none;}
   a.stop-name:hover{text-decoration:underline;}
   .stop-map-num{display:inline-flex;align-items:center;justify-content:center;width:1.3rem;height:1.3rem;border-radius:50%;font-size:0.7rem;font-weight:700;flex:none;font-family:var(--font-body);}
-  .bucket-item .stop-map-num{cursor:pointer;}
-  .bucket-item.bk-map-highlight{outline:3px solid var(--indigo);outline-offset:2px;transition:outline-color 0.3s;}
+  .bucket-item .stop-map-num, .stop-map-num[data-mapnum]{cursor:pointer;}
+  .itin-stop.bk-map-highlight{outline:3px solid var(--indigo);outline-offset:2px;transition:outline-color 0.3s;}
   .stop-map-num.c-indigo{background:var(--indigo);color:var(--surface);}
   .stop-map-num.c-persimmon{background:var(--persimmon);color:var(--surface);}
   .stop-map-num.c-moss{background:var(--moss);color:var(--surface);}
@@ -2266,7 +2266,7 @@
         photoHtml +
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
           '<div class="itin-stop-head">' +
-            (mapNumber ? '<span class="stop-map-num c-' + color + '">' + mapNumber + '</span>' : '') +
+            (mapNumber ? '<span class="stop-map-num c-' + color + '" data-mapnum="' + mapNumber + '">' + mapNumber + '</span>' : '') +
             '<span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
             (badgeText ? '<span class="stop-stay c-' + color + '">' + escapeHtml(badgeText) + '</span>' : '') + '</div>' +
           (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
@@ -2453,6 +2453,8 @@
         var slotKey = cardEl.dataset.slot, idx = Number(cardEl.dataset.idx);
         cardEl.querySelector('.ia-edit').addEventListener('click', function(){ enterEdit(cardEl, dayId, slotKey, idx); });
         cardEl.querySelector('.ia-del').addEventListener('click', function(){ removeStop(dayId, slotKey, idx); });
+        var mapNumEl = cardEl.querySelector('.stop-map-num[data-mapnum]');
+        if(mapNumEl){ mapNumEl.addEventListener('click', function(){ panToDayMarker(Number(mapNumEl.dataset.mapnum)); }); }
       });
       host.querySelectorAll('.slot-add').forEach(function(btn){
         btn.addEventListener('click', function(){ addStop(dayId, btn.dataset.slot); });
@@ -2576,8 +2578,41 @@
 
     var dayMapInstance = null;
     var dayMapObjs = [];
+    /* 跟口袋清單的地圖互動同一套邏輯：markerEntries 存「編號 → marker」，
+       點清單卡片上的編號圓圈可以反查 marker 來 pan/彈出資訊視窗；點地圖上的
+       標記點，也可以反查對應的卡片來捲動＋外框強調。編號直接沿用卡片上
+       原本就有的號碼牌數字（renderDay 用同一套 SLOT_ORDER 順序算出來的），
+       不用另外存 id。 */
+    var dayMarkerEntries = {};
+    var dayMapInfoWindow = null;
+    function showDayMarkerInfo(name, marker){
+      if(!dayMapInfoWindow){ dayMapInfoWindow = new google.maps.InfoWindow(); }
+      dayMapInfoWindow.setContent('<div style="font-weight:700;">' + escapeHtml(name || '') + '</div>');
+      dayMapInfoWindow.open(dayMapInstance, marker);
+    }
+    function highlightDayCard(num){
+      document.querySelectorAll('#dayRender .itin-stop.bk-map-highlight').forEach(function(el){ el.classList.remove('bk-map-highlight'); });
+      var numEl = document.querySelector('#dayRender .stop-map-num[data-mapnum="' + num + '"]');
+      var card = numEl && numEl.closest('.itin-stop');
+      if(!card) return;
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('bk-map-highlight');
+      setTimeout(function(){ card.classList.remove('bk-map-highlight'); }, 2000);
+    }
+    function panToDayMarker(num){
+      var entry = dayMarkerEntries[num];
+      if(!entry || !dayMapInstance) return;
+      dayMapInstance.panTo(entry.marker.getPosition());
+      if(dayMapInstance.getZoom() < 15){ dayMapInstance.setZoom(15); }
+      showDayMarkerInfo(entry.name, entry.marker);
+      entry.marker.setAnimation(google.maps.Animation.BOUNCE);
+      setTimeout(function(){ entry.marker.setAnimation(null); }, 1400);
+      var mapEl = document.getElementById('dayMap');
+      if(mapEl){ mapEl.scrollIntoView({behavior:'smooth', block:'center'}); }
+    }
     function renderDayMiniMap(d){
       var mapEl = document.getElementById('dayMap');
+      dayMarkerEntries = {};
       if(!window.google || !window.google.maps){ mapEl.style.display = 'none'; return; }
       var pts = [];
       SLOT_ORDER.forEach(function(k){
@@ -2597,11 +2632,18 @@
         }
         var bounds = new google.maps.LatLngBounds();
         pts.forEach(function(p, i){
-          dayMapObjs.push(new google.maps.Marker({
-            position:{lat:p.lat, lng:p.lng}, map:dayMapInstance, title:(i + 1) + '. ' + (p.name || ''),
+          var num = i + 1;
+          var marker = new google.maps.Marker({
+            position:{lat:p.lat, lng:p.lng}, map:dayMapInstance, title:num + '. ' + (p.name || ''),
             icon:{path:google.maps.SymbolPath.CIRCLE, scale:11, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2},
-            label:{text:String(i + 1), color:'#fff', fontSize:'11px', fontWeight:'700'}
-          }));
+            label:{text:String(num), color:'#fff', fontSize:'11px', fontWeight:'700'}
+          });
+          marker.addListener('click', function(){
+            showDayMarkerInfo(p.name, marker);
+            highlightDayCard(num);
+          });
+          dayMarkerEntries[num] = { marker: marker, name: p.name };
+          dayMapObjs.push(marker);
           bounds.extend({lat:p.lat, lng:p.lng});
         });
         dayMapInstance.fitBounds(bounds, 20);
@@ -3550,28 +3592,44 @@
         selectedItems.forEach(function(it){ distinctLayers[it.layer] = true; });
         var showLayerTag = Object.keys(distinctLayers).length > 1;
 
+        /* 分類／標籤／星等這三個篩選列，彼此要「互相看得到對方目前選了什麼」
+           （faceted filtering）：例如選了「觀光」分類，下面的標籤列就該只列
+           觀光類地點用過的標籤，不能還是顯示整個地區沒篩過分類的標籤（這是
+           之前回報的 bug——選了「觀光」，標籤列卻還是跳出一堆餐廳的標籤，
+           因為標籤清單當時是拿「整個地區」算的，沒有跟著分類篩選收斂。
+           做法：每個篩選列自己的選項/數字，都用「除了它自己以外，其他都
+           套用」的子集合去算——分類列看的是「套用了標籤+星等篩選之後」的
+           結果，標籤列看的是「套用了分類+星等篩選之後」的結果，以此類推。
+           地區（圖層）本身維持原本簡單的邏輯，不受分類/標籤/星等影響，
+           當作最外層、固定的分組依據。 */
+        function passesCat(it){ return bucketTabCats.length === 0 || bucketTabCats.indexOf(it.preset) !== -1; }
+        function passesTag(it){ return bucketTabTags.length === 0 || bucketTabTags.some(function(t){ return (it.tags || []).indexOf(t) !== -1; }); }
+        function passesStar(it){ return bucketTabStars.length === 0 || bucketTabStars.indexOf(it.stars || 0) !== -1; }
+
+        var itemsForCatFacet = selectedItems.filter(function(it){ return passesTag(it) && passesStar(it); });
+        var itemsForTagFacet = selectedItems.filter(function(it){ return passesCat(it) && passesStar(it); });
+        var itemsForStarFacet = selectedItems.filter(function(it){ return passesCat(it) && passesTag(it); });
+
         var byPreset = {};
-        selectedItems.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
+        itemsForCatFacet.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
         var presetsPresent = BUCKET_PRESETS.filter(function(p){ return byPreset[p.key] && byPreset[p.key].length; });
         bucketTabCats = bucketTabCats.filter(function(c){ return byPreset[c] && byPreset[c].length; });
 
-        /* 標籤是自訂的，沒有固定清單，這裡列出「目前選到的地區」有人用過的
-           標籤，一個都沒有的話整排標籤篩選就不顯示，不用佔畫面空間。 */
         var tagCounts = {};
-        selectedItems.forEach(function(it){ (it.tags || []).forEach(function(t){ tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+        itemsForTagFacet.forEach(function(it){ (it.tags || []).forEach(function(t){ tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
         var tagKeys = Object.keys(tagCounts).sort();
         bucketTabTags = bucketTabTags.filter(function(t){ return tagCounts[t]; });
 
         var starCounts = {};
         for(var si = 1; si <= BUCKET_STARS_MAX; si++){ starCounts[si] = 0; }
-        selectedItems.forEach(function(it){ if(it.stars >= 1 && it.stars <= BUCKET_STARS_MAX){ starCounts[it.stars]++; } });
+        itemsForStarFacet.forEach(function(it){ if(it.stars >= 1 && it.stars <= BUCKET_STARS_MAX){ starCounts[it.stars]++; } });
 
         var layerTabsHtml = '<button type="button" class="' + (bucketTabLayers.length === 0 ? 'active' : '') + '" data-value="all">全部地區 <span class="bk-tab-count">' + bucketItems.length + '</span></button>' +
           allLayers.map(function(layer){
             return '<button type="button" class="' + (bucketTabLayers.indexOf(layer) !== -1 ? 'active' : '') + '" data-value="' + escapeHtml(layer) + '">' +
               escapeHtml(layer) + ' <span class="bk-tab-count">' + byLayer[layer].length + '</span></button>';
           }).join('');
-        var catTabsHtml = '<button type="button" class="' + (bucketTabCats.length === 0 ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + selectedItems.length + '</span></button>' +
+        var catTabsHtml = '<button type="button" class="' + (bucketTabCats.length === 0 ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + itemsForCatFacet.length + '</span></button>' +
           presetsPresent.map(function(p){
             return '<button type="button" class="' + (bucketTabCats.indexOf(p.key) !== -1 ? 'active' : '') + '" data-value="' + p.key + '">' +
               '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + p.icon + '"></use></svg>' + p.label.replace(/^\S+\s*/, '') + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
@@ -3590,11 +3648,6 @@
           }).join('');
 
         var anyFilterActive = bucketTabCats.length > 0 || bucketTabTags.length > 0 || bucketTabStars.length > 0;
-        function passesExtraFilters(it){
-          if(bucketTabTags.length && !bucketTabTags.some(function(t){ return (it.tags || []).indexOf(t) !== -1; })) return false;
-          if(bucketTabStars.length && bucketTabStars.indexOf(it.stars || 0) === -1) return false;
-          return true;
-        }
         var listHtml, mapItems;
         if(!anyFilterActive){
           mapItems = selectedItems;
@@ -3612,8 +3665,7 @@
             '</details>';
           }).join('');
         } else {
-          var baseSet = bucketTabCats.length ? selectedItems.filter(function(it){ return bucketTabCats.indexOf(it.preset) !== -1; }) : selectedItems;
-          var filtered = baseSet.filter(passesExtraFilters);
+          var filtered = selectedItems.filter(function(it){ return passesCat(it) && passesTag(it) && passesStar(it); });
           mapItems = filtered;
           listHtml = '<div class="bucket-layer-list">' +
             (filtered.length ? filtered.map(function(it){ return bucketItemHtml(it, numByItem[it.id], showLayerTag); }).join('')
