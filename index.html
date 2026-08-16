@@ -4616,6 +4616,7 @@
         pendingReceipt = null;
         receiptInput.value = '';
         receiptStatus.textContent = '';
+        document.getElementById('expAddModal').hidden = true;
       });
       document.getElementById('expByDate').addEventListener('click', function(ev){
         var editBtn = ev.target.closest('[data-edit-exp]');
