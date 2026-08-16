@@ -312,6 +312,8 @@
   .bk-star.lit{color:var(--sand);}
   .itin-edit-form .bk-stars{margin-top:0.3rem;}
   .itin-edit-form .bk-star{font-size:1.3rem;}
+  .itin-stop-head .bk-stars{margin-top:0;}
+  .itin-stop-head .bk-star{font-size:0.92rem;}
 
   .day-detail-head{margin-top:1.3rem;display:flex;flex-direction:column;gap:0.2rem;}
   .day-detail-head .dh-theme{font-size:1.1rem;font-weight:700;}
@@ -346,6 +348,8 @@
   .itin-stop-body{flex:1;min-width:0;}
   .itin-stop-head{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;}
   .itin-stop .stop-name{font-weight:700;font-size:0.96rem;}
+  a.stop-name{color:inherit;text-decoration:none;}
+  a.stop-name:hover{text-decoration:underline;}
   .stop-map-num{display:inline-flex;align-items:center;justify-content:center;width:1.3rem;height:1.3rem;border-radius:50%;font-size:0.7rem;font-weight:700;flex:none;font-family:var(--font-body);}
   .bucket-item .stop-map-num{cursor:pointer;}
   .bucket-item.bk-map-highlight{outline:3px solid var(--indigo);outline-offset:2px;transition:outline-color 0.3s;}
@@ -357,6 +361,7 @@
   .itin-stop .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;white-space:nowrap;}
   .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;}
   .itin-stop .stop-hours{font-size:0.78rem;color:var(--ink-soft);margin-top:0.3rem;}
+  .itin-stop-head .stop-hours-inline{margin-top:0;white-space:nowrap;}
   .itin-stop-actions{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.65rem;align-items:center;}
   .ia-btn{font-size:0.76rem;color:var(--indigo);text-decoration:none;font-weight:600;background:none;border:none;padding:0;cursor:pointer;}
   .ia-btn:hover{text-decoration:underline;}
@@ -994,7 +999,7 @@
         <div class="dh-theme" id="dhTheme"></div>
         <div class="dh-sub-row">
           <div class="dh-sub tnum" id="dhSub"></div>
-          <button type="button" class="dh-refresh-icon" id="dhRefreshBtn" title="重新查詢這天所有地點的營業/開車時間——平常不用按，自動就會查；只有查詢失敗過（例如 API 設定問題）想強制重試時才需要">🔄</button>
+          <button type="button" class="dh-refresh-icon" id="dhRefreshBtn" title="重新查詢這天所有地點的營業/開車時間——平常不用按，自動就會查；只有查詢失敗過、或想強制重新確認時才需要">🔄 重新查這天</button>
         </div>
         <p class="hint dh-refresh-status" id="dhRefreshStatus"></p>
       </div>
@@ -2017,6 +2022,36 @@
       }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
     });
   }
+  /* 開車時間在這個門檻（分鐘）以內，才「順便」多查一次走路時間——市區開車
+     速度粗抓一下，10 分鐘車程大概對應 1.5～2 公里內，這個距離走路本來就
+     頂多 20 分上下，比較有機會落在「顯示走路」的門檻裡；超過這個門檻的
+     多半是城市/景點之間好幾公里的移動，走路不實際，直接省下這次查詢。 */
+  var WALK_CHECK_DRIVE_MAX = 10;
+  /* 卡片色塊「顯示走路」的門檻（分鐘）——使用者自己定的規則：走路在這個
+     時間以內才顯示「步行 X」，超過還是顯示開車時間比較實際。 */
+  var WALK_SHOW_MAX = 20;
+  /* 走路時間——只用在「開車時間已經很短」的相鄰兩站（見上面
+     WALK_CHECK_DRIVE_MAX），不是每一對地點都查：開車時間本來就要查一次，
+     只有短到有機會用走的（通常代表距離不遠）才「順便」多打一次 Directions
+     API 查走路時間，多數城市/景點之間動輒幾公里以上，開車都超過門檻，根本
+     不會觸發這次額外查詢，額度增加的量遠比「每一對都查兩次」小很多。 */
+  function computeWalkMinutes(origin, dest, callback){
+    window.__gmapsReady.then(function(){
+      if(!window.google || !google.maps || !google.maps.DirectionsService){ callback(null, 'NO_DIRECTIONS_SERVICE'); return; }
+      try{
+        var svc = new google.maps.DirectionsService();
+        svc.route({
+          origin: {lat:origin.lat, lng:origin.lon},
+          destination: {lat:dest.lat, lng:dest.lon},
+          travelMode: google.maps.TravelMode.WALKING
+        }, function(result, status){
+          if(status !== 'OK' || !result.routes || !result.routes.length){ callback(null, status); return; }
+          var durS = result.routes[0].legs.reduce(function(sum, leg){ return sum + leg.duration.value; }, 0);
+          callback(Math.round(durS / 60), status);
+        });
+      }catch(e){ callback(null, 'EXCEPTION:' + e.message); }
+    });
+  }
   /* 找地點名字對應的 Google 地點、抓它的營業時間——用在「原本就有座標、但
      沒有透過搜尋選過」的舊地點或口袋清單搬過去的地點，不用使用者手動重新
      搜尋一次也能補上營業時間。
@@ -2154,6 +2189,15 @@
       if(originLat != null && originLon != null){ url += '&origin=' + originLat + ',' + originLon; }
       return url;
     }
+    /* 點名稱直接跳去 Google Map 看這個地點（不是導航），用的是「通用網址」
+       搜尋格式：把名字＋座標一起當查詢字串，Google 通常能準確解析回同一個
+       地點的完整資訊頁（照片/評論）。沒有存 place_id（KML 匯入、口袋清單
+       手動加的地點都沒有），沒辦法用更精確的 query_place_id 參數，這是
+       目前不用另外存 place_id 也能做到的最佳做法。 */
+    function buildPlaceUrl(name, lat, lon){
+      var q = name ? (name + (lat != null ? (' ' + lat + ',' + lon) : '')) : (lat + ',' + lon);
+      return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+    }
 
     /* 依照這個地點存的 opening_hours 資料，算出「這一天（stop 所在的行程日期）」
        實際星期幾的營業時間文字。stop.hours 是重新搜尋地點時才會抓到的（見
@@ -2172,13 +2216,23 @@
         return p.close ? (fmtHHMM(p.open) + '–' + fmtHHMM(p.close)) : '24 小時營業';
       }).join('、');
     }
-    /* 開車時間放在名稱旁邊那個色塊（跟停留時間同一個 .stop-stay），固定
+    /* 開車/走路時間放在名稱旁邊那個色塊（跟停留時間同一個 .stop-stay），固定
        「開車 X，停留 Y」的順序；driveMin 是存檔/加入行程時算好的分鐘數，
-       跟舊資料手動寫的 time 自由文字（例如「約 3～3.5 小時」）接在一起。 */
+       跟使用者填的「停留時間」自由文字（例如「3～3.5 小時」）接在一起。
+       「停留」兩個字是自動加的，使用者不用自己打——已經打過「停留」開頭
+       的舊資料（例如「停留約 30 分」）就不會重複加一次。
+       走路時間（walkMin）只有在距離夠近時才會查到（見 refreshDayInfo 的
+       WALK_CHECK_DRIVE_MAX），查到了而且在 WALK_SHOW_MAX 分鐘以內，色塊就
+       改顯示「步行 X」取代「開車 X」——比開車實際（找車位、上下車都要
+       時間），超過門檻還是顯示開車比較準。 */
     function stayBadgeText(stop){
-      var timeText = stop.time || '';
-      if(stop.driveMin == null) return timeText;
-      return '開車 ' + fmtDriveMin(stop.driveMin) + (timeText ? '，' + timeText : '');
+      var timeText = (stop.time || '').trim();
+      var stayText = timeText ? (/^停留/.test(timeText) ? timeText : ('停留' + timeText)) : '';
+      var useWalk = stop.walkMin != null && stop.walkMin <= WALK_SHOW_MAX;
+      var travelText = useWalk ? ('步行 ' + fmtDriveMin(stop.walkMin))
+        : (stop.driveMin != null ? ('開車 ' + fmtDriveMin(stop.driveMin)) : '');
+      if(!travelText) return stayText;
+      return travelText + (stayText ? '，' + stayText : '');
     }
     function findPrevGeoStop(dayId, slotKeyTarget, idxTarget){
       var d = DAYS[dayId];
@@ -2356,9 +2410,17 @@
         if(nameInput.dataset.hours !== undefined){ updated.hours = nameInput.dataset.hours ? JSON.parse(nameInput.dataset.hours) : null; }
         else if(stop.hours){ updated.hours = stop.hours; }
         /* 地點換了，舊的開車時間就不準了，先清掉、存檔之後在背景重新算一次；
-           地點沒換就沿用原本算過的分鐘數，不用每次存檔都重打一次 API。 */
+           地點沒換就沿用原本算過的分鐘數跟「算的時候前一站在哪」，不用每次
+           存檔都重打一次 API。driveFromLat/Lon 記的是「算這個 driveMin 時，
+           前一站當時的座標」——refreshDayInfo 會拿現在真正的前一站座標跟這
+           個比對，兩個對不起來（前一站被搬動、換了地點、或整個行程重新排序
+           過）就代表 driveMin 已經過期，自動重算，不用等使用者手動按刷新。 */
         if(locationChanged){ updated.driveMin = null; }
-        else if(stop.driveMin != null){ updated.driveMin = stop.driveMin; }
+        else if(stop.driveMin != null){
+          updated.driveMin = stop.driveMin;
+          updated.driveFromLat = stop.driveFromLat;
+          updated.driveFromLon = stop.driveFromLon;
+        }
         if(stop.wikiTitle){ updated.wikiTitle = stop.wikiTitle; }
         saveStop(dayId, slotKey, idx, updated);
         if(updated.lat != null && (locationChanged || stop.driveMin == null)){
@@ -2369,6 +2431,8 @@
               var s = DAYS[dayId] && DAYS[dayId].slots[slotKey] && DAYS[dayId].slots[slotKey][idx];
               if(!s || s.lat !== updated.lat || s.lon !== updated.lon) return;
               s.driveMin = min;
+              s.driveFromLat = prevGeoStop.lat;
+              s.driveFromLon = prevGeoStop.lon;
               persistDay(dayId);
               if(String(window.__currentDay) === dayId){ renderDay(dayId); }
             });
@@ -2402,8 +2466,14 @@
        卡片自己按。forceAll=false（每次 renderDay 都會自動跑一次）只補「從
        沒查過」的地點，查過一次（不管有沒有查到）就會記在 hoursChecked／
        driveMinChecked，不會每次打開頁面都重查一次；forceAll=true（按「重新
-       查詢」按鈕）才會連上次查失敗的也重試——例如剛把 Google Cloud 專案的
-       Directions API 打開，之前失敗的這裡才有機會補上。 */
+       查詢」按鈕）才會連已經查過、甚至已經有數字的也強制重查——例如剛把
+       Google Cloud 專案的 Directions API 打開，之前失敗的這裡才有機會補上。
+       ⚠️ 開車時間比較特別：它是「跟前一站的關係」，不是這個地點自己的屬性
+       ——前一站被搬動、刪除、或整個行程重新排序過，開車時間就會過期，即使
+       driveMinChecked 是 true 也不能沿用舊數字。做法是額外記一組
+       driveFromLat/driveFromLon（算 driveMin 當下，前一站的座標），每次都
+       拿現在真正的前一站座標去比對，對不起來就代表過期了，不用等使用者按
+       「重新查詢」也會自動補算。 */
     /* 回傳的物件裡帶查詢失敗的 status，讓按鈕可以直接在頁面上顯示失敗原因
        （手機上開 DevTools 主控台太麻煩，直接顯示在畫面上比較實際）。
        ZERO_RESULTS（單純沒查到營業時間/路線，不算異常）不會算進失敗清單。 */
@@ -2419,7 +2489,8 @@
         var stops = d.slots[slotKey] || [];
         stops.forEach(function(stop){
           if(stop.lat == null || stop.lon == null) return;
-          if(!stop.hours && (forceAll || !stop.hoursChecked)){
+          var needsHours = forceAll || (!stop.hours && !stop.hoursChecked);
+          if(needsHours){
             tasks.push(new Promise(function(resolve){
               lookupPlaceHours(stop.name, stop.lat, stop.lon, function(hours, status){
                 stop.hoursChecked = true;
@@ -2429,14 +2500,34 @@
               });
             }));
           }
-          if(stop.driveMin == null && prev && (forceAll || !stop.driveMinChecked)){
+          var driveStale = prev && stop.driveMin != null && (stop.driveFromLat !== prev.lat || stop.driveFromLon !== prev.lon);
+          var needsDrive = prev && (forceAll || driveStale || (stop.driveMin == null && !stop.driveMinChecked));
+          if(needsDrive){
             var prevRef = prev;
             tasks.push(new Promise(function(resolve){
               computeDriveMinutes({lat:prevRef.lat, lon:prevRef.lon}, {lat:stop.lat, lon:stop.lon}, function(min, status){
                 stop.driveMinChecked = true;
-                if(min != null){ stop.driveMin = min; changed = true; }
-                else if(status && status !== 'ZERO_RESULTS'){ driveErrors.push(status); }
-                resolve();
+                if(min == null){
+                  if(status && status !== 'ZERO_RESULTS'){ driveErrors.push(status); }
+                  resolve();
+                  return;
+                }
+                stop.driveMin = min;
+                stop.driveFromLat = prevRef.lat;
+                stop.driveFromLon = prevRef.lon;
+                changed = true;
+                if(min > WALK_CHECK_DRIVE_MAX){
+                  if(stop.walkMin != null){ stop.walkMin = null; changed = true; } /* 距離變遠了（換了前一站），走路時間不再適用 */
+                  resolve();
+                  return;
+                }
+                /* 開車時間很短，順便多查一次走路時間，兩個共用同一組
+                   driveFromLat/driveFromLon 判斷有沒有過期，不用另外存
+                   一組 walkFromLat/walkFromLon。 */
+                computeWalkMinutes({lat:prevRef.lat, lon:prevRef.lon}, {lat:stop.lat, lon:stop.lon}, function(walkMin){
+                  if(walkMin != null){ stop.walkMin = walkMin; changed = true; }
+                  resolve();
+                });
               });
             }));
           }
@@ -2666,11 +2757,11 @@
       if(!dayId) return;
       var btn = document.getElementById('dhRefreshBtn');
       btn.disabled = true;
-      btn.textContent = '⏳';
+      btn.textContent = '⏳ 查詢中…';
       document.getElementById('dhRefreshStatus').textContent = '';
       refreshDayInfo(dayId, true).then(function(result){
         btn.disabled = false;
-        btn.textContent = '🔄';
+        btn.textContent = '🔄 重新查這天';
         showRefreshStatus(result);
       });
     });
@@ -3239,8 +3330,10 @@
       function bucketItemHtml(it, idx){
         var preset = bucketPreset(it.preset);
         var hasGeo = it.lat != null && it.lon != null;
-        var coordsText = hasGeo ? (Number(it.lat).toFixed(5) + ', ' + Number(it.lon).toFixed(5)) : '';
         var inTrip = bucketItemAlreadyInItinerary(it);
+        var nameHtml = hasGeo
+          ? '<a class="stop-name" href="' + escapeHtml(buildPlaceUrl(it.name, it.lat, it.lon)) + '" target="_blank" rel="noopener">' + escapeHtml(it.name || '（未命名）') + '</a>'
+          : '<span class="stop-name">' + escapeHtml(it.name || '（未命名）') + '</span>';
         return '<div class="itin-stop bucket-item border-' + preset.color + (inTrip ? ' bucket-item-added' : '') + '" data-bucket-id="' + it.id + '">' +
           '<button type="button" class="ia-drag" aria-label="拖曳排序">' +
             '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
@@ -3253,16 +3346,14 @@
             '<div class="itin-stop-head">' +
               '<span class="stop-map-num c-' + preset.color + '">' + (idx + 1) + '</span>' +
               '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + preset.icon + '"></use></svg>' +
-              '<span class="stop-name">' + escapeHtml(it.name || '（未命名）') + '</span>' +
+              nameHtml +
+              bucketStarsEditHtml(it.stars) +
+              (bucketHoursText(it) ? '<span class="stop-hours stop-hours-inline">🕒 ' + escapeHtml(bucketHoursText(it)) + '</span>' : '') +
               (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
             '</div>' +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
-            (bucketHoursText(it) ? '<p class="stop-hours">🕒 ' + escapeHtml(bucketHoursText(it)) + '</p>' : '') +
             bucketTagsHtml(it) +
-            bucketStarsEditHtml(it.stars) +
             '<div class="itin-stop-actions">' +
-              (hasGeo ? '<a class="ia-btn" href="' + buildNavUrl(it.lat, it.lon, null, null) + '" target="_blank" rel="noopener">導航</a>' : '') +
-              (hasGeo ? '<a class="ia-btn" href="' + MAPCODE_TOOL + '" target="_blank" rel="noopener">查 Mapcode</a><span class="ia-coords">' + coordsText + '</span>' : '') +
               (inTrip ? '' : '<button class="ia-btn bk-add-open" type="button">＋加入行程</button>') +
               '<button class="ia-btn ia-edit" type="button">編輯</button>' +
               '<button class="ia-btn ia-del" type="button">刪除</button>' +
@@ -3681,7 +3772,7 @@
           }
           var addOpenBtn = cardEl.querySelector('.bk-add-open');
           if(addOpenBtn){ addOpenBtn.addEventListener('click', function(){ openBkAddModal(it); }); }
-          var starsWrap = cardEl.querySelector('.itin-stop-view > .bk-stars');
+          var starsWrap = cardEl.querySelector('.itin-stop-head > .bk-stars');
           if(starsWrap){
             wireBucketStars(starsWrap, it, function(){
               persistBucketItems();
@@ -3736,7 +3827,13 @@
         var prevGeoStop = findPrevGeoStop(dayId, slotKey, newIdx);
         if(prevGeoStop){
           computeDriveMinutes({lat:prevGeoStop.lat, lon:prevGeoStop.lon}, {lat:newStop.lat, lon:newStop.lon}, function(min){
-            if(min != null){ newStop.driveMin = min; persistDay(dayId); if(String(window.__currentDay) === dayId){ renderDay(dayId); } }
+            if(min != null){
+              newStop.driveMin = min;
+              newStop.driveFromLat = prevGeoStop.lat;
+              newStop.driveFromLon = prevGeoStop.lon;
+              persistDay(dayId);
+              if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+            }
           });
         }
       });
