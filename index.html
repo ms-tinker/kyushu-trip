@@ -2131,60 +2131,31 @@
     var SLOT_LABELS = {start:'起點', breakfast:'早餐', morning:'上午行程', lunch:'午餐', afternoon:'下午行程', dinner:'晚餐', evening:'晚上行程', end:'終點'};
     var MAPCODE_TOOL = 'https://japanmapcode.com/zh-TW';
 
+    /* ⚠️ 2026-08-16：應使用者要求，把原本寫死在這裡的預設景點（起點/終點的
+       機場/飯店、門司港、African Safari、阿蘇沿路景點等）全部清空，改成
+       使用者自己在網頁上從頭新增。這份 DAYS_SEED 現在只當「這一天的中繼資料」
+       （日期、主題、天氣地點、備註）用，slots 只在 Firestore 完全沒有這天的
+       文件時（例如全新部署、還沒建立過任何一天的資料）才會被拿來當初始值，
+       正常情況下每天的實際地點都是 Firestore 裡的資料，不會被這裡的內容蓋過
+       ——見下面 onSnapshot 裡的 defaultsCleared 一次性清除邏輯。 */
     var DAYS_SEED = [
       { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo', wxLoc:'fukuoka',
         note:'這天完全不排景點，先讓寶寶適應環境。IT720 17:50 抵達福岡機場，領行李、取車後直接前往飯店。', warn:false,
-        slots:{
-          start:[{name:'福岡機場', time:'IT720 17:50 抵達', note:'抵達後領行李、取車。', lat:33.5859, lon:130.4515}],
-          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'整天・入住休息', note:'入住 15:00 起。', lat:33.5874, lon:130.40703}]
-        } },
+        slots:{} },
       { id:'2', date:'8/27', weekday:'（四）', wd3:'THU', monthLabel:'08月', theme:'福岡 → 門司港 → 福岡', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
-        slots:{
-          start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
-          morning:[{name:'門司港', time:'開車 1 小時 20 分，停留約 3～3.5 小時', note:'慢慢逛門司港車站、懷舊街區、海邊、展望室。', lat:33.9495, lon:130.9628, wikiTitle:'門司港レトロ'}],
-          end:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'開車 1 小時 20 分，下午～晚上', note:'回飯店休息。', lat:33.5874, lon:130.40703}]
-        } },
+        slots:{} },
       { id:'3', date:'8/28', weekday:'（五）', wd3:'FRI', monthLabel:'08月', theme:'福岡 → African Safari → 由布院', color:'moss', wxLoc:'yufuin', note:'', warn:false,
-        slots:{
-          start:[{name:'SPAZIO 3 Life More Haruyoshi Annex', time:'', note:'', lat:33.5874, lon:130.40703}],
-          morning:[{name:'African Safari', time:'開車 2 小時 15 分，停留約 2.5～3 小時', note:'以自駕 Safari 為主，這天不需要趕。', lat:33.352022, lon:131.413506, wikiTitle:'九州自然動物公園アフリカンサファリ'}],
-          end:[{name:'Yufuin Covaco', time:'開車 2 小時 15 分，晚上・住宿', note:'Check-in（15:00～00:00）、晚餐、泡湯或回飯店休息。', lat:33.2645, lon:131.3550}]
-        } },
+        slots:{} },
       { id:'4', date:'8/29', weekday:'（六）', wd3:'SAT', monthLabel:'08月', theme:'由布院 → 阿蘇景觀自駕 → 由布院', color:'persimmon', wxLoc:'aso',
         note:'全程最密集的一天，當成「景觀自駕日」，每個點都不要停太久。', warn:false,
-        slots:{
-          start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
-          morning:[
-            {name:'長者原', time:'開車 1 小時 10 分，停留約 20～30 分', note:'寶寶喝奶、換尿布、看草原與山景。', lat:33.0894, lon:131.2591},
-            {name:'牧之戶峠', time:'開車 20 分，停留約 20～30 分', note:'Yamanami Highway 景觀路段。', lat:33.0847, lon:131.2437},
-            {name:'瀨之本', time:'開車 25 分，停留約 20～30 分', note:'看高原景觀、拍照。', lat:33.0397, lon:131.1974},
-            {name:'Milk Road', time:'開車 20 分，停留約 30～45 分', note:'這段本身就是景點，不要把它當交通時間。', lat:32.98, lon:131.15}
-          ],
-          afternoon:[
-            {name:'大觀峰', time:'開車 20 分，停留約 1 小時', note:'看阿蘇五岳、阿蘇谷、草原。', lat:32.9884, lon:131.1064},
-            {name:'阿蘇火山口', time:'開車 30 分，停留約 45～60 分', note:'若當天開放，建議去；不用走太久。', lat:32.8843, lon:131.1044, wikiTitle:'中岳 (熊本県)'},
-            {name:'草千里', time:'開車 15 分，停留約 45～60 分', note:'看草原與火山景觀。', lat:32.8797, lon:131.0783, wikiTitle:'草千里ヶ浜'}
-          ],
-          end:[{name:'Yufuin Covaco', time:'開車 1 小時 20 分，晚上・住宿', note:'回到由布院吃飯、泡湯、休息。', lat:33.2645, lon:131.3550}]
-        } },
+        slots:{} },
       { id:'5', date:'8/30', weekday:'（日）', wd3:'SUN', monthLabel:'08月', theme:'由布院 → 福岡', color:'indigo', wxLoc:'yufuin', note:'', warn:false,
-        slots:{
-          start:[{name:'Yufuin Covaco', time:'', note:'', lat:33.2645, lon:131.3550}],
-          morning:[{name:'由布院自由活動', time:'約 2～3 小時', note:'若前一天太累就慢慢退房；若寶寶精神好，可去湯之坪街道或金鱗湖。Yufuin Covaco 退房時間 06:00～10:00。', lat:33.2645, lon:131.3550}],
-          end:[{name:'HOTEL Sui HARUYOSHI', time:'開車 2 小時 20 分，晚上・住宿', note:'回到福岡，休息。入住 15:00～22:00。', lat:33.58675, lon:130.4068}]
-        } },
+        slots:{} },
       { id:'6', date:'8/31', weekday:'（一）', wd3:'MON', monthLabel:'08月', theme:'福岡自由日', color:'sand', wxLoc:'fukuoka', note:'', warn:false,
-        slots:{
-          start:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}],
-          morning:[{name:'博多站／天神商圈', time:'開車 10～20 分，整天', note:'購物、嬰兒用品、伴手禮、晚餐。', lat:33.5902, lon:130.4017, wikiTitle:'天神 (福岡市)'}],
-          end:[{name:'HOTEL Sui HARUYOSHI', time:'', note:'', lat:33.58675, lon:130.4068}]
-        } },
+        slots:{} },
       { id:'7', date:'9/1', weekday:'（二）', wd3:'TUE', monthLabel:'09月', theme:'福岡 → 台灣', color:'neutral', wxLoc:'fukuoka',
         note:'HOTEL Sui HARUYOSHI 退房 10:00 前，IT241 10:55 起飛——時間非常緊，建議前一晚打包好行李、退房後直接上車。', warn:true,
-        slots:{
-          start:[{name:'HOTEL Sui HARUYOSHI', time:'退房 10:00 前', note:'', lat:33.58675, lon:130.4068}],
-          end:[{name:'福岡機場', time:'開車 30～40 分，IT241・10:55 起飛', note:'這天不安排景點，退房後直接前往機場。', lat:33.5859, lon:130.4515}]
-        } }
+        slots:{} }
     ];
 
     var DAYS = {};
@@ -2874,11 +2845,22 @@
         fns.onSnapshot(ref, function(snap){
           if(snap.exists()){
             DAYS[seed.id] = snap.data();
-            if(migrateLegacyTimeText(seed.id, DAYS[seed.id])){
-              fns.setDoc(ref, DAYS[seed.id]);
+            var needsPersist = migrateLegacyTimeText(seed.id, DAYS[seed.id]);
+            /* 2026-08-16 一次性清除：使用者要求把當初寫死在 DAYS_SEED 裡的
+               預設景點全部刪掉，讓她自己重新加。這裡只在「還沒清過」時
+               （defaultsCleared 不是 true）清一次 slots，清完馬上把
+               defaultsCleared 存回 Firestore——之後不管使用者怎麼新增/
+               編輯地點，這個旗標都擋掉這段邏輯，不會再被清第二次，也就
+               不會把使用者之後自己加的地點也清掉。 */
+            if(!DAYS[seed.id].defaultsCleared){
+              DAYS[seed.id].slots = {};
+              DAYS[seed.id].defaultsCleared = true;
+              needsPersist = true;
             }
+            if(needsPersist){ fns.setDoc(ref, DAYS[seed.id]); }
           } else {
             DAYS[seed.id] = JSON.parse(JSON.stringify(seed));
+            DAYS[seed.id].defaultsCleared = true; /* 全新文件，seed 本身已經是空的，不用再清一次 */
             fns.setDoc(ref, DAYS[seed.id]);
           }
           renderDateStrip();
