@@ -291,8 +291,6 @@
   .bucket-layer:not([open]) > .bucket-cat{display:none;}
   .itin-stop.border-plum{border-top-color:var(--plum);}
   .stop-map-num.c-plum{background:var(--plum);color:var(--surface);}
-  .bucket-item-added{opacity:0.55;}
-  .bucket-item-added .stop-name{text-decoration:line-through;}
   .bk-in-trip-tag{font-size:0.7rem;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0.1rem 0.5rem;white-space:nowrap;}
   .bk-tab-count{font-size:0.72rem;opacity:0.75;}
   .bk-layer-tabs, .bk-cat-tabs, .bk-tag-tabs{margin-bottom:0.8rem;}
@@ -2136,8 +2134,10 @@
        使用者自己在網頁上從頭新增。這份 DAYS_SEED 現在只當「這一天的中繼資料」
        （日期、主題、天氣地點、備註）用，slots 只在 Firestore 完全沒有這天的
        文件時（例如全新部署、還沒建立過任何一天的資料）才會被拿來當初始值，
-       正常情況下每天的實際地點都是 Firestore 裡的資料，不會被這裡的內容蓋過
-       ——見下面 onSnapshot 裡的 defaultsCleared 一次性清除邏輯。 */
+       正常情況下每天的實際地點都是 Firestore 裡的資料，不會被這裡的內容蓋過。
+       （原本這裡還有一段一次性把 Firestore 裡舊資料也清空的搬移邏輯，因為
+       懷疑造成使用者手動新增的地點被誤清掉，已經移除——見下面 onSnapshot
+       附近的說明。） */
     var DAYS_SEED = [
       { id:'1', date:'8/26', weekday:'（三）', wd3:'WED', monthLabel:'08月', theme:'抵達福岡', color:'indigo', wxLoc:'fukuoka',
         note:'這天完全不排景點，先讓寶寶適應環境。IT720 17:50 抵達福岡機場，領行李、取車後直接前往飯店。', warn:false,
@@ -2845,22 +2845,20 @@
         fns.onSnapshot(ref, function(snap){
           if(snap.exists()){
             DAYS[seed.id] = snap.data();
-            var needsPersist = migrateLegacyTimeText(seed.id, DAYS[seed.id]);
-            /* 2026-08-16 一次性清除：使用者要求把當初寫死在 DAYS_SEED 裡的
-               預設景點全部刪掉，讓她自己重新加。這裡只在「還沒清過」時
-               （defaultsCleared 不是 true）清一次 slots，清完馬上把
-               defaultsCleared 存回 Firestore——之後不管使用者怎麼新增/
-               編輯地點，這個旗標都擋掉這段邏輯，不會再被清第二次，也就
-               不會把使用者之後自己加的地點也清掉。 */
-            if(!DAYS[seed.id].defaultsCleared){
-              DAYS[seed.id].slots = {};
-              DAYS[seed.id].defaultsCleared = true;
-              needsPersist = true;
+            /* 2026-08-16：原本這裡有一段「defaultsCleared 一次性清除預設
+               景點」的搬移邏輯，拿掉了——使用者回報 8/26 手動新增的起點/
+               終點在後續一次發布之後又消失了，懷疑是這段一次性搬移邏輯
+               在某個時間點（例如某個分頁還在跑舊版程式碼、或多分頁同時
+               開著）又被觸發了一次，把新增的內容也清掉。既然「清空預設
+               景點」這件事本來就只需要做一次，而且已經做過了，繼續留著
+               這段邏輯只有風險沒有好處，直接移除，之後不會再有任何自動
+               清空 slots 的程式碼路徑——地點的新增/刪除完全由使用者自己
+               在畫面上操作決定。 */
+            if(migrateLegacyTimeText(seed.id, DAYS[seed.id])){
+              fns.setDoc(ref, DAYS[seed.id]);
             }
-            if(needsPersist){ fns.setDoc(ref, DAYS[seed.id]); }
           } else {
             DAYS[seed.id] = JSON.parse(JSON.stringify(seed));
-            DAYS[seed.id].defaultsCleared = true; /* 全新文件，seed 本身已經是空的，不用再清一次 */
             fns.setDoc(ref, DAYS[seed.id]);
           }
           renderDateStrip();
@@ -3359,7 +3357,12 @@
 
       /* 判斷這個口袋地點是不是已經被「加入行程」過——「加入行程」寫進行程時
          是直接複製 lat/lon（見 bkAddConfirmBtn handler），所以用經緯度完全相等
-         來比對即可，不需要模糊比對名稱。 */
+         來比對即可，不需要模糊比對名稱。
+         ⚠️ 這個只用來顯示「已加入過」的提示小標籤，不會拿來擋按鈕——機場、
+         飯店這種地點本來就會在好幾天分別當起點/終點重複出現，之前這裡曾經
+         「已加入過就整個拿掉『＋加入行程』按鈕」，導致這類地點加過一次之後
+         就沒辦法再加到別天，是真的 bug，已經改成按鈕永遠都在，提示標籤純
+         參考用。 */
       function bucketItemAlreadyInItinerary(it){
         if(it.lat == null || it.lon == null) return false;
         for(var dayId in DAYS){
@@ -3383,7 +3386,7 @@
         var nameHtml = hasGeo
           ? '<a class="stop-name" href="' + escapeHtml(buildPlaceUrl(it.name, it.lat, it.lon)) + '" target="_blank" rel="noopener">' + escapeHtml(it.name || '（未命名）') + '</a>'
           : '<span class="stop-name">' + escapeHtml(it.name || '（未命名）') + '</span>';
-        return '<div class="itin-stop bucket-item border-' + preset.color + (inTrip ? ' bucket-item-added' : '') + '" data-bucket-id="' + it.id + '">' +
+        return '<div class="itin-stop bucket-item border-' + preset.color + '" data-bucket-id="' + it.id + '">' +
           '<button type="button" class="ia-drag" aria-label="拖曳排序">' +
             '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
               '<circle cx="7" cy="4" r="1.5"/><circle cx="13" cy="4" r="1.5"/>' +
@@ -3398,13 +3401,13 @@
               nameHtml +
               bucketStarsEditHtml(it.stars) +
               (bucketHoursText(it) ? '<span class="stop-hours stop-hours-inline">🕒 ' + escapeHtml(bucketHoursText(it)) + '</span>' : '') +
-              (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
+              (inTrip ? '<span class="bk-in-trip-tag">已加入過</span>' : '') +
             '</div>' +
             (showLayer ? '<p class="bk-layer-tag">📍 ' + escapeHtml(it.layer || '') + '</p>' : '') +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
             bucketTagsHtml(it) +
             '<div class="itin-stop-actions">' +
-              (inTrip ? '' : '<button class="ia-btn bk-add-open" type="button">＋加入行程</button>') +
+              '<button class="ia-btn bk-add-open" type="button">＋加入行程</button>' +
               '<button class="ia-btn ia-edit" type="button">編輯</button>' +
               '<button class="ia-btn ia-del" type="button">刪除</button>' +
             '</div>' +
