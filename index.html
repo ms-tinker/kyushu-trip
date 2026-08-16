@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+２<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -1882,10 +1882,19 @@
         reorderList.appendChild(row);
       });
     }
+    /* ⚠️ 一定要把 catVersion 一起存回去，不能只存 items——下面 onSnapshot
+       判斷「資料是不是舊版、要不要重設成新的預設清單」是看存在 Firestore
+       裡的 catVersion 跟這裡的 catVersion 是否一致；如果 persist() 存的
+       時候沒帶這個欄位，setDoc（沒有 merge）會直接把它從文件裡拿掉，下一次
+       這個 onSnapshot 被觸發（包括存檔自己觸發的那次）就會誤判成「舊版」，
+       整個 currentList 被重設回預設清單、剛新增的類別就這樣憑空消失——這正是
+       之前「新增類別打完字按新增沒反應」的真正原因。 */
     function persist(){
       window.fbReady.then(function(){
         var fns = window.fb.fns;
-        fns.setDoc(fns.doc(window.fb.col('settings'), docName), { items: currentList });
+        var payload = { items: currentList };
+        if(catVersion){ payload.catVersion = catVersion; }
+        fns.setDoc(fns.doc(window.fb.col('settings'), docName), payload);
       });
     }
 
