@@ -208,6 +208,7 @@
   /* ---- stays ---- */
   .stay-list{display:flex;flex-direction:column;gap:1rem;}
   .stay-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.15rem 1.3rem;box-shadow:var(--shadow);}
+  .stay-card.link-row{position:relative;padding-left:2.8rem;}
   .stay-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
   .stay-badge{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;margin-bottom:0.5rem;}
   .stay-name{font-weight:700;font-size:1rem;}
@@ -363,6 +364,7 @@
   .itin-stop .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;white-space:nowrap;}
   .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;}
   .itin-stop .stop-hours{font-size:0.78rem;color:var(--ink-soft);margin-top:0.3rem;}
+  .bk-layer-tag{font-size:0.76rem;color:var(--ink-faint);margin-top:0.3rem;}
   .itin-stop-head .stop-hours-inline{margin-top:0;white-space:nowrap;}
   .itin-stop-actions{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.65rem;align-items:center;}
   .ia-btn{font-size:0.76rem;color:var(--indigo);text-decoration:none;font-weight:600;background:none;border:none;padding:0;cursor:pointer;}
@@ -2523,8 +2525,24 @@
               });
             }));
           }
-          var driveStale = prev && stop.driveMin != null && (stop.driveFromLat !== prev.lat || stop.driveFromLon !== prev.lon);
-          var needsDrive = prev && (forceAll || driveStale || (stop.driveMin == null && !stop.driveMinChecked));
+          /* 這個地點如果是這一天「第一個有座標的地點」（前面沒有 prev），
+             就不該有開車/走路時間——但它有可能是「後來變成第一個」的：原本
+             前面還有別的地點、driveMin 早就算好了，後來那個地點被搬走/刪掉，
+             這個地點自己沒被動過，driveMin 就會一直卡著舊數字，變成「起點」
+             卡片顯示開車時間的怪現象。這裡直接清掉，不用等使用者發現。 */
+          if(!prev){
+            if(stop.driveMin != null || stop.walkMin != null){
+              stop.driveMin = null;
+              stop.walkMin = null;
+              stop.driveFromLat = null;
+              stop.driveFromLon = null;
+              changed = true;
+            }
+            prev = stop;
+            return;
+          }
+          var driveStale = stop.driveMin != null && (stop.driveFromLat !== prev.lat || stop.driveFromLon !== prev.lon);
+          var needsDrive = forceAll || driveStale || (stop.driveMin == null && !stop.driveMinChecked);
           if(needsDrive){
             var prevRef = prev;
             tasks.push(new Promise(function(resolve){
@@ -2557,9 +2575,13 @@
           prev = stop;
         });
       });
-      if(!tasks.length) return Promise.resolve({changed:false, hoursErrors:[], driveErrors:[], attempted:0});
+      /* 不能用「tasks.length === 0 就直接跳過存檔」當捷徑——上面「起點不該有
+         開車時間」的清除是同步做的，沒有對應的 async task，如果那天剛好沒有
+         其他要查的東西，tasks 會是空陣列，但 changed 仍然是 true，這個清除
+         結果還是要存檔＋重畫，不然只是清了記憶體裡的值，重新整理又會打回
+         Firestore 存的舊資料。 */
       return Promise.all(tasks).then(function(){
-        persistDay(dayId); /* 就算全部查不到，也要把 checked 記下來，不然每次開頁面都會重查一次 */
+        if(tasks.length || changed){ persistDay(dayId); } /* 就算全部查不到，也要把 checked 記下來，不然每次開頁面都會重查一次 */
         if(changed && String(window.__currentDay) === dayId){ renderDay(dayId); }
         return {changed:changed, hoursErrors:hoursErrors, driveErrors:driveErrors, attempted:tasks.length};
       });
@@ -3288,13 +3310,14 @@
       var bucketHoursInFlight = {};
       /* forceAll：手動按「重新查營業時間」時忽略 hoursChecked，強制重查
          （例如第一次自動查到的那天剛好公休，想換一天再查一次確認）；
-         layerOnly：只重查指定圖層，不會一次把所有圖層全部重打一輪 API。
-         回傳 Promise<實際查了幾個地點>，給按鈕顯示查詢結果用。 */
-      function refreshBucketHours(forceAll, layerOnly){
+         layersFilter：只重查這幾個地區（陣列），空陣列/不傳＝全部地區，
+         不會一次把所有地區全部重打一輪 API。回傳 Promise<實際查了幾個
+         地點>，給按鈕顯示查詢結果用。 */
+      function refreshBucketHours(forceAll, layersFilter){
         var tasks = [];
         bucketItems.forEach(function(it){
           if(it.lat == null || it.lon == null) return;
-          if(layerOnly && it.layer !== layerOnly) return;
+          if(layersFilter && layersFilter.length && layersFilter.indexOf(it.layer) === -1) return;
           if(bucketHoursInFlight[it.id]) return;
           if(!forceAll && (it.hours || it.hoursChecked)) return;
           bucketHoursInFlight[it.id] = true;
@@ -3358,7 +3381,7 @@
         }
         return false;
       }
-      function bucketItemHtml(it, idx){
+      function bucketItemHtml(it, idx, showLayer){
         var preset = bucketPreset(it.preset);
         var hasGeo = it.lat != null && it.lon != null;
         var inTrip = bucketItemAlreadyInItinerary(it);
@@ -3382,6 +3405,7 @@
               (bucketHoursText(it) ? '<span class="stop-hours stop-hours-inline">🕒 ' + escapeHtml(bucketHoursText(it)) + '</span>' : '') +
               (inTrip ? '<span class="bk-in-trip-tag">已在行程中</span>' : '') +
             '</div>' +
+            (showLayer ? '<p class="bk-layer-tag">📍 ' + escapeHtml(it.layer || '') + '</p>' : '') +
             (it.note ? '<p class="stop-note">' + escapeHtml(it.note) + '</p>' : '') +
             bucketTagsHtml(it) +
             '<div class="itin-stop-actions">' +
@@ -3462,15 +3486,23 @@
         }catch(e){ mapEl.style.display = 'none'; }
       }
 
-      var bucketTabLayer = null;
-      var bucketTabCat = 'all';
-      var bucketTabTag = 'all';
-      var bucketTabStars = 0;
+      /* 四個篩選維度現在都是多選（陣列），空陣列＝「全部」，不特別篩選這個
+         維度。地區／分類／標籤是「符合任一個就算過」（OR），星等也是 OR，
+         但四個維度彼此之間是 AND（例如選了「福岡市＋阿蘇市」跟「餐廳」，
+         結果要同時符合「在這兩個地區之一」而且「是餐廳」）。 */
+      var bucketTabLayers = [];
+      var bucketTabCats = [];
+      var bucketTabTags = [];
+      var bucketTabStars = [];
 
       function bucketGroupByLayer(){
         var byLayer = {};
         bucketItems.forEach(function(it){ (byLayer[it.layer] = byLayer[it.layer] || []).push(it); });
         return byLayer;
+      }
+      function toggleInArray(arr, val){
+        var i = arr.indexOf(val);
+        if(i === -1){ arr.push(val); } else { arr.splice(i, 1); }
       }
 
       function renderBucketList(){
@@ -3482,59 +3514,72 @@
         renderBucketTabs(host);
       }
 
-      /* 跟行程的日期列一樣：先選圖層（分頁），再選分類（分頁），一次只看
-         一個圖層＋一個分類的清單。地圖固定顯示整個圖層的點（不會因為選了
-         分類就跟著篩選），方便看整體位置。 */
+      /* 地區／分類／標籤／星等都是多選篩選（點一下加入，再點一下取消，跟
+         「全部」互斥——選「全部」等於清空這個維度）。什麼都沒篩的時候，
+         畫面照分類分組、可收合；只要有選任何一種篩選條件，就改成扁平清單。
+         地圖固定顯示「目前篩選結果」的點（會跟著篩選變動，包括地區篩選），
+         選了多個地區時，卡片上會多顯示一行小字標明是哪個地區的，避免混淆。 */
       function renderBucketTabs(host){
         var byLayer = bucketGroupByLayer();
-        var layers = Object.keys(byLayer);
-        if(!bucketTabLayer || layers.indexOf(bucketTabLayer) === -1){ bucketTabLayer = layers[0]; }
-        var layerItems = byLayer[bucketTabLayer].slice().sort(function(a, b){ return (a.order || 0) - (b.order || 0); });
+        var allLayers = Object.keys(byLayer);
+        bucketTabLayers = bucketTabLayers.filter(function(l){ return allLayers.indexOf(l) !== -1; });
+
+        var selectedItems = (bucketTabLayers.length ? bucketItems.filter(function(it){ return bucketTabLayers.indexOf(it.layer) !== -1; }) : bucketItems.slice())
+          .sort(function(a, b){
+            if(a.layer !== b.layer){ return a.layer < b.layer ? -1 : 1; }
+            return (a.order || 0) - (b.order || 0);
+          });
         var numByItem = {};
-        layerItems.forEach(function(it, idx){ numByItem[it.id] = idx; });
+        selectedItems.forEach(function(it, idx){ numByItem[it.id] = idx; });
+        var distinctLayers = {};
+        selectedItems.forEach(function(it){ distinctLayers[it.layer] = true; });
+        var showLayerTag = Object.keys(distinctLayers).length > 1;
+
         var byPreset = {};
-        layerItems.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
+        selectedItems.forEach(function(it){ (byPreset[it.preset] = byPreset[it.preset] || []).push(it); });
         var presetsPresent = BUCKET_PRESETS.filter(function(p){ return byPreset[p.key] && byPreset[p.key].length; });
-        if(bucketTabCat !== 'all' && !byPreset[bucketTabCat]){ bucketTabCat = 'all'; }
+        bucketTabCats = bucketTabCats.filter(function(c){ return byPreset[c] && byPreset[c].length; });
 
-        /* 標籤是自訂的，沒有固定清單，這裡列出「這個圖層目前有人用過」的標籤，
-           一個都沒有的話整排標籤篩選就不顯示，不用佔畫面空間。 */
+        /* 標籤是自訂的，沒有固定清單，這裡列出「目前選到的地區」有人用過的
+           標籤，一個都沒有的話整排標籤篩選就不顯示，不用佔畫面空間。 */
         var tagCounts = {};
-        layerItems.forEach(function(it){ (it.tags || []).forEach(function(t){ tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+        selectedItems.forEach(function(it){ (it.tags || []).forEach(function(t){ tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
         var tagKeys = Object.keys(tagCounts).sort();
-        if(bucketTabTag !== 'all' && tagCounts[bucketTabTag] == null){ bucketTabTag = 'all'; }
+        bucketTabTags = bucketTabTags.filter(function(t){ return tagCounts[t]; });
 
-        var layerTabsHtml = layers.map(function(layer){
-          return '<button type="button" class="' + (layer === bucketTabLayer ? 'active' : '') + '" data-value="' + escapeHtml(layer) + '">' +
-            escapeHtml(layer) + ' <span class="bk-tab-count">' + byLayer[layer].length + '</span></button>';
-        }).join('');
-        var catTabsHtml = '<button type="button" class="' + (bucketTabCat === 'all' ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + layerItems.length + '</span></button>' +
+        var starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
+        selectedItems.forEach(function(it){ if(it.stars >= 1 && it.stars <= 5){ starCounts[it.stars]++; } });
+
+        var layerTabsHtml = '<button type="button" class="' + (bucketTabLayers.length === 0 ? 'active' : '') + '" data-value="all">全部地區 <span class="bk-tab-count">' + bucketItems.length + '</span></button>' +
+          allLayers.map(function(layer){
+            return '<button type="button" class="' + (bucketTabLayers.indexOf(layer) !== -1 ? 'active' : '') + '" data-value="' + escapeHtml(layer) + '">' +
+              escapeHtml(layer) + ' <span class="bk-tab-count">' + byLayer[layer].length + '</span></button>';
+          }).join('');
+        var catTabsHtml = '<button type="button" class="' + (bucketTabCats.length === 0 ? 'active' : '') + '" data-value="all">全部 <span class="bk-tab-count">' + selectedItems.length + '</span></button>' +
           presetsPresent.map(function(p){
-            return '<button type="button" class="' + (p.key === bucketTabCat ? 'active' : '') + '" data-value="' + p.key + '">' +
+            return '<button type="button" class="' + (bucketTabCats.indexOf(p.key) !== -1 ? 'active' : '') + '" data-value="' + p.key + '">' +
               '<svg class="cat-icon" viewBox="0 0 64 64"><use href="#' + p.icon + '"></use></svg>' + p.label.replace(/^\S+\s*/, '') + ' <span class="bk-tab-count">' + byPreset[p.key].length + '</span></button>';
           }).join('');
-        var tagTabsHtml = tagKeys.length ? ('<button type="button" class="' + (bucketTabTag === 'all' ? 'active' : '') + '" data-value="all">全部標籤</button>' +
+        var tagTabsHtml = tagKeys.length ? ('<button type="button" class="' + (bucketTabTags.length === 0 ? 'active' : '') + '" data-value="all">全部標籤</button>' +
           tagKeys.map(function(t){
-            return '<button type="button" class="' + (t === bucketTabTag ? 'active' : '') + '" data-value="' + escapeHtml(t) + '">' +
+            return '<button type="button" class="' + (bucketTabTags.indexOf(t) !== -1 ? 'active' : '') + '" data-value="' + escapeHtml(t) + '">' +
               escapeHtml(t) + ' <span class="bk-tab-count">' + tagCounts[t] + '</span></button>';
           }).join('')) : '';
-        var starsTabsHtml = '<button type="button" class="' + (bucketTabStars === 0 ? 'active' : '') + '" data-value="0">全部</button>' +
+        var starsTabsHtml = '<button type="button" class="' + (bucketTabStars.length === 0 ? 'active' : '') + '" data-value="all">全部</button>' +
           [5, 4, 3, 2, 1].map(function(n){
-            return '<button type="button" class="' + (bucketTabStars === n ? 'active' : '') + '" data-value="' + n + '">' +
-              '★'.repeat(n) + '以上</button>';
+            return '<button type="button" class="' + (bucketTabStars.indexOf(n) !== -1 ? 'active' : '') + '" data-value="' + n + '">' +
+              '★'.repeat(n) + ' <span class="bk-tab-count">' + starCounts[n] + '</span></button>';
           }).join('');
 
-        /* 選了任何篩選條件（分類/標籤/星等，只要不是全部）就改成扁平清單，
-           不分組；什麼都沒篩、單純瀏覽整個圖層時才依分類分組、可收合。 */
-        var anyFilterActive = bucketTabCat !== 'all' || bucketTabTag !== 'all' || bucketTabStars > 0;
+        var anyFilterActive = bucketTabCats.length > 0 || bucketTabTags.length > 0 || bucketTabStars.length > 0;
         function passesExtraFilters(it){
-          if(bucketTabTag !== 'all' && (it.tags || []).indexOf(bucketTabTag) === -1) return false;
-          if(bucketTabStars > 0 && (it.stars || 0) < bucketTabStars) return false;
+          if(bucketTabTags.length && !bucketTabTags.some(function(t){ return (it.tags || []).indexOf(t) !== -1; })) return false;
+          if(bucketTabStars.length && bucketTabStars.indexOf(it.stars || 0) === -1) return false;
           return true;
         }
         var listHtml, mapItems;
         if(!anyFilterActive){
-          mapItems = layerItems;
+          mapItems = selectedItems;
           listHtml = presetsPresent.map(function(preset){
             var catItems = byPreset[preset.key];
             return '<details class="bucket-cat" open>' +
@@ -3543,25 +3588,26 @@
                 '<span class="chk-group-title">' + preset.label.replace(/^\S+\s*/, '') + '</span>' +
                 '<span class="chk-group-count">' + catItems.length + '</span>' +
               '</summary>' +
-              '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
-                catItems.map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('') +
+              '<div class="bucket-layer-list">' +
+                catItems.map(function(it){ return bucketItemHtml(it, numByItem[it.id], showLayerTag); }).join('') +
               '</div>' +
             '</details>';
           }).join('');
         } else {
-          var baseSet = bucketTabCat === 'all' ? layerItems : byPreset[bucketTabCat];
+          var baseSet = bucketTabCats.length ? selectedItems.filter(function(it){ return bucketTabCats.indexOf(it.preset) !== -1; }) : selectedItems;
           var filtered = baseSet.filter(passesExtraFilters);
           mapItems = filtered;
-          listHtml = '<div class="bucket-layer-list" data-layer="' + escapeHtml(bucketTabLayer) + '">' +
-            (filtered.length ? filtered.map(function(it){ return bucketItemHtml(it, numByItem[it.id]); }).join('')
+          listHtml = '<div class="bucket-layer-list">' +
+            (filtered.length ? filtered.map(function(it){ return bucketItemHtml(it, numByItem[it.id], showLayerTag); }).join('')
               : '<p class="wx-empty">符合條件的地點目前是 0 個。</p>') +
           '</div>';
         }
 
+        var layerLabel = bucketTabLayers.length ? bucketTabLayers.join('、') : '全部地區';
         host.innerHTML =
           '<div class="btn-group bk-layer-tabs" id="bkTabLayer">' + layerTabsHtml + '</div>' +
           '<div class="bk-hours-refresh-row">' +
-            '<button type="button" class="dh-refresh-icon" id="bkHoursRefreshBtn" title="重新查詢' + escapeHtml(bucketTabLayer) + '這個圖層目前顯示的地點的營業時間——平常不用按，沒查過的會自動查；已經查過但想再確認一次（例如上次查到公休，隔幾天想再看一次）才需要手動按">🔄 重新查營業時間</button>' +
+            '<button type="button" class="dh-refresh-icon" id="bkHoursRefreshBtn" title="重新查詢「' + escapeHtml(layerLabel) + '」目前顯示的地點的營業時間——平常不用按，沒查過的會自動查；已經查過但想再確認一次（例如上次查到公休，隔幾天想再看一次）才需要手動按">🔄 重新查營業時間</button>' +
             '<span class="hint bk-hours-refresh-status" id="bkHoursRefreshStatus"></span>' +
           '</div>' +
           '<div class="btn-group bk-cat-tabs" id="bkTabCat">' + catTabsHtml + '</div>' +
@@ -3576,7 +3622,7 @@
           var statusEl = host.querySelector('#bkHoursRefreshStatus');
           btn.disabled = true;
           statusEl.textContent = '查詢中…';
-          refreshBucketHours(true, bucketTabLayer).then(function(count){
+          refreshBucketHours(true, bucketTabLayers).then(function(count){
             statusEl.textContent = '已更新 ' + count + ' 個地點的營業時間。';
             btn.disabled = false;
           });
@@ -3584,15 +3630,15 @@
         host.querySelector('#bkTabLayer').addEventListener('click', function(ev){
           var btn = ev.target.closest('button');
           if(!btn) return;
-          bucketTabLayer = btn.dataset.value;
-          bucketTabCat = 'all';
-          bucketTabTag = 'all';
+          if(btn.dataset.value === 'all'){ bucketTabLayers = []; }
+          else { toggleInArray(bucketTabLayers, btn.dataset.value); }
           renderBucketList();
         });
         host.querySelector('#bkTabCat').addEventListener('click', function(ev){
           var btn = ev.target.closest('button');
           if(!btn) return;
-          bucketTabCat = btn.dataset.value;
+          if(btn.dataset.value === 'all'){ bucketTabCats = []; }
+          else { toggleInArray(bucketTabCats, btn.dataset.value); }
           renderBucketList();
         });
         var tagTabsEl = host.querySelector('#bkTabTag');
@@ -3600,14 +3646,16 @@
           tagTabsEl.addEventListener('click', function(ev){
             var btn = ev.target.closest('button');
             if(!btn) return;
-            bucketTabTag = btn.dataset.value;
+            if(btn.dataset.value === 'all'){ bucketTabTags = []; }
+            else { toggleInArray(bucketTabTags, btn.dataset.value); }
             renderBucketList();
           });
         }
         host.querySelector('#bkTabStars').addEventListener('click', function(ev){
           var btn = ev.target.closest('button');
           if(!btn) return;
-          bucketTabStars = Number(btn.dataset.value);
+          if(btn.dataset.value === 'all'){ bucketTabStars = []; }
+          else { toggleInArray(bucketTabStars, Number(btn.dataset.value)); }
           renderBucketList();
         });
         wireBucketActions();
@@ -3929,8 +3977,8 @@
           it.hoursChecked = true;
         }
         bucketItems.push(it);
-        bucketTabLayer = layer;
-        bucketTabCat = it.preset;
+        bucketTabLayers = [layer];
+        bucketTabCats = [it.preset];
         persistBucketItems();
         renderBucketList();
         closeBucketNewModal();
@@ -4750,11 +4798,27 @@
     function render(){
       var list = document.getElementById('linksList');
       list.innerHTML = '';
-      items.forEach(function(it){
+      /* 沒有 order 欄位的（例如剛 seed 進去的兩筆預設連結）就用 createdAt asc
+         （items 原本的陣列順序）當穩定的預設排序，跟其他模組的拖曳排序邏輯
+         一致。 */
+      items.forEach(function(it, idx){ it.__idx = idx; });
+      var sorted = items.slice().sort(function(a, b){
+        var ao = (a.order != null) ? a.order : a.__idx;
+        var bo = (b.order != null) ? b.order : b.__idx;
+        return ao - bo;
+      });
+      sorted.forEach(function(it){
         var row = document.createElement('div');
-        row.className = 'stay-card';
+        row.className = 'stay-card link-row';
         row.setAttribute('data-row-id', it.id);
         row.innerHTML =
+          '<button type="button" class="ia-drag" aria-label="拖曳排序">' +
+            '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">' +
+              '<circle cx="7" cy="4" r="1.5"/><circle cx="13" cy="4" r="1.5"/>' +
+              '<circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/>' +
+              '<circle cx="7" cy="16" r="1.5"/><circle cx="13" cy="16" r="1.5"/>' +
+            '</svg>' +
+          '</button>' +
           '<div class="stay-top">' +
             '<a class="stay-name link-name" href="' + escapeHtml(it.url || '#') + '" target="_blank" rel="noopener">' + escapeHtml(it.name || '（未命名）') + '</a>' +
           '</div>' +
@@ -4829,6 +4893,89 @@
         });
         rowEl.querySelector('.ie-cancel').addEventListener('click', function(){ render(); });
       }
+
+      /* 拖曳排序：跟其他模組（行程、口袋清單、待辦/打包）同一套 Pointer
+         Events 手刻邏輯，放開後把目前畫面上的順序整批寫回 Firestore 的
+         order 欄位。 */
+      (function(){
+        var host = document.getElementById('linksList');
+        var dragState = null;
+        host.addEventListener('pointerdown', function(ev){
+          var handle = ev.target.closest('.link-row .ia-drag');
+          if(!handle) return;
+          var cardEl = handle.closest('.link-row');
+          if(!cardEl) return;
+          ev.preventDefault();
+          var container = cardEl.parentElement;
+          var rect = cardEl.getBoundingClientRect();
+          var placeholder = document.createElement('div');
+          placeholder.className = 'drag-placeholder';
+          placeholder.style.height = rect.height + 'px';
+          container.insertBefore(placeholder, cardEl);
+          dragState = {
+            cardEl: cardEl, placeholder: placeholder, container: container,
+            offsetX: ev.clientX - rect.left, offsetY: ev.clientY - rect.top,
+            pointerId: ev.pointerId
+          };
+          cardEl.classList.add('itin-dragging');
+          cardEl.style.position = 'fixed';
+          cardEl.style.width = rect.width + 'px';
+          cardEl.style.left = rect.left + 'px';
+          cardEl.style.top = rect.top + 'px';
+          cardEl.style.margin = '0';
+          cardEl.style.zIndex = '300';
+          document.body.appendChild(cardEl);
+          try{ handle.setPointerCapture(ev.pointerId); }catch(e){}
+        });
+        document.addEventListener('pointermove', function(ev){
+          if(!dragState || ev.pointerId !== dragState.pointerId) return;
+          var cardEl = dragState.cardEl;
+          cardEl.style.left = (ev.clientX - dragState.offsetX) + 'px';
+          cardEl.style.top = (ev.clientY - dragState.offsetY) + 'px';
+          var el = dropTargetFromPoint(ev.clientX, ev.clientY, cardEl);
+          if(!el) return;
+          var overRow = el.closest('.link-row');
+          if(overRow && overRow !== cardEl && overRow.parentElement === dragState.container){
+            var r = overRow.getBoundingClientRect();
+            var before = (ev.clientY - r.top) < r.height / 2;
+            dragState.container.insertBefore(dragState.placeholder, before ? overRow : overRow.nextSibling);
+          }
+        });
+        function resetCardStyle(cardEl){
+          cardEl.classList.remove('itin-dragging');
+          cardEl.style.position = '';
+          cardEl.style.width = '';
+          cardEl.style.left = '';
+          cardEl.style.top = '';
+          cardEl.style.margin = '';
+          cardEl.style.zIndex = '';
+        }
+        function endDrag(commit){
+          if(!dragState) return;
+          var cardEl = dragState.cardEl, placeholder = dragState.placeholder, container = dragState.container;
+          container.insertBefore(cardEl, placeholder);
+          placeholder.remove();
+          resetCardStyle(cardEl);
+          dragState = null;
+          if(!commit) return;
+          var orderedIds = Array.prototype.map.call(container.children, function(el){ return el.getAttribute('data-row-id'); });
+          try{
+            var batch = window.fb.batch();
+            orderedIds.forEach(function(id, idx){ batch.update(fns.doc(col, id), { order: idx * 1000 }); });
+            batch.commit().catch(function(err){ console.error('links reorder batch failed', err); });
+          }catch(err){
+            console.error('links reorder failed', err);
+          }
+        }
+        document.addEventListener('pointerup', function(ev){
+          if(!dragState || ev.pointerId !== dragState.pointerId) return;
+          endDrag(true);
+        });
+        document.addEventListener('pointercancel', function(ev){
+          if(!dragState || ev.pointerId !== dragState.pointerId) return;
+          endDrag(false);
+        });
+      })();
     });
   })();
 </script>
