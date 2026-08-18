@@ -332,8 +332,24 @@
 
   .day-mini-map{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);margin:1.1rem 0 1.3rem;}
 
-  .day-note{font-size:0.8rem;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0.55rem 0.8rem;margin:0 0 1.1rem;}
-  .day-note.warn{color:var(--persimmon);background:var(--persimmon-soft);border-color:var(--persimmon);font-weight:600;}
+  /* 每天最上面的「這天摘要」色塊——固定用當天代表色的淺色版當背景、
+     深色當上緣粗線，文字加粗，才看得出來是這天的重點摘要，不是普通備註；
+     d.warn=true 的天（例如最後一天班機很趕）維持獨立的警示紅橘色，不
+     管當天代表色是什麼，這個是刻意的例外，不要跟著改成當天顏色。 */
+  .day-summary{position:relative;border-radius:14px;border-top:4px solid var(--ink-faint);padding:0.9rem 2.6rem 0.9rem 1rem;margin:0 0 1.1rem;background:var(--surface-2);}
+  .day-summary-text{font-size:0.98rem;font-weight:700;color:var(--ink);white-space:pre-wrap;margin:0;overflow-wrap:break-word;}
+  .day-summary-text.empty{font-weight:400;color:var(--ink-faint);}
+  .day-summary-edit{position:absolute;top:0.7rem;right:0.7rem;background:none;border:none;cursor:pointer;padding:0.25rem;color:inherit;opacity:0.55;border-radius:6px;font-size:0.95rem;line-height:1;}
+  .day-summary-edit:hover{opacity:1;background:rgba(0,0,0,0.06);}
+  .day-summary.c-indigo{background:var(--indigo-soft);border-top-color:var(--indigo);}
+  .day-summary.c-persimmon{background:var(--persimmon-soft);border-top-color:var(--persimmon);}
+  .day-summary.c-moss{background:var(--moss-soft);border-top-color:var(--moss);}
+  .day-summary.c-sand{background:var(--sand-soft);border-top-color:var(--sand);}
+  .day-summary.c-neutral{background:var(--neutral-soft);border-top-color:var(--neutral);}
+  .day-summary.c-plum{background:var(--plum-soft);border-top-color:var(--plum);}
+  .day-summary.warn{background:var(--persimmon-soft);border-top-color:var(--persimmon);}
+  .day-summary.warn .day-summary-text{color:var(--persimmon);}
+  .day-summary-input{width:100%;min-height:4.5rem;font:inherit;font-size:0.9rem;padding:0.6rem 0.7rem;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);resize:vertical;}
 
   .day-card{display:flex;flex-direction:column;gap:1.3rem;}
   .slot-block .slot-head{font-family:var(--font-display);font-size:0.92rem;font-weight:700;color:var(--ink-soft);margin-bottom:0.6rem;}
@@ -360,7 +376,7 @@
   .stop-map-num.c-sand{background:var(--sand);color:var(--surface);}
   .stop-map-num.c-neutral{background:var(--neutral);color:var(--surface);}
   .itin-stop .stop-stay{display:inline-block;font-size:0.72rem;font-weight:600;padding:0.12rem 0.55rem;border-radius:999px;white-space:nowrap;}
-  .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;}
+  .itin-stop .stop-note{font-size:0.84rem;color:var(--ink-soft);margin-top:0.4rem;overflow-wrap:break-word;white-space:pre-wrap;}
   .itin-stop .stop-hours{font-size:0.78rem;color:var(--ink-soft);margin-top:0.3rem;}
   .bk-layer-tag{font-size:0.76rem;color:var(--ink-faint);margin-top:0.3rem;}
   .itin-stop-head .stop-hours-inline{margin-top:0;white-space:nowrap;}
@@ -2252,23 +2268,23 @@
         return p.close ? (fmtHHMM(p.open) + '–' + fmtHHMM(p.close)) : '24 小時營業';
       }).join('、');
     }
-    /* 開車/走路時間放在名稱旁邊那個色塊（跟停留時間同一個 .stop-stay），固定
-       「開車 X，停留 Y」的順序；driveMin 是存檔/加入行程時算好的分鐘數，
-       跟使用者填的「停留時間」自由文字（例如「3～3.5 小時」）接在一起。
-       「停留」兩個字是自動加的，使用者不用自己打——已經打過「停留」開頭
-       的舊資料（例如「停留約 30 分」）就不會重複加一次。
+    /* 開車/走路時間放在名稱旁邊那個色塊（跟「重點」欄位同一個 .stop-stay），
+       固定「開車 X，重點文字」的順序；driveMin 是存檔/加入行程時算好的
+       分鐘數，跟使用者填的「重點」自由文字（例如「3～3.5 小時」「記得買
+       門票」）直接接在一起，不會自動加任何字——這欄本來叫「停留時間」，
+       會自動幫使用者的文字加上「停留」兩個字，後來這欄改成給使用者自己
+       寫任何想標註的重點，不一定是時間長度了，所以拿掉這個自動加字。
        走路時間（walkMin）只有在距離夠近時才會查到（見 refreshDayInfo 的
        WALK_CHECK_DRIVE_MAX），查到了而且在 WALK_SHOW_MAX 分鐘以內，色塊就
        改顯示「步行 X」取代「開車 X」——比開車實際（找車位、上下車都要
        時間），超過門檻還是顯示開車比較準。 */
     function stayBadgeText(stop){
-      var timeText = (stop.time || '').trim();
-      var stayText = timeText ? (/^停留/.test(timeText) ? timeText : ('停留' + timeText)) : '';
+      var highlightText = (stop.time || '').trim();
       var useWalk = stop.walkMin != null && stop.walkMin <= WALK_SHOW_MAX;
       var travelText = useWalk ? ('步行 ' + fmtDriveMin(stop.walkMin))
         : (stop.driveMin != null ? ('開車 ' + fmtDriveMin(stop.driveMin)) : '');
-      if(!travelText) return stayText;
-      return travelText + (stayText ? '，' + stayText : '');
+      if(!travelText) return highlightText;
+      return travelText + (highlightText ? '，' + highlightText : '');
     }
     function findPrevGeoStop(dayId, slotKeyTarget, idxTarget){
       var d = DAYS[dayId];
@@ -2331,9 +2347,9 @@
       return '<div class="itin-edit-form">' +
         '<div><label>地點名稱</label><input type="text" class="ie-name" value="' + escapeHtml(stop.name || '') + '" placeholder="搜尋或輸入地點名稱" autocomplete="off"></div>' +
         '<div class="geo-suggest-list ie-suggest"></div>' +
-        '<div><label>停留時間</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="例如：約 30 分（開車時間會自動抓 Google 路線，不用自己填）"></div>' +
+        '<div><label>重點</label><input type="text" class="ie-time" value="' + escapeHtml(stop.time || '') + '" placeholder="想在色塊上標註的重點，例如：約 30 分、記得買門票"></div>' +
         '<div><label>備註</label><textarea class="ie-note" placeholder="說明、提醒…">' + escapeHtml(stop.note || '') + '</textarea></div>' +
-        '<div><label>照片（可以多張，兩人都能上傳）</label>' +
+        '<div><label>照片（可以多張，兩人都能上傳；也可以直接複製圖片後在這個表單裡貼上）</label>' +
           '<input type="file" accept="image/*" class="ie-photo-input">' +
           '<p class="ie-photo-status"></p>' +
           '<div class="ie-photo-gallery">' + photoGalleryHtml(photos) + '</div>' +
@@ -2404,11 +2420,10 @@
       var photoInput = body.querySelector('.ie-photo-input');
       var photoStatus = body.querySelector('.ie-photo-status');
       var photoGallery = body.querySelector('.ie-photo-gallery');
-      photoInput.addEventListener('change', function(){
-        var file = photoInput.files[0];
+      function uploadStopPhoto(file){
         if(!file) return;
         photoStatus.textContent = '上傳中…';
-        var path = 'itinerary/' + dayId + '/' + slotKey + '-' + idx + '-' + Date.now() + '-' + file.name;
+        var path = 'itinerary/' + dayId + '/' + slotKey + '-' + idx + '-' + Date.now() + '-' + (file.name || 'pasted.png');
         window.fb.storage.upload(path, file).then(function(res){
           stop.photos.push(res);
           window.recordStorageDelta(res.size);
@@ -2418,7 +2433,27 @@
         }).catch(function(err){
           photoStatus.textContent = '上傳失敗：' + (err && err.message ? err.message : '請再試一次');
         });
+      }
+      photoInput.addEventListener('change', function(){
+        uploadStopPhoto(photoInput.files[0]);
         photoInput.value = '';
+      });
+      /* 直接複製一張圖（截圖、或從網頁上複製圖片）貼上也能上傳，不用先存
+         成檔案再選檔——貼上事件綁在整個編輯表單上，游標在表單裡任何欄位
+         按 Ctrl/Cmd+V 都有效；只有真的貼到圖片的時候才會攔截、觸發上傳，
+         貼文字到名稱/重點/備註不受影響。 */
+      body.addEventListener('paste', function(ev){
+        var items = (ev.clipboardData && ev.clipboardData.items) || [];
+        for(var i = 0; i < items.length; i++){
+          if(items[i].type && items[i].type.indexOf('image/') === 0){
+            var file = items[i].getAsFile();
+            if(file){
+              ev.preventDefault();
+              uploadStopPhoto(file);
+            }
+            break;
+          }
+        }
       });
       photoGallery.addEventListener('click', function(ev){
         var delBtn = ev.target.closest('.ie-photo-del');
@@ -2698,6 +2733,40 @@
     }
     window.__invalidateDayMap = function(){ if(dayMapInstance){ google.maps.event.trigger(dayMapInstance, 'resize'); } };
 
+    /* 每天最上面的「這天摘要」：原本是寫死在 DAYS_SEED 的 note 欄位、單純
+       顯示用，現在改成使用者可以直接在畫面上編輯——點右上角的 ✎ 展開成
+       文字框，存檔寫回 d.note／persistDay，跟其他欄位共用同一份 Firestore
+       文件，不用另外開新的資料結構。沒有內容時顯示一句提示文字，邀請使用者
+       自己填，而不是完全不顯示這個色塊（每天都要看得到這個區塊）。 */
+    function renderDaySummary(d, dayId){
+      var host = document.getElementById('dayNoteHost');
+      var colorClass = d.warn ? 'warn' : ('c-' + d.color);
+      var text = d.note || '';
+      host.innerHTML =
+        '<div class="day-summary ' + colorClass + '">' +
+          (text ? '<p class="day-summary-text">' + escapeHtml(text) + '</p>'
+                : '<p class="day-summary-text empty">點右上角 ✎ 新增這天的重點摘要…</p>') +
+          '<button type="button" class="day-summary-edit" aria-label="編輯這天的摘要" title="編輯這天的摘要">✎</button>' +
+        '</div>';
+      host.querySelector('.day-summary-edit').addEventListener('click', function(){
+        var wrap = host.querySelector('.day-summary');
+        wrap.innerHTML =
+          '<textarea class="day-summary-input" placeholder="這天的重點摘要…">' + escapeHtml(text) + '</textarea>' +
+          '<div class="itin-edit-actions">' +
+            '<button type="button" class="ie-save">儲存</button>' +
+            '<button type="button" class="ie-cancel">取消</button>' +
+          '</div>';
+        var ta = wrap.querySelector('.day-summary-input');
+        ta.focus();
+        wrap.querySelector('.ie-save').addEventListener('click', function(){
+          d.note = ta.value.trim();
+          persistDay(dayId);
+          renderDaySummary(d, dayId);
+        });
+        wrap.querySelector('.ie-cancel').addEventListener('click', function(){ renderDaySummary(d, dayId); });
+      });
+    }
+
     function renderDay(dayId){
       var d = DAYS[dayId];
       if(!d) return;
@@ -2705,14 +2774,7 @@
       var stopCount = SLOT_ORDER.reduce(function(n, k){ return n + (d.slots[k] ? d.slots[k].length : 0); }, 0);
       document.getElementById('dhSub').textContent = d.date + d.weekday + '・' + stopCount + ' 站';
 
-      var noteHost = document.getElementById('dayNoteHost');
-      noteHost.innerHTML = '';
-      if(d.note){
-        var noteEl = document.createElement('div');
-        noteEl.className = 'day-note' + (d.warn ? ' warn' : '');
-        noteEl.textContent = d.note;
-        noteHost.appendChild(noteEl);
-      }
+      renderDaySummary(d, dayId);
       var host = document.getElementById('dayRender');
       host.innerHTML = '';
       var card = document.createElement('div');
