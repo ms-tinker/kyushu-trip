@@ -918,7 +918,7 @@
       <div id="ov-stays">
         <div class="section-head">
           <h2>住宿資訊</h2>
-          <p class="sub">三段住宿：福岡 → 由布院 → 福岡。</p>
+          <p class="sub">三段住宿：福岡 → 別府 → 福岡。</p>
         </div>
         <div class="stay-list">
           <div class="stay-card">
@@ -939,14 +939,14 @@
             <div class="stay-top">
               <div>
                 <span class="stay-badge c-moss">8/28（五）→ 8/30（日）</span>
-                <div class="stay-name">Yufuin Covaco</div>
+                <div class="stay-name">BEPPU Risana</div>
               </div>
-              <a class="stay-link" href="https://www.google.com/maps/search/?api=1&query=2937-6%20Kawakami%2C%20Yufuin-cho%2C%20Yufu%2C%20879-5102%2C%20Japan" target="_blank" rel="noopener">在 Google Maps 開啟 →</a>
+              <a class="stay-link" href="https://www.google.com/maps?q=33.27745,131.4982" target="_blank" rel="noopener">在 Google Maps 開啟 →</a>
             </div>
             <div class="stay-info">
-              <span>湯布院町川上2937-6, 由布市 879-5102</span>
-              <span class="tnum">+81 80 6198 2582</span>
-              <span class="tnum">入住 15:00～00:00・退房 8/30（日）06:00～10:00</span>
+              <span>田の湯町2-23, 別府市, 874-0909</span>
+              <span class="tnum">+81 50 1720 7129</span>
+              <span class="tnum">入住 8/28（五）15:00～00:00・退房 8/30（日）10:00 前</span>
             </div>
           </div>
           <div class="stay-card">
@@ -2216,6 +2216,14 @@
 
     var DAYS = {};
     DAYS_SEED.forEach(function(s){ DAYS[s.id] = JSON.parse(JSON.stringify(s)); });
+    /* 記錄「現在哪一天有卡片正在編輯中」——編輯表單開著的時候，這天的
+       onSnapshot（見下面 window.fbReady.then 那段）要暫停套用雲端資料、
+       暫停整個重畫，不然任何背景寫入（例如編輯中途貼上一張照片、或背景
+       補查營業時間查到結果）都會觸發 renderDay 把整個 #dayRender 重畫，
+       正在編輯打到一半的表單就會被整組換成唯讀卡片，等於「編輯到一半
+       突然被關掉」。見 enterEdit 開始編輯時設定，四個結束編輯的地方
+       （存檔／取消／刪除／搬到其他天）各自清空。 */
+    window.__activeEditDayId = null;
     function redrawOverviewMap(){ if(window.__drawOverviewFromDays){ window.__drawOverviewFromDays(DAYS, SLOT_ORDER); } }
     redrawOverviewMap();
     /* first paint usually happens before the async Google Maps script has
@@ -2323,7 +2331,9 @@
         '<div class="itin-stop-body"><div class="itin-stop-view">' +
           '<div class="itin-stop-head">' +
             (mapNumber ? '<span class="stop-map-num c-' + color + '" data-mapnum="' + mapNumber + '">' + mapNumber + '</span>' : '') +
-            '<span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>' +
+            (hasGeo
+              ? '<a class="stop-name" href="' + escapeHtml(buildPlaceUrl(stop.name, stop.lat, stop.lon)) + '" target="_blank" rel="noopener">' + escapeHtml(stop.name || '（未命名）') + '</a>'
+              : '<span class="stop-name">' + escapeHtml(stop.name || '（未命名）') + '</span>') +
             (badgeText ? '<span class="stop-stay c-' + color + '">' + escapeHtml(badgeText) + '</span>' : '') + '</div>' +
           (stop.note ? '<p class="stop-note">' + escapeHtml(stop.note) + '</p>' : '') +
           (hoursText ? '<p class="stop-hours">🕒 ' + escapeHtml(hoursText) + '</p>' : '') +
@@ -2407,6 +2417,7 @@
       redrawOverviewMap();
     }
     function enterEdit(cardEl, dayId, slotKey, idx){
+      window.__activeEditDayId = dayId;
       var stop = DAYS[dayId].slots[slotKey][idx] || {name:'', time:'', note:''};
       if(!stop.photos){ stop.photos = []; }
       var body = cardEl.querySelector('.itin-stop-body');
@@ -2469,6 +2480,7 @@
       });
 
       body.querySelector('.ie-save').addEventListener('click', function(){
+        window.__activeEditDayId = null;
         var locationChanged = !!nameInput.dataset.lat;
         var updated = {
           name: nameInput.value.trim(),
@@ -2512,19 +2524,21 @@
               s.driveFromLat = prevGeoStop.lat;
               s.driveFromLon = prevGeoStop.lon;
               persistDay(dayId);
-              if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+              if(String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); }
             });
           }
         }
       });
       body.querySelector('.ie-move-btn').addEventListener('click', function(){
+        window.__activeEditDayId = null;
         var toDayId = groupValue(body.querySelector('.ie-move-day'));
         var toSlotKey = groupValue(body.querySelector('.ie-move-slot'));
         if(toDayId === dayId && toSlotKey === slotKey) return;
         moveStop(dayId, slotKey, idx, toDayId, toSlotKey);
       });
-      body.querySelector('.ie-cancel').addEventListener('click', function(){ renderDay(dayId); });
+      body.querySelector('.ie-cancel').addEventListener('click', function(){ window.__activeEditDayId = null; renderDay(dayId); });
       body.querySelector('.ie-del').addEventListener('click', function(){
+        window.__activeEditDayId = null;
         (stop.photos || []).forEach(function(p){ window.fb.storage.remove(p.path); window.recordStorageDelta(-p.size); });
         removeStop(dayId, slotKey, idx);
       });
@@ -2637,7 +2651,7 @@
          Firestore 存的舊資料。 */
       return Promise.all(tasks).then(function(){
         if(tasks.length || changed){ persistDay(dayId); } /* 就算全部查不到，也要把 checked 記下來，不然每次開頁面都會重查一次 */
-        if(changed && String(window.__currentDay) === dayId){ renderDay(dayId); }
+        if(changed && String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); }
         return {changed:changed, hoursErrors:hoursErrors, driveErrors:driveErrors, attempted:tasks.length};
       });
     }
@@ -2994,6 +3008,11 @@
       DAYS_SEED.forEach(function(seed){
         var ref = fns.doc(window.fb.col('itinerary'), seed.id);
         fns.onSnapshot(ref, function(snap){
+          /* 這天有卡片正在編輯中就整個跳過——不套用這次雲端資料、也不重畫，
+             不然編輯到一半的表單會被重畫掉的唯讀卡片取代（見 activeEditDayId
+             宣告處的說明）。等編輯存檔/取消/刪除/搬移，畫面才會用當時最新
+             的本機資料重新畫一次。 */
+          if(window.__activeEditDayId === seed.id) return;
           if(snap.exists()){
             DAYS[seed.id] = snap.data();
             /* 2026-08-16：原本這裡有一段「defaultsCleared 一次性清除預設
@@ -4108,7 +4127,7 @@
           }
           if(changed){
             persistDay(dayId);
-            if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+            if(String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); }
           }
         }
       }
@@ -4131,7 +4150,7 @@
           }
           if(found){
             persistDay(dayId);
-            if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+            if(String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); }
           }
         }
       }
@@ -4153,7 +4172,7 @@
            營業時間；順便查一下開車時間（上一站存在的話），兩個都是背景查，
            查到了才補存檔+重畫，不會擋住剛剛的「加入」動作。 */
         lookupPlaceHours(newStop.name, newStop.lat, newStop.lon, function(hours){
-          if(hours){ newStop.hours = hours; persistDay(dayId); if(String(window.__currentDay) === dayId){ renderDay(dayId); } }
+          if(hours){ newStop.hours = hours; persistDay(dayId); if(String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); } }
         });
         var prevGeoStop = findPrevGeoStop(dayId, slotKey, newIdx);
         if(prevGeoStop){
@@ -4163,7 +4182,7 @@
               newStop.driveFromLat = prevGeoStop.lat;
               newStop.driveFromLon = prevGeoStop.lon;
               persistDay(dayId);
-              if(String(window.__currentDay) === dayId){ renderDay(dayId); }
+              if(String(window.__currentDay) === dayId && window.__activeEditDayId !== dayId){ renderDay(dayId); }
             }
           });
         }
