@@ -60,8 +60,10 @@
      跟著換色；分頁切換鈕本身在 scope 外面，所以另外補一條規則。 */
   [data-panel="checklist"] [data-subtabpanel="todo"]{ --indigo:var(--sand); --indigo-soft:var(--sand-soft); }
   [data-panel="checklist"] [data-subtabpanel="pack"]{ --indigo:var(--moss); --indigo-soft:var(--moss-soft); }
+  [data-panel="checklist"] [data-subtabpanel="shopping"]{ --indigo:var(--plum); --indigo-soft:var(--plum-soft); }
   [data-panel="checklist"] .subtab-bar button[data-subtab="todo"].active{ background:var(--sand); border-color:var(--sand); }
   [data-panel="checklist"] .subtab-bar button[data-subtab="pack"].active{ background:var(--moss); border-color:var(--moss); }
+  [data-panel="checklist"] .subtab-bar button[data-subtab="shopping"].active{ background:var(--plum); border-color:var(--plum); }
   [data-panel="links"] .panel-inner{ --indigo:var(--plum); --indigo-soft:var(--plum-soft); }
 
   @media (prefers-color-scheme: dark){
@@ -494,6 +496,33 @@
   .chk-row .chk-who{font-size:0.72rem;color:var(--ink-faint);white-space:nowrap;}
   .del-btn, .edit-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;padding:0.35rem;border-radius:8px;flex:none;line-height:0;}
   .del-btn:hover{background:var(--surface-2);color:var(--persimmon);}
+
+  /* ---- 購物清單：Board（依分類分欄的看板）／Table（表格）兩種檢視 ---- */
+  .shop-toolbar{display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.7rem;}
+  .shop-view-toggle{gap:0.4rem;}
+  .shop-board{display:flex;gap:1rem;overflow-x:auto;padding-bottom:0.8rem;-webkit-overflow-scrolling:touch;}
+  .shop-board-col{flex:0 0 240px;background:var(--surface-2);border-radius:14px;padding:0.7rem;display:flex;flex-direction:column;gap:0.6rem;}
+  .shop-board-col-head{display:flex;align-items:center;gap:0.4rem;font-weight:700;font-size:0.85rem;padding:0.2rem 0.3rem 0.5rem;}
+  .shop-board-col-head .chk-group-count{margin-left:auto;font-size:0.72rem;font-weight:600;color:var(--ink-soft);}
+  .shop-card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;}
+  .shop-card-photo{width:100%;height:110px;object-fit:cover;display:block;background:var(--surface-2);}
+  .shop-card-body{padding:0.6rem 0.7rem;}
+  .shop-card-name{font-weight:700;font-size:0.88rem;overflow-wrap:break-word;}
+  .shop-card.is-bought{opacity:0.6;}
+  .shop-card.is-bought .shop-card-name{text-decoration:line-through;}
+  .shop-card .bk-tag-list{margin-top:0.4rem;}
+  .shop-card-budget{font-size:0.78rem;color:var(--ink-soft);margin-top:0.35rem;}
+  .shop-table-wrap{overflow-x:auto;}
+  .shop-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  .shop-table th{text-align:left;padding:0.5rem 0.7rem;border-bottom:2px solid var(--line);font-size:0.74rem;color:var(--ink-soft);white-space:nowrap;}
+  .shop-table td{padding:0.5rem 0.7rem;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .shop-table tr.is-bought td{color:var(--ink-faint);}
+  .shop-table tr.is-bought .shop-table-name{text-decoration:line-through;}
+  .shop-table-thumb{width:40px;height:40px;object-fit:cover;border-radius:8px;display:block;background:var(--surface-2);}
+  .shop-table-name{font-weight:600;cursor:pointer;white-space:nowrap;}
+  .shop-table-name:hover{text-decoration:underline;}
+  .shop-table .bk-tag-list{margin:0;}
+  .shop-bought-field .shop-bought-label{display:flex;align-items:center;gap:0.5rem;font-weight:400;cursor:pointer;}
   .edit-btn:hover{background:var(--surface-2);color:var(--indigo);}
   .del-btn svg, .edit-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;}
   .row-actions{display:flex;gap:0.2rem;flex:none;}
@@ -1241,6 +1270,7 @@
       <div class="subtab-bar">
         <button data-subtab="todo" class="active">待辦事項</button>
         <button data-subtab="pack">打包清單</button>
+        <button data-subtab="shopping">購物清單</button>
       </div>
 
       <div class="subtab-panel active" data-subtabpanel="todo">
@@ -1298,7 +1328,71 @@
         <div class="chk-list" id="packList"></div>
       </div>
 
+      <div class="subtab-panel" data-subtabpanel="shopping">
+        <div class="shop-toolbar">
+          <button class="btn-primary" id="shopAddOpenBtn" type="button">＋ 新增購物項目</button>
+          <div class="btn-group shop-view-toggle" id="shopViewToggle">
+            <button type="button" class="active" data-value="board">看板</button>
+            <button type="button" data-value="table">表格</button>
+          </div>
+        </div>
+        <p class="list-progress" id="shopSummary"></p>
+        <div id="shopBoard" class="shop-board"></div>
+        <div id="shopTableWrap" class="shop-table-wrap" hidden></div>
+      </div>
+
       <p class="local-note">資料已同步到雲端，你跟另一半用這個網址打開都會即時看到彼此的勾選。</p>
+    </div>
+
+    <div class="modal-overlay" id="shopItemModal" hidden>
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h3 id="shopModalTitle">新增購物項目</h3>
+          <button type="button" class="modal-close" id="shopModalCloseBtn" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-card">
+            <div class="field">
+              <label>名稱</label>
+              <input type="text" id="shopName" placeholder="例如：小林製藥 熱敷眼罩">
+            </div>
+            <div class="field">
+              <label>分類</label>
+              <div class="cat-manager" data-catdoc="shoppingCategories" data-catfield="shoppingCategory"
+                   data-catdefault='["藥妝","伴手禮","嬰兒用品","超市","服飾","3C/家電","其他"]'></div>
+            </div>
+            <div class="field">
+              <label>標籤（點選已有的，或新增一個）</label>
+              <div id="shopTagsField"></div>
+            </div>
+            <div class="field">
+              <label>圖片（可以多張，兩人都能上傳；也可以直接複製圖片後在這裡貼上）</label>
+              <input type="file" accept="image/*" id="shopPhotoInput">
+              <p class="ie-photo-status" id="shopPhotoStatus"></p>
+              <div class="ie-photo-gallery" id="shopPhotoGallery"></div>
+            </div>
+            <div class="field">
+              <label>連結</label>
+              <input type="text" id="shopLink" placeholder="https://…">
+            </div>
+            <div class="field">
+              <label>預算／價格</label>
+              <input type="text" id="shopBudget" placeholder="例如：約 NT$500">
+            </div>
+            <div class="field shop-bought-field">
+              <label class="shop-bought-label"><input type="checkbox" id="shopBought"> 已經買了</label>
+            </div>
+            <div class="field">
+              <label>備註</label>
+              <textarea id="shopNote" placeholder="說明、提醒…"></textarea>
+            </div>
+            <div class="itin-edit-actions">
+              <button type="button" class="ie-save" id="shopSaveBtn">新增</button>
+              <button type="button" class="ie-del" id="shopDelBtn" hidden>刪除這個項目</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -4999,6 +5093,333 @@
           box: groupValue(rowEl.querySelector('.ce-box'))
         };
       }
+    });
+  })();
+
+  /* ---- 購物清單：Board（依分類分欄的看板）／Table（表格）兩種檢視切換。
+     欄位是固定的（名稱/分類/標籤/圖片/連結/預算/買了嗎/備註），不是使用者
+     可以自訂任意型別欄位的通用資料庫——分類沿用記帳/待辦/打包同一套
+     cat-manager（可以自己新增/排序/刪除分類選項，Board 就是照這個分類分
+     欄），標籤沿用口袋清單的標籤挑選器邏輯，圖片上傳/貼上沿用行程地點
+     照片的邏輯，避免重新發明一套風險更高的通用欄位系統。 ---- */
+  (function(){
+    var items = [];
+    var shopView = 'board';
+    var editingId = null;
+    var pendingTags = [];
+    var pendingPhotos = [];
+    var photosAtOpen = [];
+
+    function shopAllKnownTags(){
+      var set = {};
+      items.forEach(function(it){ (it.tags || []).forEach(function(t){ set[t] = true; }); });
+      return Object.keys(set).sort();
+    }
+    function shopTagPickerHtml(selectedTags){
+      var known = shopAllKnownTags();
+      (selectedTags || []).forEach(function(t){ if(known.indexOf(t) === -1){ known.push(t); } });
+      known.sort();
+      var chips = known.map(function(t){
+        return '<button type="button" class="bk-tag-chip-btn' + ((selectedTags || []).indexOf(t) !== -1 ? ' active' : '') + '" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</button>';
+      }).join('');
+      return '<div class="bk-tag-picker">' + (chips || '<span class="bk-tag-empty-hint">還沒有任何標籤，用下面新增第一個</span>') + '</div>' +
+        '<div class="bk-tag-add-row"><input type="text" class="bk-tag-add-input" placeholder="輸入新標籤"><button type="button" class="ia-btn bk-tag-add-btn">＋新增標籤</button></div>';
+    }
+    function wireShopTagPicker(wrapEl, tagsHolder){
+      function rerender(){ wrapEl.innerHTML = shopTagPickerHtml(tagsHolder.tags); wire(); }
+      function wire(){
+        wrapEl.querySelectorAll('.bk-tag-chip-btn').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var tag = btn.dataset.tag;
+            var idx = tagsHolder.tags.indexOf(tag);
+            if(idx === -1){ tagsHolder.tags.push(tag); } else { tagsHolder.tags.splice(idx, 1); }
+            rerender();
+          });
+        });
+        var addInput = wrapEl.querySelector('.bk-tag-add-input');
+        var addBtn = wrapEl.querySelector('.bk-tag-add-btn');
+        addBtn.addEventListener('click', function(){
+          var val = addInput.value.trim();
+          if(!val) return;
+          if(tagsHolder.tags.indexOf(val) === -1){ tagsHolder.tags.push(val); }
+          rerender();
+        });
+        addInput.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); addBtn.click(); } });
+      }
+      wire();
+    }
+    function shopPhotoGalleryHtml(photos){
+      return (photos || []).map(function(p, i){
+        return '<span class="ie-photo-thumb"><img src="' + escapeHtml(p.url) + '" alt=""><button type="button" class="ie-photo-del" data-pidx="' + i + '" aria-label="刪除照片">✕</button></span>';
+      }).join('');
+    }
+    function tagsHtml(tags){
+      if(!tags || !tags.length) return '';
+      return '<div class="bk-tag-list">' + tags.map(function(t){ return '<span class="bk-tag-chip">' + escapeHtml(t) + '</span>'; }).join('') + '</div>';
+    }
+
+    function renderBoard(){
+      var host = document.getElementById('shopBoard');
+      var catOrder = getCategoryOrder('shoppingCategory');
+      var byCat = {};
+      items.forEach(function(it, idx){
+        it.__idx = idx;
+        var cat = it.category || '未分類';
+        (byCat[cat] = byCat[cat] || []).push(it);
+      });
+      var cats = Object.keys(byCat).sort(function(a, b){
+        var ai = catOrder.indexOf(a); if(ai === -1){ ai = catOrder.length; }
+        var bi = catOrder.indexOf(b); if(bi === -1){ bi = catOrder.length; }
+        return ai - bi;
+      });
+      if(!cats.length){ host.innerHTML = '<p class="wx-empty">還沒有購物項目，點上面「＋ 新增購物項目」開始加。</p>'; return; }
+      host.innerHTML = cats.map(function(cat){
+        var catItems = byCat[cat].slice().sort(function(a, b){
+          var ao = (a.order != null) ? a.order : a.__idx;
+          var bo = (b.order != null) ? b.order : b.__idx;
+          return ao - bo;
+        });
+        return '<div class="shop-board-col">' +
+          '<div class="shop-board-col-head">' + catIconHtml(cat) + '<span>' + escapeHtml(cat) + '</span><span class="chk-group-count">' + catItems.length + '</span></div>' +
+          catItems.map(function(it){
+            var photo = (it.photos && it.photos.length) ? it.photos[0].url : null;
+            return '<div class="shop-card' + (it.bought ? ' is-bought' : '') + '" data-id="' + it.id + '">' +
+              (photo ? '<img class="shop-card-photo" src="' + escapeHtml(photo) + '" alt="">' : '') +
+              '<div class="shop-card-body">' +
+                '<div class="shop-card-name">' + escapeHtml(it.name || '（未命名）') + '</div>' +
+                tagsHtml(it.tags) +
+                (it.budget ? '<div class="shop-card-budget">' + escapeHtml(it.budget) + '</div>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }).join('');
+      host.querySelectorAll('.shop-card').forEach(function(card){
+        card.addEventListener('click', function(){ openEdit(card.dataset.id); });
+      });
+    }
+
+    function renderTable(){
+      var host = document.getElementById('shopTableWrap');
+      if(!items.length){ host.innerHTML = '<p class="wx-empty">還沒有購物項目，點上面「＋ 新增購物項目」開始加。</p>'; return; }
+      var rows = items.slice().sort(function(a, b){
+        var ao = (a.order != null) ? a.order : (a.__idx || 0);
+        var bo = (b.order != null) ? b.order : (b.__idx || 0);
+        return ao - bo;
+      });
+      host.innerHTML = '<table class="shop-table"><thead><tr>' +
+        '<th></th><th>名稱</th><th>分類</th><th>標籤</th><th>連結</th><th>預算</th><th>買了嗎</th><th></th>' +
+        '</tr></thead><tbody>' +
+        rows.map(function(it){
+          var photo = (it.photos && it.photos.length) ? it.photos[0].url : null;
+          return '<tr class="' + (it.bought ? 'is-bought' : '') + '" data-id="' + it.id + '">' +
+            '<td>' + (photo ? '<img class="shop-table-thumb" src="' + escapeHtml(photo) + '" alt="">' : '') + '</td>' +
+            '<td class="shop-table-name" data-id="' + it.id + '">' + escapeHtml(it.name || '（未命名）') + '</td>' +
+            '<td>' + escapeHtml(it.category || '') + '</td>' +
+            '<td>' + tagsHtml(it.tags) + '</td>' +
+            '<td>' + (it.link ? '<a href="' + escapeHtml(it.link) + '" target="_blank" rel="noopener">連結</a>' : '') + '</td>' +
+            '<td>' + escapeHtml(it.budget || '') + '</td>' +
+            '<td><input type="checkbox" data-toggle="' + it.id + '" ' + (it.bought ? 'checked' : '') + '></td>' +
+            '<td><button type="button" class="ia-btn ia-del" data-del="' + it.id + '">刪除</button></td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    }
+
+    function render(){
+      var summaryEl = document.getElementById('shopSummary');
+      if(summaryEl){ summaryEl.textContent = items.filter(function(it){ return it.bought; }).length + ' / ' + items.length + ' 已購買'; }
+      document.getElementById('shopBoard').hidden = shopView !== 'board';
+      document.getElementById('shopTableWrap').hidden = shopView !== 'table';
+      if(shopView === 'board'){ renderBoard(); } else { renderTable(); }
+    }
+
+    document.getElementById('shopViewToggle').addEventListener('click', function(ev){
+      var btn = ev.target.closest('button');
+      if(!btn) return;
+      document.querySelectorAll('#shopViewToggle button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      shopView = btn.dataset.value;
+      render();
+    });
+
+    var modal = document.getElementById('shopItemModal');
+    var modalTitle = document.getElementById('shopModalTitle');
+    var nameInput = document.getElementById('shopName');
+    var linkInput = document.getElementById('shopLink');
+    var budgetInput = document.getElementById('shopBudget');
+    var boughtInput = document.getElementById('shopBought');
+    var noteInput = document.getElementById('shopNote');
+    var tagsFieldWrap = document.getElementById('shopTagsField');
+    var photoInput = document.getElementById('shopPhotoInput');
+    var photoStatus = document.getElementById('shopPhotoStatus');
+    var photoGallery = document.getElementById('shopPhotoGallery');
+    var saveBtn = document.getElementById('shopSaveBtn');
+    var delBtn = document.getElementById('shopDelBtn');
+
+    function setCategoryActive(selectedValue){
+      var catGroup = document.querySelector('.cat-manager[data-catfield="shoppingCategory"] .cat-chips');
+      if(!catGroup) return;
+      var buttons = catGroup.querySelectorAll('button');
+      var matched = false;
+      buttons.forEach(function(b){
+        var isMatch = !!selectedValue && b.dataset.value === selectedValue;
+        b.classList.toggle('active', isMatch);
+        if(isMatch){ matched = true; }
+      });
+      if(!matched && buttons.length){ buttons[0].classList.add('active'); }
+    }
+
+    function openModal(it){
+      editingId = it ? it.id : null;
+      pendingTags = it ? (it.tags || []).slice() : [];
+      photosAtOpen = it ? (it.photos || []).slice() : [];
+      pendingPhotos = photosAtOpen.slice();
+      modalTitle.textContent = it ? '編輯購物項目' : '新增購物項目';
+      saveBtn.textContent = it ? '儲存' : '新增';
+      delBtn.hidden = !it;
+      nameInput.value = it ? (it.name || '') : '';
+      linkInput.value = it ? (it.link || '') : '';
+      budgetInput.value = it ? (it.budget || '') : '';
+      boughtInput.checked = !!(it && it.bought);
+      noteInput.value = it ? (it.note || '') : '';
+      photoStatus.textContent = '';
+      photoGallery.innerHTML = shopPhotoGalleryHtml(pendingPhotos);
+      setCategoryActive(it ? it.category : null);
+      tagsFieldWrap.innerHTML = shopTagPickerHtml(pendingTags);
+      wireShopTagPicker(tagsFieldWrap, { tags: pendingTags });
+      modal.hidden = false;
+    }
+    function openEdit(id){
+      var it = items.filter(function(x){ return x.id === id; })[0];
+      if(it){ openModal(it); }
+    }
+    /* 加了照片但沒按儲存就關掉表單的話，把這次新上傳、原本不存在這個項目上
+       的照片從 Storage 刪掉，不留孤兒檔案佔用量。 */
+    function cleanupUnsavedPhotos(){
+      pendingPhotos.forEach(function(p){
+        var wasThere = photosAtOpen.some(function(op){ return op.path === p.path; });
+        if(!wasThere){ window.fb.storage.remove(p.path); window.recordStorageDelta(-p.size); }
+      });
+    }
+    function closeModal(){
+      cleanupUnsavedPhotos();
+      modal.hidden = true;
+    }
+    document.getElementById('shopAddOpenBtn').addEventListener('click', function(){ openModal(null); });
+    document.getElementById('shopModalCloseBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', function(ev){ if(ev.target === modal){ closeModal(); } });
+
+    function uploadShopPhoto(file){
+      if(!file) return;
+      photoStatus.textContent = '上傳中…';
+      var path = 'shopping/' + (editingId || 'new') + '-' + Date.now() + '-' + (file.name || 'pasted.png');
+      window.fb.storage.upload(path, file).then(function(res){
+        pendingPhotos.push(res);
+        window.recordStorageDelta(res.size);
+        photoStatus.textContent = '已上傳';
+        photoGallery.innerHTML = shopPhotoGalleryHtml(pendingPhotos);
+      }).catch(function(err){
+        photoStatus.textContent = '上傳失敗：' + (err && err.message ? err.message : '請再試一次');
+      });
+    }
+    photoInput.addEventListener('change', function(){
+      uploadShopPhoto(photoInput.files[0]);
+      photoInput.value = '';
+    });
+    /* 貼上事件綁在整個彈窗上，游標在表單裡任何欄位按 Ctrl/Cmd+V 都有效，
+       只有真的貼到圖片才攔截、觸發上傳，貼文字不受影響（同一套邏輯跟行程
+       地點編輯表單的照片貼上一樣）。 */
+    modal.addEventListener('paste', function(ev){
+      var clipItems = (ev.clipboardData && ev.clipboardData.items) || [];
+      for(var i = 0; i < clipItems.length; i++){
+        if(clipItems[i].type && clipItems[i].type.indexOf('image/') === 0){
+          var file = clipItems[i].getAsFile();
+          if(file){ ev.preventDefault(); uploadShopPhoto(file); }
+          break;
+        }
+      }
+    });
+    photoGallery.addEventListener('click', function(ev){
+      var delPhotoBtn = ev.target.closest('.ie-photo-del');
+      if(!delPhotoBtn) return;
+      var pidx = Number(delPhotoBtn.getAttribute('data-pidx'));
+      var removed = pendingPhotos.splice(pidx, 1)[0];
+      if(removed){ window.fb.storage.remove(removed.path); window.recordStorageDelta(-removed.size); }
+      photoGallery.innerHTML = shopPhotoGalleryHtml(pendingPhotos);
+    });
+
+    saveBtn.addEventListener('click', function(){
+      var name = nameInput.value.trim();
+      if(!name){ alert('請輸入名稱。'); return; }
+      var catGroup = document.querySelector('.cat-manager[data-catfield="shoppingCategory"] .cat-chips');
+      var docData = {
+        name: name,
+        category: groupValue(catGroup) || '',
+        tags: pendingTags.slice(),
+        photos: pendingPhotos.slice(),
+        link: linkInput.value.trim(),
+        budget: budgetInput.value.trim(),
+        bought: !!boughtInput.checked,
+        note: noteInput.value.trim()
+      };
+      window.fbReady.then(function(){
+        var fns = window.fb.fns;
+        var col = window.fb.col('shopping');
+        if(editingId){
+          fns.updateDoc(fns.doc(col, editingId), docData);
+        } else {
+          docData.createdAt = fns.serverTimestamp();
+          fns.addDoc(col, docData);
+        }
+      });
+      modal.hidden = true; /* 剛存檔，這些照片都留著，不用清 */
+    });
+    delBtn.addEventListener('click', function(){
+      if(!editingId) return;
+      var id = editingId;
+      var photosToRemove = pendingPhotos.slice();
+      confirmDelete('確定要刪除這個購物項目嗎？', function(){
+        window.fbReady.then(function(){
+          var fns = window.fb.fns;
+          photosToRemove.forEach(function(p){ window.fb.storage.remove(p.path); window.recordStorageDelta(-p.size); });
+          fns.deleteDoc(fns.doc(window.fb.col('shopping'), id));
+        });
+        modal.hidden = true;
+      });
+    });
+
+    document.getElementById('shopTableWrap').addEventListener('click', function(ev){
+      var nameEl = ev.target.closest('.shop-table-name');
+      if(nameEl){ openEdit(nameEl.dataset.id); return; }
+      var delEl = ev.target.closest('[data-del]');
+      if(delEl){
+        var id = delEl.getAttribute('data-del');
+        var it = items.filter(function(x){ return x.id === id; })[0];
+        confirmDelete('確定要刪除這個購物項目嗎？', function(){
+          window.fbReady.then(function(){
+            var fns = window.fb.fns;
+            (it && it.photos || []).forEach(function(p){ window.fb.storage.remove(p.path); window.recordStorageDelta(-p.size); });
+            fns.deleteDoc(fns.doc(window.fb.col('shopping'), id));
+          });
+        });
+      }
+    });
+    document.getElementById('shopTableWrap').addEventListener('change', function(ev){
+      var cb = ev.target.closest('[data-toggle]');
+      if(!cb) return;
+      window.fbReady.then(function(){
+        window.fb.fns.updateDoc(window.fb.fns.doc(window.fb.col('shopping'), cb.getAttribute('data-toggle')), { bought: cb.checked });
+      });
+    });
+
+    window.fbReady.then(function(){
+      var fns = window.fb.fns;
+      var col = window.fb.col('shopping');
+      fns.onSnapshot(fns.query(col, fns.orderBy('createdAt', 'asc')), function(snap){
+        items = snap.docs.map(function(d){ var data = d.data(); data.id = d.id; return data; });
+        render();
+      }, function(err){ console.error('shopping sync error', err); });
     });
   })();
 
